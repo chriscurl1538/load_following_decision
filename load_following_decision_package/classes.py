@@ -60,6 +60,21 @@ class Building:
         self.hl = df_hl
 
 
+class TES:  # TODO: is a rate of charge or rate of discharge needed?
+    def __init__(self, size=0, state_of_charge=0, charge=False, discharge=False):
+        """
+        Initializes the thermal energy storage system
+        :param size: float, How much thermal energy the TES system holds
+        :param state_of_charge: float, What percentage of the TES capacity is currently used
+        :param charge: Boolean, whether the TES system is currently charging
+        :param discharge: Boolean, whether the TES system is currently discharging
+        """
+        self.size = size
+        self.soc = state_of_charge
+        self.charge = charge
+        self.discharge = discharge
+
+
 class EnergyWasted:
     def __init__(self, heat_wasted=0, electricity_wasted=0):
         self.hw = heat_wasted
