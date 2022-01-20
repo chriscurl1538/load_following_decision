@@ -1,0 +1,40 @@
+"""
+Expected command line inputs:
+    mCHP capacity
+    part load efficiencies
+    heat to power ratio
+    fuel type or fuel HHV value
+    prompt for importing electrical and thermal load profiles
+"""
+
+# CHP Information
+chp_capacity: 50
+heat_power: 1
+fuel_HHV: 2
+chp_turn_down_ratio: 3
+part_loads:
+- 30
+- 40
+- 50
+- 60
+- 70
+- 80
+- 90
+- 100
+part_load_effs:
+- 34.4
+- 37.9
+- 40.7
+- 42.0
+- 42.7
+- 43.7
+- 44.9
+- 45.7
+
+# Aux Boiler Information
+ab_capacity: 1
+max_efficiency: 2
+ab_turn_down_ratio: 3
+
+# Net Metering
+net_metering: True
