@@ -5,6 +5,11 @@ Expected command line inputs:
     heat to power ratio
     fuel type or fuel HHV value
     prompt for importing electrical and thermal load profiles
+    
+ Part-load efficiency data is sourced from the US EPA CHP Partnership's
+        Catalog of CHP Technologies, Section 2: Technology Characterization -
+        Reciprocating Internal Combustion Engines. Data is specific to the
+        Wartsila 20V34SG Generator's terminal efficiency (LHV).
 """
 
 # CHP Information
