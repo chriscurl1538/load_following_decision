@@ -9,7 +9,15 @@ Calculates the economics for electrical and thermal load following
 
 import classes
 import command_line
-from pint import UnitRegistry as ureg
+
+
+def load_data_processing():
+    """
+    Analyzes raw hourly load profile data from Building class. Reduces resolution
+    from hourly to daily/monthly.
+    :return: Graphs, probably
+    """
+    return None
 
 
 def calc_fuel_use():    # Create class to track this?
