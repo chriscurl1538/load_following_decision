@@ -1,21 +1,20 @@
 """
-Initializes characteristics of equipment
+These classes initialize the operating parameters of each piece of equipment
 """
 
-import numpy as np
 import pandas as pd
+import numpy as np
 
 
 class CHP:
-    def __init__(self, capacity=0, heat_power=0, turn_down_ratio=0, part_load=0):
+    def __init__(self, capacity=0, heat_power=0, turn_down_ratio=0, part_load=np.empty(10, 2)):
         """
-        Defines the operating params of the mCHP system.
-        Part-load efficiency data is sourced from the US EPA CHP Partnership's
-        "Catalog of CHP Technologies, Section 2: Technology Characterization -
-        Reciprocating Internal Combustion Engines". Data is specific to the
-        Wartsila 20V34SG Generator's terminal efficiency (LHV).
-        :param capacity: Size of the CHP system in kW
+        This class defines the operating parameters of the mCHP system.
+        :param capacity: Size of the CHP system in kW (kilowatts)
         :param heat_power: The heat-to-power ratio of the CHP system
+        :param turn_down_ratio: The ratio of the maximum capacity to minimum capacity
+        :param part_load: An array where column 0 is the partial load as a percent of max
+            capacity and column 1 is the associated mCHP efficiency
         """
         self.cap = capacity
         self.hp = heat_power
@@ -24,45 +23,50 @@ class CHP:
 
 
 class AuxBoiler:
-    def __init__(self, capacity, max_efficiency, turn_down_ratio):
+    def __init__(self, capacity=0, efficiency=0, turn_down_ratio=0):
+        """
+        This class defines the operating parameters of the Auxiliary Boiler.
+        :param capacity: Size of the boiler in BTUs (British Thermal Units)
+        :param efficiency: The rated efficiency of the boiler
+        :param turn_down_ratio: The ratio of the maximum capacity to minimum capacity
+        """
         self.cap = capacity
-        self.eff = max_efficiency
+        self.eff = efficiency
         self.td = turn_down_ratio
 
 
-class Building:     # TODO: Sum hourly load data to get monthly data
+class Building:
     def __init__(self, file_name, net_metering=False):
+        """
+        This class defines the electrical and thermal load profiles of a mid-rise apartment
+        building. The data is imported from the file 'input_load_profiles_hourly.csv' using
+        pandas.
+        :param file_name: String, file name of the .csv file with the load profile data
+        :param net_metering: Boolean, True if the local electrical utility allows the building
+        owner to sell excess electricity generated back to the grid
+        """
+        # Reads load profile data from .csv file
         df = pd.read_csv('{}.csv'.format(file_name))
+        # Plucks electrical load data from the file using row and column locations
         df_el = df.iloc[8:, [0, 1, 2, 3, 16]]
         self.el = df_el
+        # Plucks thermal load data from teh file using row and column locations
         df_hl = df.iloc[8:, [0, 1, 2, 3, 29]]
         self.hl = df_hl
+        # Assigns and stores net metering boolean value
         self.nm = net_metering
 
 
-class TES:  # TODO: is a rate of charge or rate of discharge needed?
-    def __init__(self, size=0, state_of_charge=0, charge=False, discharge=False):
+class TES:
+    def __init__(self, capacity=0, state_of_charge=0, charge=False, discharge=False):
         """
-        Initializes the thermal energy storage system
-        :param size: float, How much thermal energy the TES system holds
-        :param state_of_charge: float, What percentage of the TES capacity is currently used
-        :param charge: Boolean, whether the TES system is currently charging
-        :param discharge: Boolean, whether the TES system is currently discharging
+        This class defines the operating parameters of the TES (Thermal energy storage) system
+        :param capacity: Size of the TES system in BTUs (British Thermal Units)
+        :param state_of_charge: Percentage of the TES capacity that is currently used
+        :param charge: Boolean, True if the TES system is currently charging
+        :param discharge: Boolean, True if the TES system is currently discharging
         """
-        self.size = size
+        self.cap = capacity
         self.soc = state_of_charge
         self.charge = charge
         self.discharge = discharge
-
-
-class EnergyWasted:
-    def __init__(self, heat_wasted=0, electricity_wasted=0):
-        self.hw = heat_wasted
-        self.ew = electricity_wasted
-
-
-if __name__ == '__main__':
-    x = Building(file_name="input_load_profiles_hourly")
-    heat_load = x.hl
-    electrical_load = x.el
-    print(heat_load)
