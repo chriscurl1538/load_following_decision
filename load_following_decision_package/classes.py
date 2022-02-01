@@ -9,7 +9,7 @@ import numpy as np
 
 
 class CHP:
-    def __init__(self, capacity=0, heat_power=0, turn_down_ratio=0, part_load=np.empty(10, 2)):
+    def __init__(self, capacity=0, heat_power=0, turn_down_ratio=0, part_load=np.empty([10, 2])):
         """
         This class defines the operating parameters of the mCHP system.
 
@@ -19,9 +19,9 @@ class CHP:
             Size of the CHP system in kW (kilowatts)
         heat_power: int
             The heat-to-power ratio of the CHP system
-        turn_down_ratio: int
+        turn_down_ratio: float
             The ratio of the maximum capacity to minimum capacity
-        part_load: numpy array
+        part_load: numpy.ndarray
             An array where column 0 is the partial load as a percent of max
             capacity and column 1 is the associated mCHP efficiency
         """
@@ -42,7 +42,7 @@ class AuxBoiler:
             Size of the boiler in BTUs (British Thermal Units)
         efficiency: float
             The rated efficiency of the boiler
-        turn_down_ratio: int
+        turn_down_ratio: float
             The ratio of the maximum capacity to minimum capacity
         """
         self.cap = capacity
