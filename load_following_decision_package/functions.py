@@ -34,5 +34,9 @@ def sum_energy_wasted():    # Tracked in a class
     return None
 
 
+# Note: Can add function def main(): that calls all other functions in the proper order
+
 if __name__ == '__main__':
+    # This statement reads true if the file is run from the command line (False if imported)
+    # If imported, then __name__ == "functions" and this statement reads False
     print('executed')
