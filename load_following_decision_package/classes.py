@@ -70,10 +70,12 @@ class EnergyDemand:
         # Reads load profile data from .csv file
         df = pd.read_csv('{}.csv'.format(file_name))
         # Plucks electrical load data from the file using row and column locations
-        electric_demand_hourly = df.iloc[8:, [0, 1, 2, 3, 16]]
+        electric_demand_df = df.iloc[8:, [0, 1, 2, 3, 16]]
+        electric_demand_hourly = electric_demand_df.to_numpy()
         self.el = electric_demand_hourly
         # Plucks thermal load data from teh file using row and column locations
-        heating_demand_hourly = df.iloc[8:, [0, 1, 2, 3, 29]]
+        heating_demand_df = df.iloc[8:, [0, 1, 2, 3, 29]]
+        heating_demand_hourly = heating_demand_df.to_numpy()
         self.hl = heating_demand_hourly
         # Assigns and stores net metering boolean value
         self.nm = net_metering
