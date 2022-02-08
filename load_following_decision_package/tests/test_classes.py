@@ -10,6 +10,8 @@ from load_following_decision_package.classes import TES
 
 import numpy as np
 
+# TODO: Add tests for unacceptable inputs (negative numbers, capacity above 50, etc)
+
 
 # Testing CHP Class
 EMPTY_ARRAY = np.empty([10, 2])
