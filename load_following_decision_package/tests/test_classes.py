@@ -1,85 +1,93 @@
-# This program tests the classes.py file
+"""
+Module description:
+    This program tests the classes.py file
+"""
 
 from load_following_decision_package.classes import CHP
 from load_following_decision_package.classes import AuxBoiler
-from load_following_decision_package.classes import Building
-from load_following_decision_package.classes import EnergyWasted
+from load_following_decision_package.classes import EnergyDemand
+from load_following_decision_package.classes import TES
+
+import numpy as np
 
 
 # Testing CHP Class
-chp_test = CHP(capacity=1, heat_power=2, turn_down_ratio=3)
+EMPTY_ARRAY = np.empty([10, 2])
+chp_test = CHP(capacity=50, heat_power=4, turn_down_ratio=3.3, part_load=EMPTY_ARRAY)
 
 
 def test_chp_class():
-    exp_cap = 1
+    exp_cap = 50
     obs_cap = chp_test.cap
     assert exp_cap == obs_cap
 
-    exp_hp = 2
+    exp_hp = 4
     obs_hp = chp_test.hp
     assert exp_hp == obs_hp
 
-    exp_td = 3
+    exp_td = 3.3
     obs_td = chp_test.td
     assert exp_td == obs_td
 
-    exp_pl = 40
-    obs_pl = chp_test.part_load[1][0]
-    assert exp_pl == obs_pl
+    exp_pl = EMPTY_ARRAY
+    obs_pl = chp_test.pl
+    np.testing.assert_allclose(actual=obs_pl, desired=exp_pl, rtol=0.01)
 
 
 # Testing AuxBoiler Class
-AB_test = AuxBoiler(capacity=1, max_efficiency=2, turn_down_ratio=3)
+AB_test = AuxBoiler(capacity=50, efficiency=0.8, turn_down_ratio=3.3)
 
 
 def test_aux_boiler_class():
-    exp_cap = 1
+    exp_cap = 50
     obs_cap = AB_test.cap
     assert exp_cap == obs_cap
 
-    exp_eff = 2
+    exp_eff = 0.8
     obs_eff = AB_test.eff
     assert exp_eff == obs_eff
 
-    exp_td = 3
+    exp_td = 3.3
     obs_td = AB_test.td
     assert exp_td == obs_td
 
 
-# Testing Building Class
-build_test = Building(heat_load=1, electrical_load=2, net_metering=True)
+# Testing EnergyDemand Class
+energy_demand_test = EnergyDemand(file_name="test_input_load_profiles_hourly", net_metering=True)
 
 
-def test_building_class():
-    exp_hl = 1
-    obs_hl = build_test.hl
-    assert exp_hl == obs_hl
-
-    exp_el = 2
-    obs_el = build_test.el
-    assert exp_el == obs_el
+def test_energy_demand_class():
+    # TODO: Test that electrical and heating demands have been imported correctly
 
     exp_nm = True
-    obs_nm = build_test.nm
+    obs_nm = energy_demand_test.nm
     assert exp_nm == obs_nm
 
 
-# Testing EnergyWasted Class
-ew_test = EnergyWasted(heat_wasted=1, electricity_wasted=2)
+# Testing TES Class
+tes_test = TES(capacity=50, state_of_charge=0.5, charge=True, discharge=True)
 
 
-def test_energy_wasted_class():
-    exp_hw = 1
-    obs_hw = ew_test.hw
-    assert exp_hw == obs_hw
+def test_TES_class():
+    exp_cap = 50
+    obs_cap = tes_test.cap
+    assert exp_cap == obs_cap
 
-    exp_ew = 2
-    obs_ew = ew_test.ew
-    assert exp_ew == obs_ew
+    exp_soc = 0.5
+    obs_soc = tes_test.soc
+    assert exp_soc == obs_soc
+
+    exp_charge = True
+    obs_charge = tes_test.charge
+    assert exp_charge == obs_charge
+
+    exp_discharge = True
+    obs_discharge = tes_test.discharge
+    assert exp_discharge == obs_discharge
 
 
 if __name__ == '__main__':
     test_chp_class()
     test_aux_boiler_class()
-    test_building_class()
-    test_energy_wasted_class()
+    test_energy_demand_class()
+    test_TES_class()
