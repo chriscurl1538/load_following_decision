@@ -6,7 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="5f999b6e-7d23-4b80-9687-7973dcc3b738" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/load_following_decision_package/functions.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_following_decision_package/functions.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/load_following_decision_package/project_proposal_curl.md" beforeDir="false" afterPath="$PROJECT_DIR$/source/project_proposal_curl.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/conf.py" beforeDir="false" afterPath="$PROJECT_DIR$/source/conf.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/index.rst" beforeDir="false" afterPath="$PROJECT_DIR$/source/index.rst" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -38,6 +41,11 @@
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
     <property name="node.js.selected.package.tslint" value="(autodetect)" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\curlc\git-repo\load_following_decision\source" />
+    </key>
   </component>
   <component name="RunManager" selected="Python.test_functions">
     <configuration name="functions" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
@@ -101,7 +109,9 @@
       <updated>1644014393837</updated>
       <workItem from="1644014396659" duration="288000" />
       <workItem from="1644014688530" duration="1006000" />
-      <workItem from="1644342426006" duration="9677000" />
+      <workItem from="1644342426006" duration="10144000" />
+      <workItem from="1644353016613" duration="162000" />
+      <workItem from="1644355418260" duration="1503000" />
     </task>
     <servers />
   </component>
