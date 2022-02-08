@@ -9,7 +9,7 @@ Module Description:
  Other Equipment = Auxiliary Boiler, Thermal energy storage (TES) system
 """
 import numpy as np
-import classes
+from load_following_decision_package import classes
 
 # TODO: Replace arguments with inputs from command line
 # TODO: Create main() function within which classes and functions are called in order
@@ -17,8 +17,9 @@ import classes
 """
 Global Variables (to be replaced with main() function)
 """
-energy_demand = classes.EnergyDemand(file_name="input_load_profiles_hourly")
-electric_demand_hourly = energy_demand.el
+energy_demand = classes.EnergyDemand(file_name="test_input_load_profiles_hourly")
+electric_demand_with_timestamp = energy_demand.el
+electric_demand_hourly = electric_demand_with_timestamp[1:, -1]
 
 chp = classes.CHP(capacity=50, heat_power=4, turn_down_ratio=3.3, part_load=np.array(
         [[30, 34.4], [40, 37.9], [50, 40.7], [60, 42.0], [70, 42.7], [80, 43.7], [90, 44.9], [100, 45.7]]))
@@ -31,9 +32,14 @@ Functions
 """
 
 
-def is_electric_utility_needed():
+def is_electric_utility_needed(demand_hourly=electric_demand_hourly):
     """
     This function compares mCHP capacity with hourly electrical demand.
+
+    Parameters
+    ----------
+    demand_hourly: numpy.ndarray
+        contains 8760 rows and 1 column. Items in the array must be convertible to float.
 
     Returns
     -------
@@ -41,12 +47,36 @@ def is_electric_utility_needed():
         contains boolean values that are true if mCHP operating parameters are
         insufficient to satisfy electricity demand
     """
-    rows = electric_demand_hourly.shape[0]
+
+    # Verifies input array size
+    rows = demand_hourly.shape[0]
+    try:
+        cols = demand_hourly.shape[1]
+    except IndexError:
+        cols = 1
+
+    try:
+        assert rows == 8760
+        assert cols == 1
+    except AssertionError:
+        return AssertionError
+
     utility_needed = []
 
-    for i in range(1, rows):
-        demand = float(electric_demand_hourly[i, -1])
-        if chp_min < demand < chp_cap:
+    for i in range(rows):
+        # Verifies input dtype
+        try:
+            demand = float(demand_hourly[i])
+        except ValueError:
+            return ValueError
+
+        # Verifies acceptable input value range
+        try:
+            assert demand >= 0
+        except AssertionError:
+            return AssertionError
+
+        if chp_min <= demand <= chp_cap:
             utility_needed.append(False)
         else:
             utility_needed.append(True)
@@ -54,7 +84,7 @@ def is_electric_utility_needed():
     return utility_needed
 
 
-def calculate_ELF_annual_electricity_cost(electric_rate=0.1331):
+def calculate_ELF_annual_electricity_cost(demand_hourly=electric_demand_hourly, electric_rate=0.1331):
     """
     Calculates the cost of electricity provided by the local utility.
 
@@ -64,6 +94,9 @@ def calculate_ELF_annual_electricity_cost(electric_rate=0.1331):
 
     Parameters
     ----------
+    demand_hourly: numpy.ndarray
+        contains 8760 rows and 1 column. Items in the array must be convertible to float.
+
     electric_rate: float
         The cost of electricity in $/kWh
 
@@ -76,7 +109,7 @@ def calculate_ELF_annual_electricity_cost(electric_rate=0.1331):
 
     utility_needed = is_electric_utility_needed()
     for i in range(len(utility_needed)):
-        demand = float(electric_demand_hourly[i+1, -1])
+        demand = float(demand_hourly[i])
         if utility_needed[i] is True and chp_cap < demand:
             diff = abs(chp_cap - demand)
             hour_cost = diff * electric_rate
