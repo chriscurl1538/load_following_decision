@@ -5,8 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5f999b6e-7d23-4b80-9687-7973dcc3b738" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/load_following_decision.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/load_following_decision.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/conf.py" beforeDir="false" afterPath="$PROJECT_DIR$/docs/source/conf.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/index.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/source/index.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/project_proposal_curl.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/source/project_proposal_curl.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/requirements.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/source/requirements.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -41,6 +46,8 @@
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\chris\git-repo\load_following_decision\docs" />
+      <recent name="C:\Users\chris\git-repo\load_following_decision" />
       <recent name="C:\Users\curlc\git-repo\load_following_decision\load_following_decision_package" />
       <recent name="C:\Users\curlc\git-repo\load_following_decision\docs" />
       <recent name="C:\Users\curlc\git-repo\load_following_decision\source" />
@@ -133,6 +140,7 @@
       <workItem from="1644342426006" duration="10144000" />
       <workItem from="1644353016613" duration="162000" />
       <workItem from="1644355418260" duration="3651000" />
+      <workItem from="1644515899238" duration="2178000" />
     </task>
     <servers />
   </component>
@@ -149,17 +157,6 @@
         </entry>
       </map>
     </option>
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/load_following_decision_package/functions.py</url>
-          <line>83</line>
-          <option name="timeStamp" value="6" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/masters_thesis$mchp_load_dispatch_opt.coverage" NAME="mchp-load-dispatch-opt Coverage Results" MODIFIED="1641851187649" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
