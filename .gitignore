@@ -69,7 +69,7 @@ instance/
 .scrapy
 
 # Sphinx documentation
-load_following_decision_package/docs/_build/
+docs/_build/
 
 # PyBuilder
 target/
