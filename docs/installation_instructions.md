@@ -8,7 +8,7 @@ This package is dependent on a number of libraries that you will need to install
 
 - pandas
 - numpy
-- yaml
+- pyyaml
 
 From your terminal, you can install these dependencies with the following command:
 
