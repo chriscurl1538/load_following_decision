@@ -51,7 +51,7 @@ class AuxBoiler:
 
 
 class EnergyDemand:
-    def __init__(self, file_name, net_metering=False):
+    def __init__(self, file_name, net_metering=False, electric_cost=0, fuel_cost=0):
         """
         This class defines the electricity and heating demand of a mid-
         rise apartment building.
@@ -80,22 +80,25 @@ class EnergyDemand:
         # Assigns and stores net metering boolean value
         self.nm = net_metering
 
+        self.el_cost = electric_cost
+        self.fuel_cost = fuel_cost
 
-class TES:
-    def __init__(self, capacity=0, state_of_charge=0, charge=False, discharge=False):
-        """
-        This class defines the operating parameters of the TES (Thermal energy storage) system
 
-        capacity: int
-            Size of the TES system in BTUs (British Thermal Units)
-        state_of_charge: float
-            Percentage of the TES capacity that is currently used
-        charge: boolean
-            True if the TES system is currently charging
-        discharge: boolean
-            True if the TES system is currently discharging
-        """
-        self.cap = capacity
-        self.soc = state_of_charge
-        self.charge = charge
-        self.discharge = discharge
+# class TES:
+#     def __init__(self, capacity=0, state_of_charge=0, charge=False, discharge=False):
+#         """
+#         This class defines the operating parameters of the TES (Thermal energy storage) system
+#
+#         capacity: int
+#             Size of the TES system in BTUs (British Thermal Units)
+#         state_of_charge: float
+#             Percentage of the TES capacity that is currently used
+#         charge: boolean
+#             True if the TES system is currently charging
+#         discharge: boolean
+#             True if the TES system is currently discharging
+#         """
+#         self.cap = capacity
+#         self.soc = state_of_charge
+#         self.charge = charge
+#         self.discharge = discharge
