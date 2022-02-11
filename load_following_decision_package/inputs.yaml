@@ -1,48 +1,26 @@
-"""
-Expected command line inputs:
-    mCHP capacity
-    part load efficiencies
-    heat to power ratio
-    fuel type or fuel HHV value
-    prompt for importing electrical and thermal load profiles
-    
- Part-load efficiency data is sourced from the US EPA CHP Partnership's
-        Catalog of CHP Technologies, Section 2: Technology Characterization -
-        Reciprocating Internal Combustion Engines. Data is specific to the
-        Wartsila 20V34SG Generator's terminal efficiency (LHV).
-"""
-
-# CHP Information
-chp_capacity: 50
-heat_power: 1
-fuel_HHV: 2
-chp_turn_down_ratio: 3
+chp_cap: 50
+chp_heat_power: 4
+chp_turn_down: 3.3
 part_loads:
-- 30
-- 40
-- 50
-- 60
-- 70
-- 80
-- 90
-- 100
-part_load_effs:
-- 34.4
-- 37.9
-- 40.7
-- 42.0
-- 42.7
-- 43.7
-- 44.9
-- 45.7
+- 30: 34.4
+- 40: 37.9
+- 50: 40.7
+- 60: 42.0
+- 70: 42.7
+- 80: 43.7
+- 90: 44.9
+- 100: 45.7
 
 # Aux Boiler Information
 ab_capacity: 1
-max_efficiency: 2
-ab_turn_down_ratio: 3
+ab_eff: 2
+ab_turn_down: 3
 
 # Net Metering
 net_metering: True
+
+# Energy Demand
+demand_filename: input_load_profiles_hourly
 
 # Economics
 electric_utility_cost: 0.1331   # $/kWh
