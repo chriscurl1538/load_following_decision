@@ -2,37 +2,34 @@
 Module Description:
     Contains functions needed to calculate the economics of electrical load following
     and thermal load following mCHP energy dispatch options
- Assumptions:
- Fuel = Natural gas
- Prime Mover = Internal combustion engine
- Building = Mid-rise Apartment
- Other Equipment = Auxiliary Boiler, Thermal energy storage (TES) system
+
+Assumptions:
+    Fuel = Natural gas
+    Prime Mover = Internal combustion engine
+    Building = Mid-rise Apartment
+    Other Equipment = Auxiliary Boiler, Thermal energy storage (TES) system
 """
+
 import numpy as np
 from load_following_decision_package import classes
 
 # TODO: Replace arguments with inputs from command line
-# TODO: Create main() function within which classes and functions are called in order
 
-"""
-Global Variables (to be replaced with main() function)
-"""
-energy_demand = classes.EnergyDemand(file_name="test_input_load_profiles_hourly")
-electric_demand_with_timestamp = energy_demand.el
-electric_demand_hourly = electric_demand_with_timestamp[1:, -1]
 
-chp = classes.CHP(capacity=50, heat_power=4, turn_down_ratio=3.3, part_load=np.array(
+def get_class_info():
+    energy_demand = classes.EnergyDemand(file_name="test_input_load_profiles_hourly")
+    chp = classes.CHP(capacity=50, heat_power=4, turn_down_ratio=3.3, part_load=np.array(
         [[30, 34.4], [40, 37.9], [50, 40.7], [60, 42.0], [70, 42.7], [80, 43.7], [90, 44.9], [100, 45.7]]))
-chp_cap = chp.cap
-chp_min = chp_cap / chp.td
-chp_pl = chp.pl
 
-"""
-Functions
-"""
+    electric_demand_hourly = energy_demand.el[1:, -1]
+    chp_cap = chp.cap
+    chp_min = chp_cap / chp.td
+    chp_pl = chp.pl
+
+    return electric_demand_hourly, chp_cap, chp_min, chp_pl
 
 
-def is_electric_utility_needed(demand_hourly=electric_demand_hourly):
+def is_electric_utility_needed(demand_hourly, chp_cap, chp_min):
     """
     This function compares mCHP capacity with hourly electrical demand.
 
@@ -84,7 +81,7 @@ def is_electric_utility_needed(demand_hourly=electric_demand_hourly):
     return utility_needed
 
 
-def calculate_ELF_annual_electricity_cost(demand_hourly=electric_demand_hourly, electric_rate=0.1331):
+def calculate_ELF_annual_electricity_cost(demand_hourly, chp_cap, chp_min, electric_rate=0.1331):
     """
     Calculates the cost of electricity provided by the local utility.
 
@@ -105,6 +102,7 @@ def calculate_ELF_annual_electricity_cost(demand_hourly=electric_demand_hourly, 
     annual_cost: float
         The total annual cost of electricity bought from the local utility
     """
+
     cost = []
 
     utility_needed = is_electric_utility_needed()
@@ -123,7 +121,7 @@ def calculate_ELF_annual_electricity_cost(demand_hourly=electric_demand_hourly, 
     return annual_cost
 
 
-def calculate_part_load_efficiency():
+def calculate_part_load_efficiency(demand_hourly, chp_cap, chp_pl):
     # TODO: Can be improved by linearizing the array for a more accurate efficiency value
     """
     Calculates the hourly mCHP efficiency using part-load efficiency data.
@@ -140,11 +138,12 @@ def calculate_part_load_efficiency():
         Array of efficiency values from the chp_pl array that correspond to the
         partload closest to the actual partload during that hour.
     """
-    rows = electric_demand_hourly.shape[0]
+
+    rows = demand_hourly.shape[0]
     partload_list = []
 
     for i in range(1, rows):
-        demand = float(electric_demand_hourly[i, -1])
+        demand = float(demand_hourly[i, -1])
         partload_actual = demand/chp_cap
         idx = np.searchsorted(chp_pl[:, 0], partload_actual, side="left")
         partload_list.append(chp_pl[idx])
@@ -169,6 +168,13 @@ def calculate_ELF_annual_chp_fuel_cost():
 
     """
     return None
+
+
+def main():
+    electric_demand_hourly, chp_cap, chp_min, chp_pl = get_class_info()
+    is_electric_utility_needed(demand_hourly=electric_demand_hourly, chp_cap=chp_cap, chp_min=chp_min)
+    calculate_ELF_annual_electricity_cost(demand_hourly=electric_demand_hourly, chp_cap=chp_cap, chp_min=chp_min)
+    calculate_part_load_efficiency(demand_hourly=electric_demand_hourly, chp_cap=chp_cap, chp_pl=chp_pl)
 
 
 if __name__ == '__main__':
