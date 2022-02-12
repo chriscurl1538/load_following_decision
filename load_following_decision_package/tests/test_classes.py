@@ -55,7 +55,7 @@ def test_aux_boiler_class():
 
 
 # Testing EnergyDemand Class
-energy_demand_test = EnergyDemand(file_name="test_input_load_profiles_hourly", net_metering=True)
+energy_demand_test = EnergyDemand(file_name="test_input_load_profiles_hourly.csv", net_metering=True)
 
 
 def test_energy_demand_class():
