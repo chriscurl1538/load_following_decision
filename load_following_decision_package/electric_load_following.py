@@ -10,26 +10,46 @@ Assumptions:
     Other Equipment = Auxiliary Boiler, Thermal energy storage (TES) system
 """
 
+import classes
 import numpy as np
-from load_following_decision_package import classes
-
-# TODO: Replace arguments with inputs from command line
 
 
 def get_class_info():
-    energy_demand = classes.EnergyDemand(file_name="test_input_load_profiles_hourly")
-    chp = classes.CHP(capacity=50, heat_power=4, turn_down_ratio=3.3, part_load=np.array(
-        [[30, 34.4], [40, 37.9], [50, 40.7], [60, 42.0], [70, 42.7], [80, 43.7], [90, 44.9], [100, 45.7]]))
+    """
+    Retrieves data stored in classes from classes.py for use in this module.
+
+    This function prevents classes from needing to be called in every function.
+
+    Returns
+    -------
+    electric_demand_hourly: numpy.ndarray
+        contains 8760 rows and 1 column. Items in the array must be convertible to float.
+
+    chp_cap: float
+        Size of the CHP system in kW (kilowatts)
+
+    chp_min: float
+        The minimum load of the system as a percentage of chp_cap. Calculated from the
+        turn-down ratio
+
+    chp_pl: numpy.ndarray
+        Array of part-loads (first col) and their associated part-load efficiencies
+        (second col)
+    """
+    energy_demand = classes.EnergyDemand()
+    electric_cost = energy_demand.el_cost
+
+    chp = classes.CHP()
 
     electric_demand_hourly = energy_demand.el[1:, -1]
     chp_cap = chp.cap
     chp_min = chp_cap / chp.td
     chp_pl = chp.pl
 
-    return electric_demand_hourly, chp_cap, chp_min, chp_pl
+    return electric_demand_hourly, chp_cap, chp_min, chp_pl, electric_cost
 
 
-def is_electric_utility_needed(demand_hourly, chp_cap, chp_min):
+def is_electric_utility_needed(demand_hourly):
     """
     This function compares mCHP capacity with hourly electrical demand.
 
@@ -44,6 +64,10 @@ def is_electric_utility_needed(demand_hourly, chp_cap, chp_min):
         contains boolean values that are true if mCHP operating parameters are
         insufficient to satisfy electricity demand
     """
+
+    x = get_class_info()
+    chp_cap = x[1]
+    chp_min = x[2]
 
     # Verifies input array size
     rows = demand_hourly.shape[0]
@@ -81,7 +105,7 @@ def is_electric_utility_needed(demand_hourly, chp_cap, chp_min):
     return utility_needed
 
 
-def calculate_ELF_annual_electricity_cost(demand_hourly, chp_cap, chp_min, electric_rate=0.1331):
+def calculate_ELF_annual_electricity_cost(demand_hourly):
     """
     Calculates the cost of electricity provided by the local utility.
 
@@ -94,14 +118,16 @@ def calculate_ELF_annual_electricity_cost(demand_hourly, chp_cap, chp_min, elect
     demand_hourly: numpy.ndarray
         contains 8760 rows and 1 column. Items in the array must be convertible to float.
 
-    electric_rate: float
-        The cost of electricity in $/kWh
-
     Returns
     -------
     annual_cost: float
         The total annual cost of electricity bought from the local utility
     """
+
+    x = get_class_info()
+    chp_cap = x[1]
+    chp_min = x[2]
+    electric_rate = x[4]
 
     cost = []
 
@@ -121,16 +147,15 @@ def calculate_ELF_annual_electricity_cost(demand_hourly, chp_cap, chp_min, elect
     return annual_cost
 
 
-def calculate_part_load_efficiency(demand_hourly, chp_cap, chp_pl):
+def calculate_part_load_efficiency(demand_hourly):
     # TODO: Can be improved by linearizing the array for a more accurate efficiency value
     """
     Calculates the hourly mCHP efficiency using part-load efficiency data.
 
     Parameters
     ----------
-    chp_pl: numpy.ndarray
-        Array of partload percentages and efficiency values for the mCHP system.
-        (Currently passed as a global variable rather than an argument.)
+    demand_hourly: numpy.ndarray
+        contains 8760 rows and 1 column. Items in the array must be convertible to float.
 
     Returns
     -------
@@ -138,6 +163,9 @@ def calculate_part_load_efficiency(demand_hourly, chp_cap, chp_pl):
         Array of efficiency values from the chp_pl array that correspond to the
         partload closest to the actual partload during that hour.
     """
+    x = get_class_info()
+    chp_cap = x[1]
+    chp_pl = x[3]
 
     rows = demand_hourly.shape[0]
     partload_list = []
@@ -153,21 +181,21 @@ def calculate_part_load_efficiency(demand_hourly, chp_cap, chp_pl):
 
 
 # TODO: Function is unfinished
-def calculate_ELF_annual_chp_fuel_cost():
-    """
-    Calculates the fuel cost for the mCHP system.
-
-    Assumes that energy dispatch for the mCHP system is electric load
-    following (ELF).
-
-    Parameters
-    ---------
-
-    Returns
-    -------
-
-    """
-    return None
+# def calculate_ELF_annual_chp_fuel_cost():
+#     """
+#     Calculates the fuel cost for the mCHP system.
+#
+#     Assumes that energy dispatch for the mCHP system is electric load
+#     following (ELF).
+#
+#     Parameters
+#     ---------
+#
+#     Returns
+#     -------
+#
+#     """
+#     return None
 
 
 if __name__ == '__main__':
