@@ -170,12 +170,5 @@ def calculate_ELF_annual_chp_fuel_cost():
     return None
 
 
-def main():
-    electric_demand_hourly, chp_cap, chp_min, chp_pl = get_class_info()
-    is_electric_utility_needed(demand_hourly=electric_demand_hourly, chp_cap=chp_cap, chp_min=chp_min)
-    calculate_ELF_annual_electricity_cost(demand_hourly=electric_demand_hourly, chp_cap=chp_cap, chp_min=chp_min)
-    calculate_part_load_efficiency(demand_hourly=electric_demand_hourly, chp_cap=chp_cap, chp_pl=chp_pl)
-
-
 if __name__ == '__main__':
     print('executed')

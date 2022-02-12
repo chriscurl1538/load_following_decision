@@ -1,15 +1,16 @@
 chp_cap: 50
 chp_heat_power: 4
 chp_turn_down: 3.3
-part_loads:
-- 30: 34.4
-- 40: 37.9
-- 50: 40.7
-- 60: 42.0
-- 70: 42.7
-- 80: 43.7
-- 90: 44.9
-- 100: 45.7
+
+# CHP Part Loads and Efficiencies
+30: 34.4
+40: 37.9
+50: 40.7
+60: 42.0
+70: 42.7
+80: 43.7
+90: 44.9
+100: 45.7
 
 # Aux Boiler Information
 ab_capacity: 1
