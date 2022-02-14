@@ -1,11 +1,11 @@
 """
 Module Description:
-    Contains  test functions for functions located in the "functions.py" file
+    Contains  test functions for functions located in the "electric_load_following.py" file
 """
 
-from load_following_decision_package.functions import is_electric_utility_needed
-from load_following_decision_package.functions import calculate_ELF_annual_electricity_cost
-from load_following_decision_package.functions import calculate_part_load_efficiency
+from load_following_decision_package.electric_load_following import is_electric_utility_needed
+from load_following_decision_package.electric_load_following import calculate_ELF_annual_electricity_cost
+from load_following_decision_package.electric_load_following import calculate_part_load_efficiency
 
 import numpy as np
 

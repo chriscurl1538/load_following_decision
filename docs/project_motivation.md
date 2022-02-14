@@ -44,10 +44,9 @@ This software package may not be significantly different from existing packages 
 
 **Package dependency**: My software will depend on the following packages, though other packages may be added to this list during the course of development:
 
-- Pandas (for easier csv file importing)
-
+- Pandas
 - Numpy
-
+- Yaml
 - Pint
 
 ### References
