@@ -5,16 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5f999b6e-7d23-4b80-9687-7973dcc3b738" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/load_following_decision_package/docs/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/load_following_decision_package/docs/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/load_following_decision_package/docs/Makefile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/make.bat" beforeDir="false" afterPath="$PROJECT_DIR$/load_following_decision_package/docs/make.bat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/conf.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_following_decision_package/docs/conf.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/index.rst" beforeDir="false" afterPath="$PROJECT_DIR$/load_following_decision_package/docs/index.rst" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/project_proposal_curl.md" beforeDir="false" afterPath="$PROJECT_DIR$/load_following_decision_package/docs/project_proposal_curl.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -118,7 +109,8 @@
       <workItem from="1644014688530" duration="1006000" />
       <workItem from="1644342426006" duration="10144000" />
       <workItem from="1644353016613" duration="162000" />
-      <workItem from="1644355418260" duration="3651000" />
+      <workItem from="1644355418260" duration="4299000" />
+      <workItem from="1644365702616" duration="741000" />
     </task>
     <servers />
   </component>
