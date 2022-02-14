@@ -6,9 +6,11 @@ Module description:
 from load_following_decision_package.classes import CHP
 from load_following_decision_package.classes import AuxBoiler
 from load_following_decision_package.classes import EnergyDemand
-from load_following_decision_package.classes import TES
+# from load_following_decision_package.classes import TES
 
 import numpy as np
+
+# TODO: Add tests for unacceptable inputs (negative numbers, capacity above 50, etc)
 
 
 # Testing CHP Class
@@ -53,7 +55,7 @@ def test_aux_boiler_class():
 
 
 # Testing EnergyDemand Class
-energy_demand_test = EnergyDemand(file_name="test_input_load_profiles_hourly", net_metering=True)
+energy_demand_test = EnergyDemand(file_name="test_input_load_profiles_hourly.csv", net_metering=True)
 
 
 def test_energy_demand_class():
@@ -64,30 +66,30 @@ def test_energy_demand_class():
     assert exp_nm == obs_nm
 
 
-# Testing TES Class
-tes_test = TES(capacity=50, state_of_charge=0.5, charge=True, discharge=True)
+# # Testing TES Class
+# tes_test = TES(capacity=50, state_of_charge=0.5, charge=True, discharge=True)
 
 
-def test_TES_class():
-    exp_cap = 50
-    obs_cap = tes_test.cap
-    assert exp_cap == obs_cap
-
-    exp_soc = 0.5
-    obs_soc = tes_test.soc
-    assert exp_soc == obs_soc
-
-    exp_charge = True
-    obs_charge = tes_test.charge
-    assert exp_charge == obs_charge
-
-    exp_discharge = True
-    obs_discharge = tes_test.discharge
-    assert exp_discharge == obs_discharge
+# def test_TES_class():
+#     exp_cap = 50
+#     obs_cap = tes_test.cap
+#     assert exp_cap == obs_cap
+#
+#     exp_soc = 0.5
+#     obs_soc = tes_test.soc
+#     assert exp_soc == obs_soc
+#
+#     exp_charge = True
+#     obs_charge = tes_test.charge
+#     assert exp_charge == obs_charge
+#
+#     exp_discharge = True
+#     obs_discharge = tes_test.discharge
+#     assert exp_discharge == obs_discharge
 
 
 if __name__ == '__main__':
     test_chp_class()
     test_aux_boiler_class()
     test_energy_demand_class()
-    test_TES_class()
+    # test_TES_class()

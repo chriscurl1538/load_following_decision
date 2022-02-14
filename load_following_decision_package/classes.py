@@ -8,14 +8,15 @@ import pandas as pd
 import numpy as np
 
 
+# TODO: Consider having optional chp_min input that can be entered instead of turn_down_ratio
 class CHP:
-    def __init__(self, capacity=0, heat_power=0, turn_down_ratio=0, part_load=np.empty([10, 2])):
+    def __init__(self, capacity, heat_power, turn_down_ratio, part_load=np.empty([10, 2])):
         """
         This class defines the operating parameters of the mCHP system.
 
         Parameters
         ----------
-        capacity : int
+        capacity: float
             Size of the CHP system in kW (kilowatts)
         heat_power: int
             The heat-to-power ratio of the CHP system
@@ -32,7 +33,7 @@ class CHP:
 
 
 class AuxBoiler:
-    def __init__(self, capacity=0, efficiency=0, turn_down_ratio=0):
+    def __init__(self, capacity, efficiency, turn_down_ratio):
         """
         This class defines the operating parameters of the Auxiliary Boiler.
 
@@ -51,7 +52,7 @@ class AuxBoiler:
 
 
 class EnergyDemand:
-    def __init__(self, file_name, net_metering=False):
+    def __init__(self, file_name, electric_cost, fuel_cost, net_metering=False):
         """
         This class defines the electricity and heating demand of a mid-
         rise apartment building.
@@ -68,7 +69,7 @@ class EnergyDemand:
             owner to sell excess electricity generated back to the grid
         """
         # Reads load profile data from .csv file
-        df = pd.read_csv('{}.csv'.format(file_name))
+        df = pd.read_csv(file_name)
         # Plucks electrical load data from the file using row and column locations
         electric_demand_df = df.iloc[8:, [0, 1, 2, 3, 16]]
         electric_demand_hourly = electric_demand_df.to_numpy()
@@ -80,22 +81,25 @@ class EnergyDemand:
         # Assigns and stores net metering boolean value
         self.nm = net_metering
 
+        self.el_cost = electric_cost
+        self.fuel_cost = fuel_cost
 
-class TES:
-    def __init__(self, capacity=0, state_of_charge=0, charge=False, discharge=False):
-        """
-        This class defines the operating parameters of the TES (Thermal energy storage) system
 
-        capacity: int
-            Size of the TES system in BTUs (British Thermal Units)
-        state_of_charge: float
-            Percentage of the TES capacity that is currently used
-        charge: boolean
-            True if the TES system is currently charging
-        discharge: boolean
-            True if the TES system is currently discharging
-        """
-        self.cap = capacity
-        self.soc = state_of_charge
-        self.charge = charge
-        self.discharge = discharge
+# class TES:
+#     def __init__(self, capacity=0, state_of_charge=0, charge=False, discharge=False):
+#         """
+#         This class defines the operating parameters of the TES (Thermal energy storage) system
+#
+#         capacity: int
+#             Size of the TES system in BTUs (British Thermal Units)
+#         state_of_charge: float
+#             Percentage of the TES capacity that is currently used
+#         charge: boolean
+#             True if the TES system is currently charging
+#         discharge: boolean
+#             True if the TES system is currently discharging
+#         """
+#         self.cap = capacity
+#         self.soc = state_of_charge
+#         self.charge = charge
+#         self.discharge = discharge
