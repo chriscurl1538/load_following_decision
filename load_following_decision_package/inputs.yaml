@@ -17,9 +17,6 @@ ab_capacity: 1
 ab_eff: 2
 ab_turn_down: 3
 
-# Net Metering
-net_metering: True
-
 # Energy Demand
 demand_filename: input_load_profiles_hourly.csv
 
