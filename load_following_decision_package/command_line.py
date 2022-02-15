@@ -40,8 +40,8 @@ def run(args):
     classes.CHP(capacity=data['chp_cap'], heat_power=data['chp_heat_power'], turn_down_ratio=data['chp_turn_down'],
                 part_load=part_load_array)
     classes.AuxBoiler(capacity=data['ab_capacity'], efficiency=data['ab_eff'], turn_down_ratio=data['ab_turn_down'])
-    classes.EnergyDemand(file_name=data['demand_filename'], net_metering=data['net_metering'],
-                         electric_cost=data['electric_utility_cost'], fuel_cost=data['fuel_cost'])
+    classes.EnergyDemand(file_name=data['demand_filename'], electric_cost=data['electric_utility_cost'],
+                         fuel_cost=data['fuel_cost'])
 
 
 def main():

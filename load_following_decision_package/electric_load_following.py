@@ -8,6 +8,7 @@ Assumptions:
     Prime Mover = Internal combustion engine
     Building = Mid-rise Apartment
     Other Equipment = Auxiliary Boiler, Thermal energy storage (TES) system
+    Net metering is not allowed
 """
 
 import classes
@@ -24,14 +25,11 @@ def get_class_info():
     -------
     electric_demand_hourly: numpy.ndarray
         contains 8760 rows and 1 column. Items in the array must be convertible to float.
-
     chp_cap: float
         Size of the CHP system in kW (kilowatts)
-
     chp_min: float
         The minimum load of the system as a percentage of chp_cap. Calculated from the
         turn-down ratio
-
     chp_pl: numpy.ndarray
         Array of part-loads (first col) and their associated part-load efficiencies
         (second col)
@@ -49,7 +47,7 @@ def get_class_info():
     return electric_demand_hourly, chp_cap, chp_min, chp_pl, electric_cost
 
 
-def is_electric_utility_needed(demand_hourly):
+def is_electric_utility_needed(demand_hourly=None):
     """
     This function compares mCHP capacity with hourly electrical demand.
 
@@ -64,48 +62,49 @@ def is_electric_utility_needed(demand_hourly):
         contains boolean values that are true if mCHP operating parameters are
         insufficient to satisfy electricity demand
     """
+    if demand_hourly is not None:
 
-    x = get_class_info()
-    chp_cap = x[1]
-    chp_min = x[2]
+        x = get_class_info()
+        chp_cap = x[1]
+        chp_min = x[2]
 
-    # Verifies input array size
-    rows = demand_hourly.shape[0]
-    try:
-        cols = demand_hourly.shape[1]
-    except IndexError:
-        cols = 1
-
-    try:
-        assert rows == 8760
-        assert cols == 1
-    except AssertionError:
-        return AssertionError
-
-    utility_needed = []
-
-    for i in range(rows):
-        # Verifies input dtype
+        # Verifies input array size
+        rows = demand_hourly.shape[0]
         try:
-            demand = float(demand_hourly[i])
-        except ValueError:
-            return ValueError
+            cols = demand_hourly.shape[1]
+        except IndexError:
+            cols = 1
 
-        # Verifies acceptable input value range
         try:
-            assert demand >= 0
+            assert rows == 8760
+            assert cols == 1
         except AssertionError:
             return AssertionError
 
-        if chp_min <= demand <= chp_cap:
-            utility_needed.append(False)
-        else:
-            utility_needed.append(True)
+        utility_needed = []
 
-    return utility_needed
+        for i in range(rows):
+            # Verifies input dtype
+            try:
+                demand = float(demand_hourly[i])
+            except ValueError:
+                return ValueError
+
+            # Verifies acceptable input value range
+            try:
+                assert demand >= 0
+            except AssertionError:
+                return AssertionError
+
+            if chp_min <= demand <= chp_cap:
+                utility_needed.append(False)
+            else:
+                utility_needed.append(True)
+
+        return utility_needed
 
 
-def calculate_ELF_annual_electricity_cost(demand_hourly):
+def calculate_ELF_annual_electricity_cost(demand_hourly=None):
     """
     Calculates the cost of electricity provided by the local utility.
 
@@ -123,31 +122,33 @@ def calculate_ELF_annual_electricity_cost(demand_hourly):
     annual_cost: float
         The total annual cost of electricity bought from the local utility
     """
+    if demand_hourly is not None:
 
-    x = get_class_info()
-    chp_cap = x[1]
-    chp_min = x[2]
-    electric_rate = x[4]
+        x = get_class_info()
+        chp_cap = x[1]
+        chp_min = x[2]
+        electric_rate = x[4]
 
-    cost = []
+        cost = []
 
-    utility_needed = is_electric_utility_needed()
-    for i in range(len(utility_needed)):
-        demand = float(demand_hourly[i])
-        if utility_needed[i] is True and chp_cap < demand:
-            diff = abs(chp_cap - demand)
-            hour_cost = diff * electric_rate
-            cost.append(hour_cost)
-        elif utility_needed[i] is True and chp_min > demand:
-            hour_cost = demand * electric_rate
-            cost.append(hour_cost)
-        else:
-            pass
-    annual_cost = sum(cost)
-    return annual_cost
+        utility_needed = is_electric_utility_needed()
+
+        for i in range(len(utility_needed)):
+            demand = float(demand_hourly[i])
+            if utility_needed[i] is True and chp_cap < demand:
+                diff = abs(chp_cap - demand)
+                hour_cost = diff * electric_rate
+                cost.append(hour_cost)
+            elif utility_needed[i] is True and chp_min > demand:
+                hour_cost = demand * electric_rate
+                cost.append(hour_cost)
+            else:
+                pass
+        annual_cost = sum(cost)
+        return annual_cost
 
 
-def calculate_part_load_efficiency(demand_hourly):
+def calculate_part_load_efficiency(demand_hourly=None):
     # TODO: Can be improved by linearizing the array for a more accurate efficiency value
     """
     Calculates the hourly mCHP efficiency using part-load efficiency data.
@@ -163,21 +164,23 @@ def calculate_part_load_efficiency(demand_hourly):
         Array of efficiency values from the chp_pl array that correspond to the
         partload closest to the actual partload during that hour.
     """
-    x = get_class_info()
-    chp_cap = x[1]
-    chp_pl = x[3]
+    if demand_hourly is not None:
 
-    rows = demand_hourly.shape[0]
-    partload_list = []
+        x = get_class_info()
+        chp_cap = x[1]
+        chp_pl = x[3]
 
-    for i in range(1, rows):
-        demand = float(demand_hourly[i, -1])
-        partload_actual = demand/chp_cap
-        idx = np.searchsorted(chp_pl[:, 0], partload_actual, side="left")
-        partload_list.append(chp_pl[idx])
-    partload_array = np.array(partload_list)
-    efficiency_array = partload_array[:, 1]
-    return efficiency_array
+        rows = demand_hourly.shape[0]
+        partload_list = []
+
+        for i in range(1, rows):
+            demand = float(demand_hourly[i, -1])
+            partload_actual = demand/chp_cap
+            idx = np.searchsorted(chp_pl[:, 0], partload_actual, side="left")
+            partload_list.append(chp_pl[idx])
+        partload_array = np.array(partload_list)
+        efficiency_array = partload_array[:, 1]
+        return efficiency_array
 
 
 # TODO: Function is unfinished

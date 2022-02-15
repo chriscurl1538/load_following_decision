@@ -10,7 +10,7 @@ import numpy as np
 
 # TODO: Consider having optional chp_min input that can be entered instead of turn_down_ratio
 class CHP:
-    def __init__(self, capacity, heat_power, turn_down_ratio, part_load=np.empty([10, 2])):
+    def __init__(self, capacity=None, heat_power=None, turn_down_ratio=None, part_load=np.empty([10, 2])):
         """
         This class defines the operating parameters of the mCHP system.
 
@@ -33,7 +33,7 @@ class CHP:
 
 
 class AuxBoiler:
-    def __init__(self, capacity, efficiency, turn_down_ratio):
+    def __init__(self, capacity=None, efficiency=None, turn_down_ratio=None):
         """
         This class defines the operating parameters of the Auxiliary Boiler.
 
@@ -52,7 +52,7 @@ class AuxBoiler:
 
 
 class EnergyDemand:
-    def __init__(self, file_name, electric_cost, fuel_cost, net_metering=False):
+    def __init__(self, file_name=None, electric_cost=None, fuel_cost=None):
         """
         This class defines the electricity and heating demand of a mid-
         rise apartment building.
@@ -64,9 +64,6 @@ class EnergyDemand:
         ----------
         file_name: string
             File name of the .csv file with the load profile data
-        net_metering: boolean
-            True if the local electrical utility allows the building
-            owner to sell excess electricity generated back to the grid
         """
         # Reads load profile data from .csv file
         df = pd.read_csv(file_name)
@@ -74,12 +71,10 @@ class EnergyDemand:
         electric_demand_df = df.iloc[8:, [0, 1, 2, 3, 16]]
         electric_demand_hourly = electric_demand_df.to_numpy()
         self.el = electric_demand_hourly
-        # Plucks thermal load data from teh file using row and column locations
+        # Plucks thermal load data from the file using row and column locations
         heating_demand_df = df.iloc[8:, [0, 1, 2, 3, 29]]
         heating_demand_hourly = heating_demand_df.to_numpy()
         self.hl = heating_demand_hourly
-        # Assigns and stores net metering boolean value
-        self.nm = net_metering
 
         self.el_cost = electric_cost
         self.fuel_cost = fuel_cost
