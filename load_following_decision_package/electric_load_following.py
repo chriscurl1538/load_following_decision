@@ -11,7 +11,7 @@ Assumptions:
     Net metering is not allowed
 """
 
-import classes
+from load_following_decision_package import classes
 import numpy as np
 
 
@@ -41,13 +41,17 @@ def get_class_info():
 
     electric_demand_hourly = energy_demand.el[1:, -1]
     chp_cap = chp.cap
-    chp_min = chp_cap / chp.td
     chp_pl = chp.pl
+
+    try:
+        chp_min = chp_cap / chp.td
+    except ZeroDivisionError:
+        chp_min = 0
 
     return electric_demand_hourly, chp_cap, chp_min, chp_pl, electric_cost
 
 
-def is_electric_utility_needed(demand_hourly=None):
+def is_electric_utility_needed(demand_hourly=np.empty(shape=[8760, 1])):
     """
     This function compares mCHP capacity with hourly electrical demand.
 
@@ -62,7 +66,9 @@ def is_electric_utility_needed(demand_hourly=None):
         contains boolean values that are true if mCHP operating parameters are
         insufficient to satisfy electricity demand
     """
-    if demand_hourly is not None:
+    if demand_hourly.size is 0:
+        return None
+    else:
 
         x = get_class_info()
         chp_cap = x[1]
@@ -74,12 +80,8 @@ def is_electric_utility_needed(demand_hourly=None):
             cols = demand_hourly.shape[1]
         except IndexError:
             cols = 1
-
-        try:
-            assert rows == 8760
-            assert cols == 1
-        except AssertionError:
-            return AssertionError
+        assert rows == 8760
+        assert cols == 1
 
         utility_needed = []
 
@@ -91,10 +93,7 @@ def is_electric_utility_needed(demand_hourly=None):
                 return ValueError
 
             # Verifies acceptable input value range
-            try:
-                assert demand >= 0
-            except AssertionError:
-                return AssertionError
+            assert demand >= 0
 
             if chp_min <= demand <= chp_cap:
                 utility_needed.append(False)
@@ -202,4 +201,5 @@ def calculate_part_load_efficiency(demand_hourly=None):
 
 
 if __name__ == '__main__':
-    print('executed')
+    x = is_electric_utility_needed()
+    print(x)

@@ -10,7 +10,7 @@ import numpy as np
 
 # TODO: Consider having optional chp_min input that can be entered instead of turn_down_ratio
 class CHP:
-    def __init__(self, capacity=None, heat_power=None, turn_down_ratio=None, part_load=np.empty([10, 2])):
+    def __init__(self, capacity=0, heat_power=0, turn_down_ratio=0, part_load=np.empty([10, 2])):
         """
         This class defines the operating parameters of the mCHP system.
 
@@ -33,7 +33,7 @@ class CHP:
 
 
 class AuxBoiler:
-    def __init__(self, capacity=None, efficiency=None, turn_down_ratio=None):
+    def __init__(self, capacity=0, efficiency=0, turn_down_ratio=0):
         """
         This class defines the operating parameters of the Auxiliary Boiler.
 
@@ -52,7 +52,7 @@ class AuxBoiler:
 
 
 class EnergyDemand:
-    def __init__(self, file_name=None, electric_cost=None, fuel_cost=None):
+    def __init__(self, file_name='input_load_profiles_hourly.csv', electric_cost=0, fuel_cost=0):
         """
         This class defines the electricity and heating demand of a mid-
         rise apartment building.
@@ -63,7 +63,8 @@ class EnergyDemand:
         Parameters
         ----------
         file_name: string
-            File name of the .csv file with the load profile data
+            File name of the .csv file with the load profile data. This can be changed from the
+            default value by modifying the name in the .yaml file.
         """
         # Reads load profile data from .csv file
         df = pd.read_csv(file_name)

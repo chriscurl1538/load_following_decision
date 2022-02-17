@@ -5,7 +5,7 @@ Module description:
 
 from load_following_decision_package.classes import CHP
 from load_following_decision_package.classes import AuxBoiler
-from load_following_decision_package.classes import EnergyDemand
+# from load_following_decision_package.classes import EnergyDemand
 # from load_following_decision_package.classes import TES
 
 import numpy as np
@@ -54,16 +54,16 @@ def test_aux_boiler_class():
     assert exp_td == obs_td
 
 
-# Testing EnergyDemand Class
-energy_demand_test = EnergyDemand(file_name="test_input_load_profiles_hourly.csv", net_metering=True)
+# # Testing EnergyDemand Class
+# energy_demand_test = EnergyDemand(file_name="test_input_load_profiles_hourly.csv")
 
 
-def test_energy_demand_class():
-    # TODO: Test that electrical and heating demands have been imported correctly
-
-    exp_nm = True
-    obs_nm = energy_demand_test.nm
-    assert exp_nm == obs_nm
+# def test_energy_demand_class():
+#     # TODO: Test that electrical and heating demands have been imported correctly
+#
+#     exp_nm = True
+#     obs_nm = energy_demand_test.nm
+#     assert exp_nm == obs_nm
 
 
 # # Testing TES Class
@@ -86,10 +86,3 @@ def test_energy_demand_class():
 #     exp_discharge = True
 #     obs_discharge = tes_test.discharge
 #     assert exp_discharge == obs_discharge
-
-
-if __name__ == '__main__':
-    test_chp_class()
-    test_aux_boiler_class()
-    test_energy_demand_class()
-    # test_TES_class()
