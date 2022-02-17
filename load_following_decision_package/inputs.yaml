@@ -1,16 +1,22 @@
+# Part-load efficiency data is sourced from the US EPA CHP Partnership's
+#        "Catalog of CHP Technologies, Section 2: Technology Characterization -
+#        Reciprocating Internal Combustion Engines". Data is specific to the
+#        Wartsila 20V34SG Generator's terminal efficiency (LHV).
+
 chp_cap: 50
 chp_heat_power: 4
 chp_turn_down: 3.3
+thermal_output_to_fuel_input: 0.35
 
 # CHP Part Loads and Efficiencies
-30: 34.4
-40: 37.9
-50: 40.7
-60: 42.0
-70: 42.7
-80: 43.7
-90: 44.9
-100: 45.7
+30: 0.344
+40: 0.379
+50: 0.407
+60: 0.420
+70: 0.427
+80: 0.437
+90: 0.449
+100: 0.457
 
 # Aux Boiler Information
 ab_capacity: 1
@@ -18,7 +24,7 @@ ab_eff: 2
 ab_turn_down: 3
 
 # Energy Demand
-demand_filename: input_load_profiles_hourly.csv
+demand_filename: default_file.csv
 
 # Economics
 electric_utility_cost: 0.1331   # $/kWh
