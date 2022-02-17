@@ -10,7 +10,8 @@ import numpy as np
 
 # TODO: Consider having optional chp_min input that can be entered instead of turn_down_ratio
 class CHP:
-    def __init__(self, capacity=0, heat_power=0, turn_down_ratio=0, part_load=np.empty([10, 2])):
+    def __init__(self, capacity=0, heat_power=0, turn_down_ratio=0, thermal_output_to_fuel_input=0,
+                 part_load=np.empty([10, 2])):
         """
         This class defines the operating parameters of the mCHP system.
 
@@ -30,6 +31,7 @@ class CHP:
         self.hp = heat_power
         self.td = turn_down_ratio
         self.pl = part_load
+        self.out_in = thermal_output_to_fuel_input
 
 
 class AuxBoiler:
@@ -52,12 +54,12 @@ class AuxBoiler:
 
 
 class EnergyDemand:
-    def __init__(self, file_name='input_load_profiles_hourly.csv', electric_cost=0, fuel_cost=0):
+    def __init__(self, file_name='default_file.csv', electric_cost=0, fuel_cost=0):
         """
         This class defines the electricity and heating demand of a mid-
         rise apartment building.
 
-        The data is imported from the file 'input_load_profiles_hourly.csv'
+        The data is imported from the file 'default_file.csv'
         using pandas.
 
         Parameters
@@ -67,16 +69,20 @@ class EnergyDemand:
             default value by modifying the name in the .yaml file.
         """
         # Reads load profile data from .csv file
+        self.demand_file_name = file_name
         df = pd.read_csv(file_name)
+
         # Plucks electrical load data from the file using row and column locations
-        electric_demand_df = df.iloc[8:, [0, 1, 2, 3, 16]]
+        electric_demand_df = df.iloc[9:, 16]
         electric_demand_hourly = electric_demand_df.to_numpy()
         self.el = electric_demand_hourly
+
         # Plucks thermal load data from the file using row and column locations
-        heating_demand_df = df.iloc[8:, [0, 1, 2, 3, 29]]
+        heating_demand_df = df.iloc[9:, 29]
         heating_demand_hourly = heating_demand_df.to_numpy()
         self.hl = heating_demand_hourly
 
+        # Assigns remaining values
         self.el_cost = electric_cost
         self.fuel_cost = fuel_cost
 
