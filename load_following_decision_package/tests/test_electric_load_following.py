@@ -13,8 +13,8 @@ import numpy as np
 
 
 def test_is_electric_utility_needed():
-    # # Test default input
-    # assert is_electric_utility_needed() is None
+    # Test default input
+    assert is_electric_utility_needed() is None
 
     # Test input array dtype
     a = np.ones(shape=(8759, 1))
