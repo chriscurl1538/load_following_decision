@@ -4,6 +4,7 @@ Module Description:
 """
 
 import pytest
+from load_following_decision_package import classes
 
 from load_following_decision_package.electric_load_following import is_electric_utility_needed
 # from load_following_decision_package.electric_load_following import calculate_ELF_annual_electricity_cost
@@ -12,6 +13,7 @@ from load_following_decision_package.electric_load_following import is_electric_
 import numpy as np
 
 
+# TODO: Update data stored in class to modify hourly demand data for testing
 def test_is_electric_utility_needed():
     # Test default input
     assert is_electric_utility_needed() is None
