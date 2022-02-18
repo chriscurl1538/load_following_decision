@@ -10,7 +10,7 @@ Assumptions:
     Other Equipment = Auxiliary Boiler, Thermal energy storage (TES) system
     Net metering is not allowed
 
-Order of assignment:
+Current prioritization of equipment in order of which addresses energy needs first:
     mCHP
     Aux Boiler
     Thermal storage
@@ -234,6 +234,7 @@ def calculate_electrical_part_load_efficiency():
         return efficiency_array
 
 
+# Uses the above part load efficiency function
 def calculate_hourly_chp_fuel_use():
     """
     Calculates the fuel use of the mCHP system. First it uses the heat to power ratio
