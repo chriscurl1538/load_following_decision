@@ -19,7 +19,9 @@ Further details can be found in /docs/project_motivation.md
 
 ## Installation Instructions
 
-This project is hosted on GitHub at https://github.com/SoftwareDevEngResearch/load_following_decision. 
+This project is hosted on GitHub. It has not been hosted on PyPI, so install from GitHub:
+
+`pip install git+git://github.com/SoftwareDevEngResearch/load_following_decision.git`
 
 Detailed installation instructions can be found in /docs/installation_instructions.md
 
