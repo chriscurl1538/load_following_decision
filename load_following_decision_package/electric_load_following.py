@@ -29,9 +29,6 @@ def calc_utility_electricity_needed():
     Returns
     -------
     utility_needed: list
-        contains boolean values that are true if mCHP operating parameters are
-        insufficient to satisfy electricity demand
-    utility_supply: list
         contains float values for how many kWh of electricity needs to be purchased
         from the utility
     """
@@ -97,7 +94,7 @@ def calc_annual_electric_cost():
     return annual_cost
 
 
-# TODO: Change this to TES storage assignment
+# TODO: Change this to TES storage assignment (storage should be prioritized over running the boiler)
 def calc_aux_boiler_output():
     """
     Using CHP turn down ratio and heat to power ratio, this function determines when the
@@ -168,7 +165,7 @@ def calc_aux_boiler_output():
     return boiler_heat
 
 
-# TODO: Change to aux boiler
+# TODO: Change to aux boiler (storage should be prioritized over running the boiler)
 def calc_heat_storage_needed():
     """
     Using the list of hourly boiler heat output from the calc_aux_boiler_output() function,
@@ -176,7 +173,8 @@ def calc_heat_storage_needed():
 
     Returns
     -------
-
+    stored_heat: list
+        Heat stored in the thermal storage system each hour
     """
     ab = classes.AuxBoiler()
     ab_cap = ab.cap
@@ -282,31 +280,6 @@ def calculate_hourly_chp_fuel_use():
             fuel_use.append(fuel_btu)
 
         return fuel_use
-
-
-# def calculate_ab_fuel_use():
-#     return None
-#
-#
-# # TODO: Fill in docstring
-# def calculate_annual_fuel_cost():
-#     """
-#
-#     Returns
-#     -------
-#
-#     """
-#     demand = classes.EnergyDemand()
-#     fuel_cost = demand.fuel_cost
-#
-#     fuel_use = calculate_hourly_chp_fuel_use()
-#
-#     fuel_cost_hourly = []
-#     for i in range(len(fuel_use)):
-#         cost_hourly = fuel_use[i] * fuel_cost
-#         fuel_cost_hourly.append(cost_hourly)
-#     fuel_cost_sum = sum(fuel_cost_hourly)
-#     return fuel_cost_sum
 
 
 if __name__ == '__main__':
