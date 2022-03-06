@@ -2,18 +2,6 @@
 Module Description:
     Contains functions needed to calculate the economics of electrical load following
     mCHP energy dispatch option
-
-Assumptions:
-    Fuel = Natural gas
-    Prime Mover = Internal combustion engine
-    Building = Mid-rise Apartment
-    Other Equipment = Auxiliary Boiler, Thermal energy storage (TES) system
-    Net metering is not allowed
-
-Current prioritization of equipment in order of which addresses energy needs first:
-    mCHP
-    Aux Boiler
-    Thermal storage
 """
 
 import classes
@@ -28,8 +16,8 @@ def calc_utility_electricity_needed():
 
     Returns
     -------
-    utility_needed: list
-        contains float values for how many kWh of electricity needs to be purchased
+    utility_needed: float
+        contains float value for the annual sum of kWh of electricity needs to be purchased
         from the utility
     """
     chp = classes.CHP()
@@ -63,7 +51,7 @@ def calc_utility_electricity_needed():
         else:
             raise Exception("Error in ELF calc_utility_electricity_needed function")
 
-    return utility_needed
+    return sum(utility_needed)
 
 
 def calc_annual_electric_cost():
@@ -83,14 +71,9 @@ def calc_annual_electric_cost():
     demand = classes.EnergyDemand()
     electric_rate = demand.el_cost
 
-    cost = []
-
     utility_needed = calc_utility_electricity_needed()
+    annual_cost = utility_needed * electric_rate
 
-    for i in range(len(utility_needed)):
-        hourly_cost = utility_needed[i] * electric_rate
-        cost.append(hourly_cost)
-    annual_cost = sum(cost)
     return annual_cost
 
 
@@ -200,9 +183,10 @@ def calc_heat_storage_needed():
 
 
 def calculate_electrical_part_load_efficiency():
-    # TODO: Can be improved by linearizing the array for a more accurate efficiency value
     """
     Calculates the hourly mCHP efficiency using part-load efficiency data.
+
+    TODO: This can be improved by linearizing the array for a more accurate efficiency value
 
     Returns
     -------

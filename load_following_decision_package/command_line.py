@@ -29,7 +29,12 @@ def run(args):
 
     Returns
     -------
-
+    chp: CHP class
+        Initialized class using input data from .yaml file
+    ab: AuxBoiler class
+        Initialized class using input data from .yaml file
+    demand: EnergyDemand class
+        Initialized class using input data from .yaml file
     """
     yaml_filename = args.input   # these match the "dest": dest="input"
     cwd = pathlib.Path(__file__).parent.resolve() / 'input_files'
@@ -51,10 +56,11 @@ def run(args):
                            )
     demand = classes.EnergyDemand(file_name=data['demand_filename'], electric_cost=data['electric_utility_cost'],
                                   fuel_cost=data['fuel_cost'])
+    return chp, ab, demand
 
 
 def main():
-    # TODO: Add argument that prints program output to a file
+    # Command Line Interface
     parser = argparse.ArgumentParser(description="Import equipment operating parameter data")
     parser.add_argument("--in", help="filename for .yaml file with equipment data", dest="input", type=str,
                         required=True)
@@ -62,67 +68,65 @@ def main():
     args = parser.parse_args()
     args.func(args)
 
-    # TODO: Add other modules to main() function here
+    # Retrieve initialized class from run() function
+    chp, ab, demand = run(args)
 
-    # Headers to be used in tables
-    head_equipment = ["", "mCHP", "TES", "Aux Boiler"]
-    head_units = ["", "Value", "Units"]
-    head_comparison = ["", "Control", "ELF"]
-
-    # Create list of economic calculations
-    demand = classes.EnergyDemand()
-    chp = classes.CHP()
-    ab = classes.AuxBoiler()
-
+    # Electrical and Thermal Demand
     electric_demand = demand.annual_el
     thermal_demand = demand.annual_hl
 
-    util_electric_demand_list = elf.calc_utility_electricity_needed()
-    util_electric_demand = sum(util_electric_demand_list)
+    # Electricity bought using CHP
+    util_electric_demand = elf.calc_utility_electricity_needed()
 
     # Display economic calculations
+    head_comparison = ["", "Control", "ELF"]
+
     elf_costs = [
-        ["Annual Electrical Demand", electric_demand, util_electric_demand],
-        ["Annual Thermal Demand", thermal_demand, ""],
-        ["Thermal Energy Savings", "", ""],
-        ["Thermal Cost Savings", "", ""],
-        ["Electrical Energy Savings", "", ""],
-        ["Electrical Cost Savings", "", ""],
-        ["Total Cost Savings", "", ""],
-        ["Simple Payback", "", ""]
+        ["Annual Electrical Demand [kWh]", electric_demand, util_electric_demand],
+        ["Annual Thermal Demand [Btu]", thermal_demand, ""],
+        ["Thermal Energy Savings [Btu]", "", ""],
+        ["Thermal Cost Savings [$]", "", ""],
+        ["Electrical Energy Savings [kWh]", "", ""],
+        ["Electrical Cost Savings [$]", "", ""],
+        ["Total Cost Savings [$]", "", ""],
+        ["Simple Payback [Yrs]", "", ""]
     ]
 
-    table_elf_costs = tabulate(elf_costs, headers=head_comparison, tablefmt="grid")
+    table_elf_costs = tabulate(elf_costs, headers=head_comparison, tablefmt="fancy_grid")
     print(table_elf_costs)
 
     # Display system property inputs
+    head_equipment = ["", "mCHP", "TES", "Aux Boiler"]
+
     system_properties = [
         ["Efficiency", "", "", ""],
         ["Turn-Down Ratio", chp.td, "", ab.td],
-        ["Size", chp.cap, "", ab.cap],
+        ["Size [kW]", chp.cap, "", ab.cap],
         ["Heat to Power Ratio", chp.hp, "N/A", "N/A"],
         ["Heat out to Fuel in", chp.out_in, "N/A", "N/A"]
+    ]
+
+    # Fuel Consumption
+    fuel_consumption = [
+        ["Fuel Consumption [Btu]", "", "", ""]
     ]
 
     table_system_properties = tabulate(system_properties, headers=head_equipment, tablefmt="fancy_grid")
     print(table_system_properties)
 
+    table_fuel_consumption = tabulate(fuel_consumption, headers=head_equipment, tablefmt="fancy_grid")
+    print(table_fuel_consumption)
+
     # Display key input data
+    head_units = ["", "Value"]
+
     input_data = [
-        ["Fuel Cost", demand.fuel_cost, ""],
-        ["Electricity Rate", demand.el_cost, ""]
+        ["Fuel Cost [$]", demand.fuel_cost],
+        ["Electricity Rate [$/kWh]", demand.el_cost]
     ]
 
     table_input_data = tabulate(input_data, headers=head_units, tablefmt="fancy_grid")
     print(table_input_data)
-
-    # Fuel Consumption
-    fuel_consumption = [
-        ["Fuel Consumption", "", "", ""]
-    ]
-
-    table_fuel_consumption = tabulate(fuel_consumption, headers=head_equipment, tablefmt="fancy_grid")
-    print(table_fuel_consumption)
 
 
 if __name__ == "__main__":
