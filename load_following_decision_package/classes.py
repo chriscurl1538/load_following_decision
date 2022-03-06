@@ -6,6 +6,7 @@ Module description:
 
 import pandas as pd
 import numpy as np
+import pathlib
 
 
 # TODO: Consider having optional chp_min input that can be entered instead of turn_down_ratio
@@ -69,8 +70,9 @@ class EnergyDemand:
             default value by modifying the name in the .yaml file.
         """
         # Reads load profile data from .csv file
+        cwd = pathlib.Path(__file__).parent.resolve() / 'input_files'
         self.demand_file_name = file_name
-        df = pd.read_csv(file_name)
+        df = pd.read_csv(cwd / file_name)
 
         # Plucks electrical load data from the file using row and column locations
         electric_demand_df = df.iloc[9:, 16]
@@ -85,6 +87,18 @@ class EnergyDemand:
         # Assigns remaining values
         self.el_cost = electric_cost
         self.fuel_cost = fuel_cost
+
+        def sum_annual_demand(array=np.empty([8760, 2])):
+            demand_items = []
+            for i in range(array.shape[0]):
+                demand = float(array[i])
+                assert demand >= 0
+                demand_items.append(demand)
+            demand_sum = sum(demand_items)
+            return demand_sum
+
+        self.annual_el = sum_annual_demand(array=self.el)
+        self.annual_hl = sum_annual_demand(array=self.hl)
 
 
 # class TES:

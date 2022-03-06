@@ -16,7 +16,7 @@ Current prioritization of equipment in order of which addresses energy needs fir
     Thermal storage
 """
 
-from load_following_decision_package import classes
+import classes
 import numpy as np
 
 
