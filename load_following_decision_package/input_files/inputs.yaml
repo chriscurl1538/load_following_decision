@@ -23,6 +23,9 @@ ab_capacity: 2  # MMBtu/hr
 ab_eff: 0.80
 ab_turn_down: 3
 
+# TES Storage Information
+tes_cap: 100  # MMBtu
+
 # Energy Demand
 demand_filename: default_file.csv
 
