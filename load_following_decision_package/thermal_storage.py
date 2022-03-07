@@ -1,7 +1,7 @@
 """
 Module Description:
-    Contains functions needed to calculate the heat generated and fuel used
-    by the auxiliary boiler
+    Contains functions needed to calculate the thermal energy stored and thermal
+    energy dispatched by the thermal energy storage (TES) system
 
 Functions:
     Heat excess or deficit
