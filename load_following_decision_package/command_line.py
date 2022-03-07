@@ -4,12 +4,11 @@ Module Description:
     from the file to initialize the class variables.
 """
 
-import electric_load_following as elf
+import chp as cogen
+import classes
 
 import pathlib
-
 import argparse
-import classes
 import numpy as np
 from tabulate import tabulate
 import yaml
@@ -48,15 +47,16 @@ def run(args):
         part_load_list.append([i, data[i]])
     part_load_array = np.array(part_load_list)
 
-    # TODO: This does not store the data in classes as anticipated
-
+    # Class initialization using CLI arguments
     chp = classes.CHP(capacity=data['chp_cap'], heat_power=data['chp_heat_power'], turn_down_ratio=data['chp_turn_down']
                       , thermal_output_to_fuel_input=['thermal_output_to_fuel_input'], part_load=part_load_array)
     ab = classes.AuxBoiler(capacity=data['ab_capacity'], efficiency=data['ab_eff'], turn_down_ratio=data['ab_turn_down']
                            )
     demand = classes.EnergyDemand(file_name=data['demand_filename'], electric_cost=data['electric_utility_cost'],
                                   fuel_cost=data['fuel_cost'])
-    return chp, ab, demand
+    tes = classes.TES(capacity=data['tes_cap'])
+
+    return chp, ab, demand, tes
 
 
 def main():
@@ -69,16 +69,17 @@ def main():
     args.func(args)
 
     # Retrieve initialized class from run() function
-    chp, ab, demand = run(args)
+    chp, ab, demand, tes = run(args)
 
     # Electrical and Thermal Demand
     electric_demand = demand.annual_el
     thermal_demand = demand.annual_hl
 
     # Electricity bought using CHP
-    util_electric_demand = elf.calc_utility_electricity_needed()
+    bought_hourly = cogen.calc_electricity_bought()
+    util_electric_demand = sum(bought_hourly)
 
-    # Display economic calculations
+    # Table: Display economic calculations
     head_comparison = ["", "Control", "ELF"]
 
     elf_costs = [
@@ -95,7 +96,7 @@ def main():
     table_elf_costs = tabulate(elf_costs, headers=head_comparison, tablefmt="fancy_grid")
     print(table_elf_costs)
 
-    # Display system property inputs
+    # Table: Display system property inputs
     head_equipment = ["", "mCHP", "TES", "Aux Boiler"]
 
     system_properties = [
@@ -106,9 +107,8 @@ def main():
         ["Heat out to Fuel in", chp.out_in, "N/A", "N/A"]
     ]
 
-    # Fuel Consumption
     fuel_consumption = [
-        ["Fuel Consumption [Btu]", "", "", ""]
+        ["Fuel Consumption [Btu]", "", "N/A", ""]
     ]
 
     table_system_properties = tabulate(system_properties, headers=head_equipment, tablefmt="fancy_grid")
@@ -117,7 +117,7 @@ def main():
     table_fuel_consumption = tabulate(fuel_consumption, headers=head_equipment, tablefmt="fancy_grid")
     print(table_fuel_consumption)
 
-    # Display key input data
+    # Table: Display key input data
     head_units = ["", "Value"]
 
     input_data = [
