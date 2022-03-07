@@ -1,24 +1,32 @@
 """
 Module Description:
-    Contains functions needed to calculate the economics of electrical load following
-    mCHP energy dispatch option
+    Contains functions needed to calculate the demand, electricity cost, and fuel use of
+    the micro-chp unit.
+
+Functions:
+    Electricity bought
+    Electricity cost
+    Electricity generated
+    Hourly CHP efficiency
+    Heat generated
+    Fuel used
 """
 
 import classes
 import numpy as np
 
 
-def calc_utility_electricity_needed():
+# TODO: Plot Electricity bought
+def calc_electricity_bought():
     """
     This function compares mCHP capacity and minimum allowed electrical generation
     with hourly electrical demand. If demand is too high or too low, it calculates
-    how much electricity needs to be purchased from the utility.
+    how much electricity needs to be purchased from the utility each hour.
 
     Returns
     -------
-    utility_needed: float
-        contains float value for the annual sum of kWh of electricity needs to be purchased
-        from the utility
+    utility_bought: list
+        contains float values for electricity purchased hourly
     """
     chp = classes.CHP()
     chp_cap = chp.cap
@@ -30,7 +38,7 @@ def calc_utility_electricity_needed():
     demand = classes.EnergyDemand()
     demand_hourly = demand.el
 
-    utility_needed = []
+    utility_bought = []
 
     for i in range(demand_hourly.shape[0]):
         # Verifies input dtype
@@ -40,23 +48,23 @@ def calc_utility_electricity_needed():
         assert demand >= 0
 
         if chp_min <= demand <= chp_cap:
-            supply = 0
-            utility_needed.append(supply)
+            bought = 0
+            utility_bought.append(bought)
         elif demand < chp_min:
-            supply = demand
-            utility_needed.append(supply)
+            bought = demand
+            utility_bought.append(bought)
         elif chp_cap < demand:
-            supply = abs(demand - chp_cap)
-            utility_needed.append(supply)
+            bought = abs(demand - chp_cap)
+            utility_bought.append(bought)
         else:
             raise Exception("Error in ELF calc_utility_electricity_needed function")
 
-    return sum(utility_needed)
+    return utility_bought
 
 
 def calc_annual_electric_cost():
     """
-    Calculates the cost of electricity provided by the local utility.
+    Calculates the annual cost of electricity bought from the local utility.
 
     This function calls the calc_utility_electricity_needed function and uses the
     calculated utility electricity needed. Assumes that energy dispatch for the
@@ -71,120 +79,15 @@ def calc_annual_electric_cost():
     demand = classes.EnergyDemand()
     electric_rate = demand.el_cost
 
-    utility_needed = calc_utility_electricity_needed()
-    annual_cost = utility_needed * electric_rate
+    total_bought = calc_electricity_bought()
+    annual_cost = total_bought * electric_rate
 
     return annual_cost
 
 
-# TODO: Change this to TES storage assignment (storage should be prioritized over running the boiler)
-def calc_aux_boiler_output():
+def calc_hourly_efficiency():
     """
-    Using CHP turn down ratio and heat to power ratio, this function determines when the
-    heat demand exceeds the heat produced by the electric load following CHP system. Heat
-    demand not met by CHP is then assigned to the aux boiler (added to boiler_heat list).
-    Items in the list are then verified to be within boiler operating parameters.
-
-    Returns
-    -------
-    boiler_heat: list
-        Hourly heat output of the auxiliary boiler
-    """
-    chp = classes.CHP()
-    chp_cap = chp.cap
-    chp_hp = chp.hp
-    try:
-        chp_min = chp_cap / chp.td
-    except ZeroDivisionError:
-        chp_min = 0
-
-    demand = classes.EnergyDemand()
-    el_demand_hourly = demand.el
-    heat_demand_hourly = demand.hl
-
-    ab = classes.AuxBoiler()
-    ab_cap = ab.cap
-    ab_min = ab.cap / ab.td
-
-    boiler_heat = []
-
-    for i in range(el_demand_hourly.shape[0]):
-        # Verifies input dtype
-        el_demand = float(el_demand_hourly[i])
-        heat_demand = float(heat_demand_hourly[i])
-
-        # Verifies acceptable input value range
-        assert el_demand >= 0
-        assert heat_demand >= 0
-
-        if chp_min <= el_demand <= chp_cap:
-            chp_heat = el_demand * chp_hp   # Compare heat generated to heat demand
-            if chp_heat < heat_demand:
-                ab_heat = abs(heat_demand - chp_heat)
-                boiler_heat.append(ab_heat)
-            else:
-                ab_heat = 0
-                boiler_heat.append(ab_heat)
-        elif el_demand < chp_min:
-            heat = heat_demand
-            boiler_heat.append(heat)
-        elif chp_cap < el_demand:
-            chp_heat = chp_cap * chp_hp
-            heat = abs(heat_demand - chp_heat)
-            boiler_heat.append(heat)
-        else:
-            raise Exception("Error in ELF calc_aux_boiler_output function: Heat demand is less than minimum allowed aux"
-                            "boiler output")
-
-    # Check that hourly heat demand is within aux boiler operating parameters
-    for i in boiler_heat:
-        if ab_min < i < ab_cap:
-            pass
-        elif i < ab_min:
-            i = 0
-        elif ab_cap < i:
-            i = ab_cap
-
-    return boiler_heat
-
-
-# TODO: Change to aux boiler (storage should be prioritized over running the boiler)
-def calc_heat_storage_needed():
-    """
-    Using the list of hourly boiler heat output from the calc_aux_boiler_output() function,
-    heat demands not met by CHP and the aux boiler are assigned to TES storage.
-
-    Returns
-    -------
-    stored_heat: list
-        Heat stored in the thermal storage system each hour
-    """
-    ab = classes.AuxBoiler()
-    ab_cap = ab.cap
-
-    boiler_heat = calc_aux_boiler_output()
-
-    storage_needed = []
-    stored_heat = []
-
-    for i in range(len(boiler_heat)):
-        if ab_cap < boiler_heat[i]:
-            heat_diff = abs(boiler_heat[i] - ab_cap)
-            stored_heat.append(heat_diff)
-            storage_needed.append(True)
-        elif boiler_heat[i] <= ab_cap:
-            heat_diff = 0
-            stored_heat.append(heat_diff)
-            storage_needed.append(False)
-        else:
-            raise Exception("Error in ELF calc_heat_storage_needed function")
-
-    return storage_needed, stored_heat
-
-
-def calculate_electrical_part_load_efficiency():
-    """
-    Calculates the hourly mCHP efficiency using part-load efficiency data.
+    Calculates the hourly mCHP efficiency using part-load electrical efficiency data.
 
     TODO: This can be improved by linearizing the array for a more accurate efficiency value
 
@@ -216,56 +119,82 @@ def calculate_electrical_part_load_efficiency():
         return efficiency_array
 
 
-# Uses the above part load efficiency function
-def calculate_hourly_chp_fuel_use():
+# TODO: Plot electricity generated
+def calc_generated_electricity():
     """
-    Calculates the fuel use of the mCHP system. First it uses the heat to power ratio
-    and hourly electrical demand to calculate the hourly heat output of the CHP unit
-    in MMBtu. Then it uses the hourly heat output and the thermal output to fuel input
-    ratio to calculate the hourly fuel use in MMBtu.
+    Calculates electricity generated by the mCHP unit each hour
+
+    Returns
+    -------
+    generated_list: list
+        Contains values for the amount of electricity generated each hour
+    """
+    demand = classes.EnergyDemand()
+    demand_hourly = demand.el
+    demand_bought_hourly = calc_electricity_bought()
+
+    generated_list = []
+
+    for i in range(demand_hourly):
+        generated = abs(demand_bought_hourly[i] - demand_hourly[i])
+        generated_list.append(generated)
+
+    return generated_list
+
+
+# TODO: Plot heat generated
+def calc_heat_generated():
+    """
+    Uses heat to power ratio and hourly electricity generated to calculate
+    hourly thermal output of mCHP unit.
+
+    Returns
+    -------
+    hourly_heat: list
+        Hourly thermal output of CHP unit
+    """
+    chp = classes.CHP()
+    heat_to_power = chp.hp
+    electricity_generated = calc_generated_electricity()
+    hourly_heat = []
+
+    for i in range(len(electricity_generated)):
+        heat = heat_to_power * electricity_generated[i]     # TODO: Check units
+        hourly_heat.append(heat)
+
+    return hourly_heat
+
+
+def calculate_fuel_use():
+    """
+    Uses hourly electrical efficiency values (electricity generated / fuel used)
+    and hourly electricity generated to calculate fuel use for each hour.
 
     Assumes that energy dispatch for the mCHP system is electric load
     following (ELF).
 
     Returns
     -------
-    fuel_use: float
-        Annual sum of mCHP fuel use.
+    total_fuel: list
+        Collection of hourly fuel use values.
     """
 
-    chp = classes.CHP()
-    chp_cap = chp.cap
-    heat_power = chp.hp
-    thermal_out_fuel_in = chp.out_in
+    efficiency_array = calc_hourly_efficiency()
+    electricity_generated = calc_generated_electricity()
 
-    demand = classes.EnergyDemand()
-    demand_hourly = demand.el
-
-    utility_needed = calc_utility_electricity_needed()
-
-    heat_out = []
     fuel_use = []
 
-    for i in range(len(utility_needed)):
-        if utility_needed[i] is False:
-            heat = demand_hourly[i] * heat_power
-            fuel_btu = heat / thermal_out_fuel_in
-            heat_out.append(heat)
-            fuel_use.append(fuel_btu)
-        elif utility_needed[i] is True and demand_hourly[i] >= chp_cap:
-            heat = chp_cap * heat_power
-            fuel_btu = heat / thermal_out_fuel_in
-            heat_out.append(heat)
-            fuel_use.append(fuel_btu)
+    for i in range(len(efficiency_array)):
+        if efficiency_array[i] is not 0:
+            fuel = electricity_generated[i] / efficiency_array[i]
+            fuel_use.append(fuel)
         else:
-            heat = 0
-            fuel_btu = 0
-            heat_out.append(heat)
-            fuel_use.append(fuel_btu)
+            fuel_use.append(0)
 
-        return fuel_use
+    total_fuel = sum(fuel_use)
+    return total_fuel
 
 
 if __name__ == '__main__':
-    x = calc_utility_electricity_needed()
+    x = calc_electricity_bought()
     print(x)
