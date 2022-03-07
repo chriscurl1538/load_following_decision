@@ -101,21 +101,12 @@ class EnergyDemand:
         self.annual_hl = sum_annual_demand(array=self.hl)
 
 
-# class TES:
-#     def __init__(self, capacity=0, state_of_charge=0, charge=False, discharge=False):
-#         """
-#         This class defines the operating parameters of the TES (Thermal energy storage) system
-#
-#         capacity: int
-#             Size of the TES system in BTUs (British Thermal Units)
-#         state_of_charge: float
-#             Percentage of the TES capacity that is currently used
-#         charge: boolean
-#             True if the TES system is currently charging
-#         discharge: boolean
-#             True if the TES system is currently discharging
-#         """
-#         self.cap = capacity
-#         self.soc = state_of_charge
-#         self.charge = charge
-#         self.discharge = discharge
+class TES:
+    def __init__(self, capacity=0):
+        """
+        This class defines the operating parameters of the TES (Thermal energy storage) system
+
+        capacity: int
+            Size of the TES system in BTUs (British Thermal Units)
+        """
+        self.cap = capacity
