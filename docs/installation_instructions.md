@@ -12,6 +12,7 @@ This package is dependent on a number of libraries that you will need to install
 - PyYAML==6.0
 - pytest==7.0.1
 - tabulate==0.8.9
+- matplotlib==3.5.1
 
 From your terminal, you can install these dependencies with the following command:
 
