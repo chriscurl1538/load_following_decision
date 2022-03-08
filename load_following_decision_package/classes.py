@@ -33,6 +33,11 @@ class CHP:
         self.td = turn_down_ratio
         self.pl = part_load
         self.out_in = thermal_output_to_fuel_input
+        try:
+            chp_min = self.cap / self.td
+        except ZeroDivisionError:
+            chp_min = 0
+        self.min = chp_min
 
 
 class AuxBoiler:
@@ -77,21 +82,30 @@ class EnergyDemand:
         # Plucks electrical load data from the file using row and column locations
         electric_demand_df = df.iloc[9:, 16]
         electric_demand_hourly = electric_demand_df.to_numpy()
-        self.el = electric_demand_hourly
 
         # Plucks thermal load data from the file using row and column locations
         heating_demand_df = df.iloc[9:, 29]
         heating_demand_hourly = heating_demand_df.to_numpy()
-        self.hl = heating_demand_hourly
 
-        # Assigns remaining values
+        # Energy Costs
         self.el_cost = electric_cost
         self.fuel_cost = fuel_cost
 
-        def sum_annual_demand(array=np.empty([8760, 2])):
+        def convert_numpy_to_float(array=np.empty([8760, 1])):
+            float_list = []
+            for item in array:
+                f = float(item)
+                float_list.append(f)
+            float_array = np.array(float_list, dtype=float)
+            return float_array
+
+        self.hl = convert_numpy_to_float(heating_demand_hourly)
+        self.el = convert_numpy_to_float(electric_demand_hourly)
+
+        def sum_annual_demand(array=np.empty([8760, 1])):
             demand_items = []
-            for i in range(array.shape[0]):
-                demand = float(array[i])
+            for item in array:
+                demand = float(item)
                 assert demand >= 0
                 demand_items.append(demand)
             demand_sum = sum(demand_items)
