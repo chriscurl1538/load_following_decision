@@ -49,7 +49,7 @@ def run(args):
 
     # Class initialization using CLI arguments
     chp = classes.CHP(capacity=data['chp_cap'], heat_power=data['chp_heat_power'], turn_down_ratio=data['chp_turn_down']
-                      , thermal_output_to_fuel_input=['thermal_output_to_fuel_input'], part_load=part_load_array)
+                      , thermal_output_to_fuel_input=data['thermal_output_to_fuel_input'], part_load=part_load_array)
     ab = classes.AuxBoiler(capacity=data['ab_capacity'], efficiency=data['ab_eff'], turn_down_ratio=data['ab_turn_down']
                            )
     demand = classes.EnergyDemand(file_name=data['demand_filename'], electric_cost=data['electric_utility_cost'],
@@ -78,17 +78,19 @@ def main():
     # Electricity bought using CHP
     bought_hourly = cogen.calc_electricity_bought()
     util_electric_demand = sum(bought_hourly)
+    electric_energy_savings = sum(cogen.calc_generated_electricity())
+    electric_cost_savings = cogen.calc_annual_electric_cost()
 
     # Table: Display economic calculations
     head_comparison = ["", "Control", "ELF"]
 
     elf_costs = [
-        ["Annual Electrical Demand [kWh]", electric_demand, util_electric_demand],
+        ["Annual Electrical Demand [kWh]", electric_demand, ""],
         ["Annual Thermal Demand [Btu]", thermal_demand, ""],
         ["Thermal Energy Savings [Btu]", "", ""],
         ["Thermal Cost Savings [$]", "", ""],
-        ["Electrical Energy Savings [kWh]", "", ""],
-        ["Electrical Cost Savings [$]", "", ""],
+        ["Electrical Energy Savings [kWh]", 0, electric_energy_savings],
+        ["Electrical Cost Savings [$]", "", electric_cost_savings],
         ["Total Cost Savings [$]", "", ""],
         ["Simple Payback [Yrs]", "", ""]
     ]
@@ -102,7 +104,7 @@ def main():
     system_properties = [
         ["Efficiency", "", "", ""],
         ["Turn-Down Ratio", chp.td, "", ab.td],
-        ["Size [kW]", chp.cap, "", ab.cap],
+        ["Size", '{} kW'.format(chp.cap), "", '{} MMBtu/hr'.format(ab.cap)],
         ["Heat to Power Ratio", chp.hp, "N/A", "N/A"],
         ["Heat out to Fuel in", chp.out_in, "N/A", "N/A"]
     ]
