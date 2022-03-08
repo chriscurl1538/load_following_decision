@@ -29,37 +29,32 @@ def calc_electricity_bought():
         contains float values for electricity purchased hourly
     """
     chp = classes.CHP()
-    chp_cap = chp.cap
-    try:
-        chp_min = chp_cap / chp.td
-    except ZeroDivisionError:
-        chp_min = 0
-
     demand = classes.EnergyDemand()
+
     demand_hourly = demand.el
 
-    utility_bought = []
+    utility_bought_list = []
 
-    for i in range(demand_hourly.shape[0]):
+    for d in demand_hourly:
         # Verifies input dtype
-        demand = float(demand_hourly[i])
+        demand = float(d)
 
         # Verifies acceptable input value range
         assert demand >= 0
 
-        if chp_min <= demand <= chp_cap:
+        if chp.min <= demand <= chp.cap:
             bought = 0
-            utility_bought.append(bought)
-        elif demand < chp_min:
+            utility_bought_list.append(bought)
+        elif demand < chp.min:
             bought = demand
-            utility_bought.append(bought)
-        elif chp_cap < demand:
-            bought = abs(demand - chp_cap)
-            utility_bought.append(bought)
+            utility_bought_list.append(bought)
+        elif chp.cap < demand:
+            bought = abs(demand - chp.cap)
+            utility_bought_list.append(bought)
         else:
             raise Exception("Error in ELF calc_utility_electricity_needed function")
 
-    return utility_bought
+    return utility_bought_list
 
 
 def calc_annual_electric_cost():
@@ -79,7 +74,7 @@ def calc_annual_electric_cost():
     demand = classes.EnergyDemand()
     electric_rate = demand.el_cost
 
-    total_bought = calc_electricity_bought()
+    total_bought = sum(calc_electricity_bought())
     annual_cost = total_bought * electric_rate
 
     return annual_cost
@@ -135,7 +130,7 @@ def calc_generated_electricity():
 
     generated_list = []
 
-    for i in range(demand_hourly):
+    for i in range(len(demand_hourly)):
         generated = abs(demand_bought_hourly[i] - demand_hourly[i])
         generated_list.append(generated)
 
@@ -197,4 +192,4 @@ def calculate_fuel_use():
 
 if __name__ == '__main__':
     x = calc_electricity_bought()
-    print(x)
+    print(sum(x))
