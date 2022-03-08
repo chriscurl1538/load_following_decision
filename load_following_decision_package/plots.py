@@ -2,6 +2,14 @@
 Module Description:
     This module will create plots of data passed to the program
     as well as relevant data calculated by the program
+
+Plots to be included:
+    Electrical Demand
+    Thermal Demand
+    mCHP Electricity Generated
+    mCHP Heat Generated
+    TES Storage/Dispatch History
+    Aux Boiler Heat Generated
 """
 
 # TODO: plot electrical and thermal demand of building
@@ -13,22 +21,32 @@ import classes
 
 def plot_electrical_demand():
     demand = classes.EnergyDemand()
-    plt.style.use('_mpl-gallery')
 
-    # make data
-    x = range(8760)
     y = demand.el
+    plt.plot(y)
+    plt.title('Annual Electrical Demand, Hourly')
+    plt.ylabel('Electrical Demand [kWh]')
+    plt.yticks(np.arange(y.min(), y.max(), 5))
+    plt.xlabel('Time (hours)')
 
     # plot
-    fig, ax = plt.subplots()
+    plt.show()
 
-    ax.plot(x, y, linewidth=2.0)
 
-    ax.set(xlim=(0, 8), xticks=np.arange(1, 8),
-           ylim=(0, 8), yticks=np.arange(1, 8))
+def plot_thermal_demand():
+    demand = classes.EnergyDemand()
 
+    y = demand.hl
+    plt.plot(y)
+    plt.title('Annual Heating Demand, Hourly')
+    plt.ylabel('Heating Demand [Btu]')
+    plt.yticks(np.arange(y.min(), y.max(), 20000))
+    plt.xlabel('Time (hours)')
+
+    # plot
     plt.show()
 
 
 if __name__ == "__main__":
+    plot_thermal_demand()
     plot_electrical_demand()
