@@ -13,7 +13,7 @@ from __init__ import ureg
 # TODO: Consider having optional chp_min input that can be entered instead of turn_down_ratio
 class CHP:
     def __init__(self, capacity=0, heat_power=0, turn_down_ratio=0, thermal_output_to_fuel_input=0,
-                 part_load=np.empty([10, 2])):
+                 part_load=np.empty([8, 2])):
         """
         This class defines the operating parameters of the mCHP system.
 
