@@ -13,6 +13,7 @@ This package is dependent on a number of libraries that you will need to install
 - pytest==7.0.1
 - tabulate==0.8.9
 - matplotlib==3.5.1
+- pint==0.18
 
 From your terminal, you can install these dependencies with the following command:
 
