@@ -43,7 +43,7 @@ def run(args):
     f.close()
 
     part_load_list = []
-    for i in range(30, 100, 10):
+    for i in range(30, 110, 10):
         part_load_list.append([i, data[i]])
     part_load_array = np.array(part_load_list)
 
@@ -71,26 +71,43 @@ def main():
     # Retrieve initialized class from run() function
     chp, ab, demand, tes = run(args)
 
-    # Electrical and Thermal Demand
+    # Annual Demand Values
     electric_demand = demand.annual_el
     thermal_demand = demand.annual_hl
 
-    # Electricity bought using CHP
-    bought_hourly = cogen.calc_electricity_bought()
-    util_electric_demand = sum(bought_hourly)
-    electric_energy_savings = sum(cogen.calc_generated_electricity())
-    electric_cost_savings = cogen.calc_annual_electric_cost()
+    # Thermal Energy Savings
+    # TODO: Thermal Energy Savings
+
+    # Thermal Cost Savings
+    # TODO: Thermal Cost Savings
+
+    # Electrical Energy Savings
+    electric_energy_savings = sum(cogen.calc_hourly_generated_electricity())
+
+    # Electrical Cost Savings
+    electric_cost_old = demand.el_cost * demand.annual_el
+    electric_cost_new = cogen.calc_annual_electric_cost()
+    electric_cost_savings = abs(electric_cost_old - electric_cost_new)
+
+    # Total Cost Savings
+    # TODO: Total Cost Savings
+
+    # Simple Payback Period
+    # TODO: Simple Payback Period
+
+    # Fuel Consumption Annual
+    # TODO: Fuel Consumption Annual
 
     # Table: Display economic calculations
     head_comparison = ["", "Control", "ELF"]
 
     elf_costs = [
-        ["Annual Electrical Demand [kWh]", electric_demand, ""],
-        ["Annual Thermal Demand [Btu]", thermal_demand, ""],
+        ["Annual Electrical Demand [kWh]", round(electric_demand, 0), ""],
+        ["Annual Thermal Demand [Btu]", round(thermal_demand, 0), ""],
         ["Thermal Energy Savings [Btu]", "", ""],
         ["Thermal Cost Savings [$]", "", ""],
-        ["Electrical Energy Savings [kWh]", 0, electric_energy_savings],
-        ["Electrical Cost Savings [$]", "", electric_cost_savings],
+        ["Electrical Energy Savings [kWh]", 0, round(electric_energy_savings, 0)],
+        ["Electrical Cost Savings [$]", "", round(electric_cost_savings, 0)],
         ["Total Cost Savings [$]", "", ""],
         ["Simple Payback [Yrs]", "", ""]
     ]
@@ -102,9 +119,9 @@ def main():
     head_equipment = ["", "mCHP", "TES", "Aux Boiler"]
 
     system_properties = [
-        ["Efficiency", "", "", ""],
-        ["Turn-Down Ratio", chp.td, "", ab.td],
-        ["Size", '{} kW'.format(chp.cap), "", '{} MMBtu/hr'.format(ab.cap)],
+        ["Efficiency (Full Load)", chp.pl[-1, 1], "N/A", ab.eff],
+        ["Turn-Down Ratio", chp.td, "N/A", ab.td],
+        ["Size", chp.cap, tes.cap, ab.cap],
         ["Heat to Power Ratio", chp.hp, "N/A", "N/A"],
         ["Heat out to Fuel in", chp.out_in, "N/A", "N/A"]
     ]
@@ -123,7 +140,7 @@ def main():
     head_units = ["", "Value"]
 
     input_data = [
-        ["Fuel Cost [$]", demand.fuel_cost],
+        ["Fuel Cost [$/MMBtu]", demand.fuel_cost],
         ["Electricity Rate [$/kWh]", demand.el_cost]
     ]
 
