@@ -38,10 +38,10 @@ def run(args):
     part_load_array = np.array(part_load_list)
 
     classes.CHP(capacity=data['chp_cap'], heat_power=data['chp_heat_power'], turn_down_ratio=data['chp_turn_down'],
-                part_load=part_load_array)
+                thermal_output_to_fuel_input=['thermal_output_to_fuel_input'], part_load=part_load_array)
     classes.AuxBoiler(capacity=data['ab_capacity'], efficiency=data['ab_eff'], turn_down_ratio=data['ab_turn_down'])
-    classes.EnergyDemand(file_name=data['demand_filename'], net_metering=data['net_metering'],
-                         electric_cost=data['electric_utility_cost'], fuel_cost=data['fuel_cost'])
+    classes.EnergyDemand(file_name=data['demand_filename'], electric_cost=data['electric_utility_cost'],
+                         fuel_cost=data['fuel_cost'])
 
 
 def main():
@@ -54,6 +54,7 @@ def main():
     args.func(args)
 
     # TODO: Add other modules to main() function here
+
 
 
 if __name__ == "__main__":

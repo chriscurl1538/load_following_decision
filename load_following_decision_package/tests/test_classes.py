@@ -55,15 +55,39 @@ def test_aux_boiler_class():
 
 
 # Testing EnergyDemand Class
-energy_demand_test = EnergyDemand(file_name="test_input_load_profiles_hourly.csv", net_metering=True)
-
 
 def test_energy_demand_class():
     # TODO: Test that electrical and heating demands have been imported correctly
+    energy_demand = EnergyDemand()
 
-    exp_nm = True
-    obs_nm = energy_demand_test.nm
-    assert exp_nm == obs_nm
+    # Verifies electrical load array size
+    rows_el = energy_demand.el.shape[0]
+    try:
+        cols_el = energy_demand.el.shape[1]
+    except IndexError:
+        cols_el = 1
+    assert rows_el == 8760
+    assert cols_el == 1
+
+    # Verifies heating load array size
+    rows_hl = energy_demand.hl.shape[0]
+    try:
+        cols_hl = energy_demand.hl.shape[1]
+    except IndexError:
+        cols_hl = 1
+    assert rows_hl == 8760
+    assert cols_hl == 1
+
+    # Verifies default values
+    assert energy_demand.demand_file_name == "default_file.csv"
+    assert energy_demand.el_cost == 0
+    assert energy_demand.fuel_cost == 0
+
+    # Verifies that values pass to class correctly
+    pass_values = EnergyDemand(file_name="name.csv", electric_cost=0.24, fuel_cost=0.5)
+    assert pass_values.el_cost == 0.24
+    assert pass_values.fuel_cost == 0.5
+    assert pass_values.demand_file_name == "name.csv"
 
 
 # # Testing TES Class
@@ -86,10 +110,3 @@ def test_energy_demand_class():
 #     exp_discharge = True
 #     obs_discharge = tes_test.discharge
 #     assert exp_discharge == obs_discharge
-
-
-if __name__ == '__main__':
-    test_chp_class()
-    test_aux_boiler_class()
-    test_energy_demand_class()
-    # test_TES_class()
