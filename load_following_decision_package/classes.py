@@ -7,6 +7,7 @@ Module description:
 import pandas as pd
 import numpy as np
 import pathlib
+from __init__ import ureg
 
 
 # TODO: Consider having optional chp_min input that can be entered instead of turn_down_ratio
@@ -28,7 +29,7 @@ class CHP:
             An array where column 0 is the partial load as a percent of max
             capacity and column 1 is the associated mCHP efficiency
         """
-        self.cap = capacity
+        self.cap = capacity * ureg.kW
         self.hp = heat_power
         self.td = turn_down_ratio
         self.pl = part_load
@@ -47,14 +48,14 @@ class AuxBoiler:
 
         Parameters
         ----------
-        capacity: int
-            Size of the boiler in BTUs (British Thermal Units)
+        capacity: float
+            Size of the boiler in MMBtu/hr (Btu = British Thermal Units)
         efficiency: float
             The rated efficiency of the boiler
         turn_down_ratio: float
             The ratio of the maximum capacity to minimum capacity
         """
-        self.cap = capacity
+        self.cap = capacity * ureg.Btu
         self.eff = efficiency
         self.td = turn_down_ratio
 
@@ -73,6 +74,10 @@ class EnergyDemand:
         file_name: string
             File name of the .csv file with the load profile data. This can be changed from the
             default value by modifying the name in the .yaml file.
+        electric_cost: float
+            Cost of electricity in $/kWh
+        fuel_cost: float
+            Cost of electricity in $/MMBtu
         """
         # Reads load profile data from .csv file
         cwd = pathlib.Path(__file__).parent.resolve() / 'input_files'
@@ -88,8 +93,8 @@ class EnergyDemand:
         heating_demand_hourly = heating_demand_df.to_numpy()
 
         # Energy Costs
-        self.el_cost = electric_cost
-        self.fuel_cost = fuel_cost
+        self.el_cost = electric_cost * (1/ureg.kWh)
+        self.fuel_cost = fuel_cost * (1/ureg.megaBtu)
 
         def convert_numpy_to_float(array=np.empty([8760, 1])):
             float_list = []
@@ -99,13 +104,12 @@ class EnergyDemand:
             float_array = np.array(float_list, dtype=float)
             return float_array
 
-        self.hl = convert_numpy_to_float(heating_demand_hourly)
-        self.el = convert_numpy_to_float(electric_demand_hourly)
+        self.hl = convert_numpy_to_float(heating_demand_hourly) * ureg.Btu
+        self.el = convert_numpy_to_float(electric_demand_hourly) * ureg.kWh
 
         def sum_annual_demand(array=np.empty([8760, 1])):
             demand_items = []
-            for item in array:
-                demand = float(item)
+            for demand in array:
                 assert demand >= 0
                 demand_items.append(demand)
             demand_sum = sum(demand_items)
@@ -121,6 +125,6 @@ class TES:
         This class defines the operating parameters of the TES (Thermal energy storage) system
 
         capacity: int
-            Size of the TES system in BTUs (British Thermal Units)
+            Size of the TES system in Btu (Btu = British Thermal Units)
         """
-        self.cap = capacity
+        self.cap = capacity * ureg.Btu
