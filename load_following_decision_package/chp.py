@@ -91,25 +91,30 @@ def calc_hourly_efficiency():
         partload closest to the actual partload during that hour.
     """
     chp = classes.CHP()
-    chp_cap = chp.cap
+    chp_cap_kwh = chp.cap * ureg.hour
     chp_pl = chp.pl
 
     demand = classes.EnergyDemand()
     demand_hourly = demand.el
 
-    if demand_hourly is not None:
+    rows = demand_hourly.shape[0]
+    eff_list = []
 
-        rows = demand_hourly.shape[0]
-        partload_list = []
+    # TODO: This section of code contains an error
+    for i in range(rows):
+        demand = demand_hourly[i]
+        partload_actual = demand/chp_cap_kwh
 
-        for i in range(rows):
-            demand = float(demand_hourly[i])
-            partload_actual = demand/chp_cap
-            idx = np.searchsorted(chp_pl[:, 0], partload_actual, side="left")
-            partload_list.append(chp_pl[idx])
-        partload_array = np.array(partload_list)
-        efficiency_array = partload_array[:, 1]
-        return efficiency_array
+        # Grabs the first column and calculates difference
+        part_loads = chp_pl[:, 0]
+        desired_shape = np.shape(part_loads)
+        actual_load_array = np.full(shape=desired_shape, fill_value=partload_actual.magnitude)
+        diff = np.abs(part_loads, actual_load_array)
+        idx = diff.argmin()
+
+        part_effs = chp_pl[idx, 1]
+        eff_list.append(part_effs)
+    return eff_list
 
 
 def calc_hourly_generated_electricity():
@@ -158,7 +163,7 @@ def calc_hourly_heat_generated():
     return hourly_heat
 
 
-def calculate_fuel_use():
+def calculate_annual_fuel_use():
     """
     Uses hourly electrical efficiency values (electricity generated / fuel used)
     and hourly electricity generated to calculate fuel use for each hour.
@@ -172,14 +177,14 @@ def calculate_fuel_use():
         Collection of hourly fuel use values.
     """
 
-    efficiency_array = calc_hourly_efficiency()
+    efficiency_list = calc_hourly_efficiency()
     electricity_generated = calc_hourly_generated_electricity()
 
     fuel_use = []
 
-    for i in range(len(efficiency_array)):
-        if efficiency_array[i] is not 0:
-            fuel = electricity_generated[i] / efficiency_array[i]
+    for i in range(len(efficiency_list)):
+        if efficiency_list[i] is not 0:
+            fuel = electricity_generated[i] / efficiency_list[i]
             fuel_use.append(fuel)
         else:
             fuel_use.append(0)
@@ -189,5 +194,4 @@ def calculate_fuel_use():
 
 
 if __name__ == '__main__':
-    x = calc_hourly_generated_electricity()
-    print(x)
+    print('stuff')
