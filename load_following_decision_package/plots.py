@@ -8,7 +8,7 @@ Plots to be included:
     Thermal Demand (done)
     mCHP Electricity Generated (done)
     mCHP Heat Generated (done)
-    TES Storage/Dispatch History
+    TES Storage/Dispatch History (done)
     Aux Boiler Heat Generated
 """
 
@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import classes
 import chp as cogen
+import thermal_storage as tes
 from __init__ import ureg
 
 
@@ -25,7 +26,7 @@ def plot_electrical_demand():
     y = demand.el
     plt.plot(y)
     plt.title('Annual Electrical Demand, Hourly')
-    plt.ylabel('Electrical Demand [kWh]')
+    plt.ylabel('Electrical Demand [{}]'.format(y[0].units))
     plt.yticks(np.arange(y.min(), y.max(), 5))
     plt.xlabel('Time (hours)')
 
@@ -39,7 +40,7 @@ def plot_thermal_demand():
     y = demand.hl
     plt.plot(y)
     plt.title('Annual Heating Demand, Hourly')
-    plt.ylabel('Heating Demand [Btu]')
+    plt.ylabel('Heating Demand [{}]'.format(y[0].units))
     plt.yticks(np.arange(y.min(), y.max(), 20000))
     plt.xlabel('Time (hours)')
 
@@ -71,7 +72,7 @@ def plot_chp_heat_generated():
 
     plt.plot(y)
     plt.title('CHP Heat Generated, Hourly')
-    plt.ylabel('Heat [{}}]'.format(data[0].units))
+    plt.ylabel('Heat [{}]'.format(data[0].units))
     plt.yticks(np.arange(y.min(), y.max(), 5))
     plt.xlabel('Time (hours)')
 
@@ -79,9 +80,26 @@ def plot_chp_heat_generated():
     plt.show()
 
 
-def plot_tes_history():
+def plot_tes_status():
+    data = tes.tes_heat_stored()
+
+    # Convert to base units before creating numpy array for plotting
+    y = np.array([storage.to_base_units().magnitude for storage in data])
+
+    plt.plot(y)
+    plt.title('TES Status, Hourly')
+    plt.ylabel('Heat [{}]'.format(data[0].units))
+    plt.yticks(np.arange(y.min(), y.max(), 5))
+    plt.xlabel('Time (hours)')
+
+    # plot
+    plt.show()
+
+
+# TODO: Plot aux boiler heat generated
+def aux_boiler_heat_generated():
     return None
 
 
 if __name__ == "__main__":
-    plot_chp_heat_generated()
+    plot_tes_status()
