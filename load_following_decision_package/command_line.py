@@ -5,6 +5,7 @@ Module Description:
 """
 
 import chp as cogen
+import plots
 import classes
 
 import pathlib
@@ -48,10 +49,12 @@ def run(args):
     part_load_array = np.array(part_load_list)
 
     # Class initialization using CLI arguments
-    chp = classes.CHP(capacity=data['chp_cap'], heat_power=data['chp_heat_power'], turn_down_ratio=data['chp_turn_down']
-                      , thermal_output_to_fuel_input=data['thermal_output_to_fuel_input'], part_load=part_load_array)
-    ab = classes.AuxBoiler(capacity=data['ab_capacity'], efficiency=data['ab_eff'], turn_down_ratio=data['ab_turn_down']
-                           )
+    chp = classes.CHP(capacity=data['chp_cap'], heat_power=data['chp_heat_power'],
+                      turn_down_ratio=data['chp_turn_down'],
+                      thermal_output_to_fuel_input=data['thermal_output_to_fuel_input'],
+                      part_load=part_load_array)
+    ab = classes.AuxBoiler(capacity=data['ab_capacity'], efficiency=data['ab_eff'],
+                           turn_down_ratio=data['ab_turn_down'])
     demand = classes.EnergyDemand(file_name=data['demand_filename'], electric_cost=data['electric_utility_cost'],
                                   fuel_cost=data['fuel_cost'])
     tes = classes.TES(capacity=data['tes_cap'])
@@ -127,7 +130,7 @@ def main():
     ]
 
     fuel_consumption = [
-        ["Fuel Consumption [Btu]", "", "N/A", ""]
+        ["Fuel Consumption [Btu]", round(cogen.calculate_annual_fuel_use(), 0), "N/A", ""]
     ]
 
     table_system_properties = tabulate(system_properties, headers=head_equipment, tablefmt="fancy_grid")
