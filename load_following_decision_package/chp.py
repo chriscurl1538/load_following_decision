@@ -100,7 +100,7 @@ def calc_hourly_efficiency():
     rows = demand_hourly.shape[0]
     eff_list = []
 
-    # TODO: This section of code contains an error
+    # TODO: This section of code contains a runtime division by zero error
     for i in range(rows):
         demand = demand_hourly[i]
         partload_actual = demand/chp_cap_kwh
