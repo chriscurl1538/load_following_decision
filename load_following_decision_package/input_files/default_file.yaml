@@ -32,13 +32,13 @@ ab_turn_down: 3
 # TES Storage Information
 tes_cap: 1000000  # Btu
 
-# Energy Demand
-demand_filename: default_file.csv
-
 # Energy Costs
 electric_utility_cost: 0.1331   # $/kWh
 fuel_cost: 3.60  # $/MMBtu
 
-# Equipment Costs (material and installation)
+# Incremental Equipment Costs (material and installation)
 chp_installed_cost: 2900 # $/kW
 tes_installed_cost: 0.35 # $/kWh
+
+# Energy Demand File Name
+demand_filename: default_file.csv
