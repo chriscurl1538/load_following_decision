@@ -157,6 +157,14 @@ def main():
     table_input_data = tabulate(input_data, headers=head_units, tablefmt="fancy_grid")
     print(table_input_data)
 
+    # Plots
+    plots.plot_electrical_demand(demand=demand)
+    plots.plot_thermal_demand(demand=demand)
+    plots.plot_chp_electricity_generated(chp=chp, demand=demand)
+    plots.plot_chp_heat_generated(chp=chp, demand=demand)
+    plots.plot_tes_status(chp=chp, demand=demand, tes=tes)
+    plots.plot_aux_boiler_output(chp=chp, demand=demand, tes=tes, ab=ab)
+
 
 if __name__ == "__main__":
     main()
