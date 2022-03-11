@@ -9,36 +9,36 @@
 # TES installed cost sourced from:
 #    https://betterbuildingssolutioncenter.energy.gov/sites/default/files/slides/Thermal%20Energy%20Storage%2C%20The%20Lowest%20Cost%20Storage.pdf
 
-chp_cap: 50   # kW
-chp_heat_power: 4
-chp_turn_down: 3.3
-thermal_output_to_fuel_input: 0.35
+chp_cap:    # kW
+chp_heat_power:
+chp_turn_down:
+thermal_output_to_fuel_input:
 
 # CHP Part Loads and Efficiencies
-30: 0.344
-40: 0.379
-50: 0.407
-60: 0.420
-70: 0.427
-80: 0.437
-90: 0.449
-100: 0.457
+30:
+40:
+50:
+60:
+70:
+80:
+90:
+100:
 
 # Aux Boiler Information
-ab_capacity: 2000000  # Btu/hr
-ab_eff: 0.80
-ab_turn_down: 3
+ab_capacity:   # Btu/hr
+ab_eff:
+ab_turn_down:
 
 # TES Storage Information
-tes_cap: 1000000  # Btu
+tes_cap:   # Btu
 
 # Energy Costs
-electric_utility_cost: 0.1331   # $/kWh
-fuel_cost: 3.60  # $/MMBtu
+electric_utility_cost:    # $/kWh
+fuel_cost:   # $/MMBtu
 
-# Equipment Costs (material and installation)
-chp_installed_cost: 2900 # $/kW
-tes_installed_cost: 0.35 # $/kWh
+# Incremental Equipment Costs (material and installation)
+chp_installed_cost:  # $/kW
+tes_installed_cost:  # $/kWh
 
 # Energy Demand File Name
-demand_filename: default_file.csv
+demand_filename:
