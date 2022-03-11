@@ -4,25 +4,15 @@ Module Description:
     as well as relevant data calculated by the program
 
 Plots to be included:
-    Electrical Demand (done)
-    Thermal Demand (done)
-    mCHP Electricity Generated (done)
-    mCHP Heat Generated (done)
-    TES Storage/Dispatch History (done)
     Aux Boiler Heat Generated
 """
 
-import matplotlib.pyplot as plt
-import numpy as np
-import classes
-import chp as cogen
-import thermal_storage as tes
+import matplotlib.pyplot as plt, numpy as np
+import classes, chp as cogen, thermal_storage as storage, aux_boiler as boiler
 from __init__ import ureg
 
 
-def plot_electrical_demand():
-    demand = classes.EnergyDemand()
-
+def plot_electrical_demand(demand=None):
     y = demand.el
     plt.plot(y)
     plt.title('Annual Electrical Demand, Hourly')
@@ -34,9 +24,7 @@ def plot_electrical_demand():
     plt.show()
 
 
-def plot_thermal_demand():
-    demand = classes.EnergyDemand()
-
+def plot_thermal_demand(demand=None):
     y = demand.hl
     plt.plot(y)
     plt.title('Annual Heating Demand, Hourly')
@@ -48,8 +36,8 @@ def plot_thermal_demand():
     plt.show()
 
 
-def plot_chp_electricity_generated():
-    data = cogen.calc_hourly_generated_electricity()
+def plot_chp_electricity_generated(chp=None, demand=None):
+    data = cogen.calc_hourly_generated_electricity(chp=chp, demand=demand)
 
     # Convert to base units before creating numpy array for plotting
     y = np.array([gen.to_base_units().magnitude for gen in data])
@@ -64,8 +52,8 @@ def plot_chp_electricity_generated():
     plt.show()
 
 
-def plot_chp_heat_generated():
-    data = cogen.calc_hourly_heat_generated()
+def plot_chp_heat_generated(chp=None, demand=None):
+    data = cogen.calc_hourly_heat_generated(chp=chp, demand=demand)
 
     # Convert to base units before creating numpy array for plotting
     y = np.array([heat.to_base_units().magnitude for heat in data])
@@ -80,11 +68,11 @@ def plot_chp_heat_generated():
     plt.show()
 
 
-def plot_tes_status():
-    data = tes.tes_heat_stored()
+def plot_tes_status(chp=None, demand=None, tes=None):
+    data = storage.tes_heat_stored(chp=chp, demand=demand, tes=tes)
 
     # Convert to base units before creating numpy array for plotting
-    y = np.array([storage.to_base_units().magnitude for storage in data])
+    y = np.array([status.to_base_units().magnitude for status in data])
 
     plt.plot(y)
     plt.title('TES Status, Hourly')
@@ -96,10 +84,17 @@ def plot_tes_status():
     plt.show()
 
 
-# TODO: Plot aux boiler heat generated
-def aux_boiler_heat_generated():
-    return None
+def plot_aux_boiler_output(chp=None, demand=None, tes=None, ab=None):
+    data = boiler.calc_aux_boiler_output(chp=chp, demand=demand, tes=tes, ab=ab)
 
+    # Convert to base units before creating numpy array for plotting
+    y = np.array([heat.to_base_units().magnitude for heat in data])
 
-if __name__ == "__main__":
-    plot_tes_status()
+    plt.plot(y)
+    plt.title('Boiler Output, Hourly')
+    plt.ylabel('Heat [{}]'.format(data[0].units))
+    plt.yticks(np.arange(y.min(), y.max(), 5))
+    plt.xlabel('Time (hours)')
+
+    # plot
+    plt.show()
