@@ -4,8 +4,8 @@ Welcome to the load_following_decision README file! This file
 will give a brief explanation of what this package does, when and
 why you should use it, how to install it, and basic guidelines for
 getting started. It will also delve into the limitations of this
-package and explain some of the assumptions this project is built
-on. Finally we will delve into future work, aka the functionality
+package and explain the assumptions this project is built
+on. Finally, we will delve into future work, aka the functionality
 I plan to add to this software in the future.
 
 ## First, a brief note on nomenclature
@@ -47,7 +47,7 @@ produced by the system matches the building’s thermal demands
 (which is called "thermal load following", or TLF). This software 
 package is intended to perform an economic analysis of both operating
 modes and select the one that is most economically favorable (has
-the lowest payback period). Currently the software only calculates
+the lowest payback period). Currently, the software only calculates
 the payback period for the ELF operating mode.
 
 Further details can be found in /docs/project_motivation.md
@@ -68,14 +68,46 @@ a professional before making a final decision on whether an mCHP
 system is right for you.
 
 ## Installation Instructions
+### Installing from PyPI:
 
-This project is hosted on GitHub. It has not been hosted on 
-PyPI, so install from GitHub:
+This project can be installed from PyPI by entering the following 
+command in your terminal:
+
+`<Enter Instructions Here>`
+
+### Installing from GitHub:
+
+If installing from PyPI does not work, this project can also be 
+installed from GitHub by entering the following command in your 
+terminal:
 
 `pip install git+git://github.com/SoftwareDevEngResearch/load_following_decision.git`
 
-Detailed installation instructions can be found in 
-/docs/installation_instructions.md
+This package is dependent on a number of libraries that you 
+will need to install before using this package. Here is a list 
+of current known dependencies:
+
+- python>=3.7.4
+- pandas>=1.3.5
+- numpy>=1.21.5
+- PyYAML>=6.0
+- pytest>=7.0.1
+- tabulate>=0.8.9
+- matplotlib>=3.5.1
+- pint>=0.18
+
+From your terminal, you can install these dependencies manually 
+with the following command:
+
+`pip install package_name`
+
+For example, to install the pandas package, enter the following 
+command:
+
+`pip install pandas>=1.3.5`
+
+Use `pip freeze` to double-check that the correct version of each
+dependency is installed.
 
 ## Getting Started
 
@@ -120,6 +152,7 @@ This package operates under the following assumptions:
 - mCHP type = Internal combustion engine
 - Building Type = Residential Apartment Building
 - TES = Charge and discharge rate is not limited
+- TES = Assumes no energy is lost during storage
 - Net metering is not accounted for
 - Building already has a boiler installed
 
