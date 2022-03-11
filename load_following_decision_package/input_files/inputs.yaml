@@ -3,6 +3,12 @@
 #        Reciprocating Internal Combustion Engines". Data is specific to the
 #        Wartsila 20V34SG Generator's terminal efficiency (LHV).
 
+# CHP installed cost sourced from the following link:
+#    https://understandingchp.com/chp-applications-guide/6-8-rules-of-thumb-for-chp-engineering-and-installation-costs/
+
+# TES installed cost sourced from:
+#    https://betterbuildingssolutioncenter.energy.gov/sites/default/files/slides/Thermal%20Energy%20Storage%2C%20The%20Lowest%20Cost%20Storage.pdf
+
 chp_cap: 50   # kW
 chp_heat_power: 4
 chp_turn_down: 3.3
@@ -29,6 +35,10 @@ tes_cap: 1000000  # Btu
 # Energy Demand
 demand_filename: default_file.csv
 
-# Economics
+# Energy Costs
 electric_utility_cost: 0.1331   # $/kWh
 fuel_cost: 3.60  # $/MMBtu
+
+# Equipment Costs (material and installation)
+chp_installed_cost: 2900 # $/kW
+tes_installed_cost: 0.35 # $/kWh
