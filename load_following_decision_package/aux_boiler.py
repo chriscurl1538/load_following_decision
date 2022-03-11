@@ -72,6 +72,7 @@ def calc_aux_boiler_output(chp=None, demand=None, tes=None, ab=None):
             tes_heat = tes_heat_hourly[i]
             sum_heat = chp_heat + tes_heat
 
+            # TODO: Exception has been triggered - check heat output calculations for all equipment
             if sum_heat > heat_demand_hourly[i]:
                 raise Exception('chp heat output and tes heat output exceeds building heating demand. Check chp and tes'
                                 ' heat output calculations for errors')
