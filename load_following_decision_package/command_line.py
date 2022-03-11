@@ -4,15 +4,12 @@ Module Description:
     from the file to initialize the class variables.
 """
 
-import chp as cogen
-import plots
-import classes
-
-import pathlib
-import argparse
-import numpy as np
+import plots, classes, chp as cogen, aux_boiler as boiler
 from tabulate import tabulate
-import yaml
+import pathlib, argparse, yaml, numpy as np
+from __init__ import ureg
+
+
 try:
     from yaml import CLoader as Loader
 except ImportError:
@@ -52,14 +49,14 @@ def run(args):
     chp = classes.CHP(capacity=data['chp_cap'], heat_power=data['chp_heat_power'],
                       turn_down_ratio=data['chp_turn_down'],
                       thermal_output_to_fuel_input=data['thermal_output_to_fuel_input'],
-                      part_load=part_load_array)
+                      part_load=part_load_array, cost=data['chp_installed_cost'])
     ab = classes.AuxBoiler(capacity=data['ab_capacity'], efficiency=data['ab_eff'],
                            turn_down_ratio=data['ab_turn_down'])
     demand = classes.EnergyDemand(file_name=data['demand_filename'], electric_cost=data['electric_utility_cost'],
                                   fuel_cost=data['fuel_cost'])
-    tes = classes.TES(capacity=data['tes_cap'])
+    tes = classes.TES(capacity=data['tes_cap'], cost=data['tes_installed_cost'])
 
-    return chp, ab, demand, tes
+    return [chp, ab, demand, tes]
 
 
 def main():
@@ -72,47 +69,62 @@ def main():
     args.func(args)
 
     # Retrieve initialized class from run() function
-    chp, ab, demand, tes = run(args)
+    class_list = run(args)
+    chp = class_list[0]
+    ab = class_list[1]
+    demand = class_list[2]
+    tes = class_list[3]
 
     # Annual Demand Values
     electric_demand = demand.annual_el
     thermal_demand = demand.annual_hl
 
-    # Thermal Energy Savings
-    # TODO: Thermal Energy Savings
+    # Thermal Energy Savings (current energy consumption - proposed energy consumption)
+    thermal_consumption_control = thermal_demand / ab.eff
+    thermal_consumption_chp = cogen.calculate_annual_fuel_use(chp=chp, demand=demand)
+    thermal_consumption_ab = boiler.calc_annual_fuel_use(chp=chp, demand=demand, tes=tes, ab=ab)
+    thermal_consumption_elf = thermal_consumption_chp + thermal_consumption_ab
+    thermal_energy_savings = thermal_consumption_control - thermal_consumption_elf
 
-    # Thermal Cost Savings
-    # TODO: Thermal Cost Savings
+    # Thermal Cost Savings (current energy costs - proposed energy costs)
+    thermal_cost_control = thermal_consumption_control.to(ureg.megaBtu) * demand.fuel_cost
+    thermal_cost_chp = cogen.calc_annual_fuel_cost(chp=chp, demand=demand)
+    thermal_cost_ab = boiler.calc_annual_fuel_cost(chp=chp, demand=demand, tes=tes, ab=ab)
+    thermal_cost_elf = thermal_cost_chp + thermal_cost_ab
+    thermal_cost_savings = thermal_cost_control - thermal_cost_elf
 
     # Electrical Energy Savings
-    electric_energy_savings = sum(cogen.calc_hourly_generated_electricity())
+    electric_energy_savings = sum(cogen.calc_hourly_generated_electricity(chp=chp, demand=demand))
 
     # Electrical Cost Savings
     electric_cost_old = demand.el_cost * demand.annual_el
-    electric_cost_new = cogen.calc_annual_electric_cost()
+    electric_cost_new = cogen.calc_annual_electric_cost(chp=chp, demand=demand)
     electric_cost_savings = abs(electric_cost_old - electric_cost_new)
 
     # Total Cost Savings
-    # TODO: Total Cost Savings
+    total_cost_savings = electric_cost_savings + thermal_cost_savings
 
-    # Simple Payback Period
-    # TODO: Simple Payback Period
+    # Implementation Cost (material cost + installation cost)
+    capex_chp = chp.cost * chp.cap
+    tes_cap_kwh = tes.cap.to(ureg.kWh)
+    capex_tes = tes.cost * tes_cap_kwh
+    implementation_cost = capex_chp + capex_tes
 
-    # Fuel Consumption Annual
-    # TODO: Fuel Consumption Annual
+    # Simple Payback Period (implementation cost / annual cost savings)
+    simple_payback = implementation_cost / total_cost_savings
 
     # Table: Display economic calculations
-    head_comparison = ["", "Control", "ELF"]
+    head_comparison = ["", "ELF"]
 
     elf_costs = [
-        ["Annual Electrical Demand [kWh]", round(electric_demand, 0), ""],
-        ["Annual Thermal Demand [Btu]", round(thermal_demand, 0), ""],
-        ["Thermal Energy Savings [Btu]", "", ""],
-        ["Thermal Cost Savings [$]", "", ""],
-        ["Electrical Energy Savings [kWh]", 0, round(electric_energy_savings, 0)],
-        ["Electrical Cost Savings [$]", "", round(electric_cost_savings, 0)],
-        ["Total Cost Savings [$]", "", ""],
-        ["Simple Payback [Yrs]", "", ""]
+        ["Annual Electrical Demand [kWh]", round(electric_demand)],
+        ["Annual Thermal Demand [Btu]", round(thermal_demand)],
+        ["Thermal Energy Savings [Btu]", round(thermal_energy_savings)],
+        ["Thermal Cost Savings [$]", round(thermal_cost_savings)],
+        ["Electrical Energy Savings [kWh]", round(electric_energy_savings)],
+        ["Electrical Cost Savings [$]", round(electric_cost_savings)],
+        ["Total Cost Savings [$]", round(total_cost_savings)],
+        ["Simple Payback [Yrs]", round(simple_payback)]
     ]
 
     table_elf_costs = tabulate(elf_costs, headers=head_comparison, tablefmt="fancy_grid")
@@ -129,22 +141,17 @@ def main():
         ["Heat out to Fuel in", chp.out_in, "N/A", "N/A"]
     ]
 
-    fuel_consumption = [
-        ["Fuel Consumption [Btu]", round(cogen.calculate_annual_fuel_use(), 0), "N/A", ""]
-    ]
-
     table_system_properties = tabulate(system_properties, headers=head_equipment, tablefmt="fancy_grid")
     print(table_system_properties)
-
-    table_fuel_consumption = tabulate(fuel_consumption, headers=head_equipment, tablefmt="fancy_grid")
-    print(table_fuel_consumption)
 
     # Table: Display key input data
     head_units = ["", "Value"]
 
     input_data = [
         ["Fuel Cost [$/MMBtu]", demand.fuel_cost],
-        ["Electricity Rate [$/kWh]", demand.el_cost]
+        ["Electricity Rate [$/kWh]", demand.el_cost],
+        ["CHP Installed Cost [$]", capex_chp],
+        ["TES Installed Cost [$]", capex_tes]
     ]
 
     table_input_data = tabulate(input_data, headers=head_units, tablefmt="fancy_grid")
