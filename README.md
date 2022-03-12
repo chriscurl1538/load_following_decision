@@ -1,21 +1,23 @@
 ## Software Package: load_following_decision
 
-Welcome to the load_following_decision README file! This file
-will give a brief explanation of what this package does, when and
-why you should use it, how to install it, and basic guidelines for
-getting started. It will also delve into the limitations of this
-package and explain the assumptions this project is built
-on. Finally, we will delve into future work, aka the functionality
-I plan to add to this software in the future.
+### Welcome to the load_following_decision README file! 
 
-## First, a brief note on nomenclature
+This file will give a brief explanation of what this package does, 
+when and why you should use it, how to install it, and basic 
+guidelines for getting started. It will also delve into the 
+limitations of this package and explain the assumptions this 
+project is built on. Finally, we will delve into future work, 
+aka the functionality I plan to add to this software in the 
+future.
+
+### First, a brief note on nomenclature
 
 In this package the following terms are used interchangeably:
 
 - Heating demand, thermal demand, heating load, thermal load
 - Energy demand, load profile
 
-## Overview: What this package does
+### Overview: What this package does
 
 In simple terms, this package answers the following question: if
 an apartment building owner replaces their conventional energy
@@ -52,7 +54,7 @@ the payback period for the ELF operating mode.
 
 Further details can be found in /docs/project_motivation.md
 
-## When and why to use this package
+### When and why to use this package
 
 This package is designed for my academic research project. I intend
 to eventually use this package to examine how the economic 
@@ -67,15 +69,16 @@ decisions based on these analysis results. Please consult with
 a professional before making a final decision on whether an mCHP 
 system is right for you.
 
-## Installation Instructions
-### Installing from PyPI:
+### Installation Instructions
+
+**Installing from PyPI:**
 
 This project can be installed from PyPI by entering the following 
 command in your terminal:
 
 `<Enter Instructions Here>`
 
-### Installing from GitHub:
+**Installing from GitHub:**
 
 If installing from PyPI does not work, this project can also be 
 installed from GitHub by entering the following command in your 
@@ -109,7 +112,7 @@ command:
 Use `pip freeze` to double-check that the correct version of each
 dependency is installed.
 
-## Getting Started
+### Getting Started
 
 Once the package and its dependencies have been installed, it is
 time to add the energy demand .csv file to the /input_files
@@ -143,7 +146,7 @@ name would be entered as `default_file.csv`
 Use case examples with step-by-step instructions and expected
 results are located in /docs/how_to_guide.md.
 
-## Limitations and Assumptions
+### Limitations and Assumptions
 
 This package operates under the following assumptions:
 
@@ -162,7 +165,7 @@ This package also has the following limitations:
 - Energy demand data must span the course of an entire year
 - Weather, location, and building information (square footage, number of floors, etc) must be specified in eQuest when simulating the building's energy demand
 
-## Future Work
+### Future Work
 
 Features to be added to this package in the future include:
 
@@ -171,7 +174,7 @@ Features to be added to this package in the future include:
 - Calculation of TES capacity based on energy demand data
 - Generate results as a pdf file containing relevant tables and plots
 
-## Questions?
+### Questions?
 
 For questions regarding this package, please contact:
 
