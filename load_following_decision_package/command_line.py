@@ -2,6 +2,13 @@
 Module Description:
     Command line interface - imports .yaml file and uses equipment operating parameters
     from the file to initialize the class variables.
+
+Documentation action items:
+    TODO: Update README.md with PyPI installation instructions (line 79)
+    TODO: Generate distribution archives and upload to PyPI
+    (see https://packaging.python.org/en/latest/tutorials/packaging-projects/)
+    TODO: Add instructions for using the testing suite to /docs/how_to_guide.md
+    TODO: Add desired output to /docs/example_output.md
 """
 
 import plots, classes, chp as cogen, aux_boiler as boiler
