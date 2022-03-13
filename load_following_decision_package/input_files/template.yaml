@@ -1,0 +1,44 @@
+# Part-load efficiency data is sourced from the US EPA CHP Partnership's
+#        "Catalog of CHP Technologies, Section 2: Technology Characterization -
+#        Reciprocating Internal Combustion Engines". Data is specific to the
+#        Wartsila 20V34SG Generator's terminal efficiency (LHV).
+
+# CHP installed cost sourced from the following link:
+#    https://understandingchp.com/chp-applications-guide/6-8-rules-of-thumb-for-chp-engineering-and-installation-costs/
+
+# TES installed cost sourced from:
+#    https://betterbuildingssolutioncenter.energy.gov/sites/default/files/slides/Thermal%20Energy%20Storage%2C%20The%20Lowest%20Cost%20Storage.pdf
+
+chp_cap:    # kW
+chp_heat_power:
+chp_turn_down:
+thermal_output_to_fuel_input:
+
+# CHP Part Loads and Efficiencies
+30:
+40:
+50:
+60:
+70:
+80:
+90:
+100:
+
+# Aux Boiler Information
+ab_capacity:   # Btu/hr
+ab_eff:
+ab_turn_down:
+
+# TES Storage Information
+tes_cap:   # Btu
+
+# Energy Costs
+electric_utility_cost:    # $/kWh
+fuel_cost:   # $/MMBtu
+
+# Incremental Equipment Costs (material and installation)
+chp_installed_cost:  # $/kW
+tes_installed_cost:  # $/kWh
+
+# Energy Demand File Name
+demand_filename:
