@@ -14,4 +14,14 @@ In windows, run the file using the following command:
 
 This will print instructions to move forward.
 
+## Assumptions and Limitations
+
+This program makes the following assumptions about the energy system and equipment:
+
+- Fuel = Natural gas
+- Prime Mover = Internal combustion engine
+- Building = Mid-rise Apartment
+- Other Equipment = Auxiliary Boiler, Thermal energy storage (TES) system
+- Net metering is not allowed
+
 ## Examples

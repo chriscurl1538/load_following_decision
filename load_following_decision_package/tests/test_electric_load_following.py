@@ -1,6 +1,6 @@
 """
 Module Description:
-    Contains  test functions for functions located in the "electric_load_following.py" file
+    Contains  test functions for functions located in the "chp.py" file
 
 NOT READY FOR TESTING
 """
@@ -8,7 +8,7 @@ NOT READY FOR TESTING
 import pytest
 from load_following_decision_package import classes
 
-from load_following_decision_package import electric_load_following as elf
+from load_following_decision_package import chp as elf
 
 import numpy as np
 
