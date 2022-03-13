@@ -27,7 +27,7 @@ be?
 
 To answer that question, this software package needs the operating
 parameters of the proposed mCHP system, the building's existing 
-boiler, and the proposed (TES) system. Once the user has that 
+boiler, and the proposed TES system. Once the user has that 
 information, they can enter it into the .yaml file located in the 
 package's /input_files folder. This software package also needs 
 the energy demand of the building in the form of a .csv file.
@@ -162,7 +162,7 @@ This package operates under the following assumptions:
 This package also has the following limitations:
 
 - Energy demand data resolution must be hourly
-- Energy demand data must span the course of an entire year
+- Energy demand data must span the course of one year
 - Weather, location, and building information (square footage, number of floors, etc) must be specified in eQuest when simulating the building's energy demand
 
 ### Future Work
