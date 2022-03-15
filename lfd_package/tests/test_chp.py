@@ -6,7 +6,7 @@ NOT READY FOR TESTING
 """
 
 import pytest
-from load_following_decision_package import chp as cogen
+from lfd_package import chp as cogen
 
 
 def test_calc_hourly_electricity_bought():

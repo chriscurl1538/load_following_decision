@@ -3,10 +3,10 @@ Module description:
     This program tests the classes.py file
 """
 
-from load_following_decision_package.classes import CHP
-from load_following_decision_package.classes import AuxBoiler
-from load_following_decision_package.classes import EnergyDemand
-# from load_following_decision_package.classes import TES
+from lfd_package.classes import CHP
+from lfd_package.classes import AuxBoiler
+from lfd_package.classes import EnergyDemand
+# from lfd_package.classes import TES
 
 import numpy as np
 

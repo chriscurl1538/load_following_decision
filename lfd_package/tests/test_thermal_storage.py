@@ -6,7 +6,7 @@ NOT READY FOR TESTING
 """
 
 import pytest
-from load_following_decision_package import aux_boiler as boiler
+from lfd_package import aux_boiler as boiler
 
 
 def test_calc_heat_needs():
