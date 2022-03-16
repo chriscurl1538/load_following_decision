@@ -4,8 +4,8 @@ Module Description:
     by the auxiliary boiler
 """
 
-import chp as cogen
-import thermal_storage as storage
+from lfd_package import chp as cogen
+from lfd_package import thermal_storage as storage
 from lfd_package.__init__ import ureg
 
 
@@ -73,9 +73,12 @@ def calc_aux_boiler_output(chp=None, demand=None, tes=None, ab=None):
             sum_heat = chp_heat + tes_heat
 
             # TODO: Exception has been triggered - check heat output calculations for all equipment
-            if sum_heat > heat_demand_hourly[i]:
-                raise Exception('chp heat output and tes heat output exceeds building heating demand. Check chp and tes'
-                                ' heat output calculations for errors')
+            if 0 < tes_heat and sum_heat > heat_demand_hourly[i]:
+                raise Exception('chp heat output and tes heat output exceeds building heating demand by {}. '
+                                'Check chp and tes heat output calculations for errors'.format(sum_heat - heat_demand_hourly[i]))
+            elif tes_heat == 0 and sum_heat > heat_demand_hourly[i]:
+                ab_heat = 0
+                ab_heat_hourly.append(ab_heat)
             elif sum_heat == heat_demand_hourly[i]:
                 ab_heat = 0
                 ab_heat_hourly.append(ab_heat)
