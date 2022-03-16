@@ -5,7 +5,7 @@ Module description:
 """
 
 import pathlib, pandas as pd, numpy as np
-from __init__ import ureg
+from lfd_package.modules.__init__ import ureg
 
 
 class CHP:
@@ -83,7 +83,7 @@ class EnergyDemand:
             Cost of electricity in $/MMBtu
         """
         # Reads load profile data from .csv file
-        cwd = pathlib.Path(__file__).parent.resolve() / 'input_files'
+        cwd = pathlib.Path(__file__).parent.parent.resolve() / 'input_files'
         self.demand_file_name = file_name
         df = pd.read_csv(cwd / file_name)
 
