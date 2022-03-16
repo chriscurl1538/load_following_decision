@@ -5,12 +5,11 @@ Module description:
 """
 
 import pathlib, pandas as pd, numpy as np
-from __init__ import ureg
+from lfd_package.__init__ import ureg
 
 
 class CHP:
-    def __init__(self, capacity=None, heat_power=None, turn_down_ratio=None, thermal_output_to_fuel_input=None,
-                 part_load=None, cost=None):
+    def __init__(self, capacity=None, heat_power=None, turn_down_ratio=None, part_load=None, cost=None):
         """
         This class defines the operating parameters of the mCHP system.
 
@@ -18,20 +17,21 @@ class CHP:
         ----------
         capacity: float
             Size of the CHP system in kW (kilowatts)
-        heat_power: int
+        heat_power: float
             The heat-to-power ratio of the CHP system
         turn_down_ratio: float
             The ratio of the maximum capacity to minimum capacity
         part_load: numpy.ndarray
             An array where column 0 is the partial load as a percent of max
             capacity and column 1 is the associated mCHP efficiency
+        cost: float
+            The incremental installation cost of the CHP system (includes material cost and labor)
         """
         self.cap = capacity * ureg.kW
         self.hp = heat_power
         self.td = turn_down_ratio
         self.pl = part_load
         self.cost = cost * (1/ureg.kW)
-        self.out_in = thermal_output_to_fuel_input
         try:
             chp_min = self.cap / self.td
         except ZeroDivisionError:
@@ -127,7 +127,7 @@ class TES:
         """
         This class defines the operating parameters of the TES (Thermal energy storage) system
 
-        capacity: int
+        capacity: float
             Size of the TES system in Btu (Btu = British Thermal Units)
         """
         self.cap = capacity * ureg.Btu

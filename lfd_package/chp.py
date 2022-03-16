@@ -5,7 +5,7 @@ Module Description:
 """
 
 import numpy as np
-from __init__ import ureg
+from lfd_package.__init__ import ureg
 
 
 def calc_hourly_electricity_bought(chp=None, demand=None):
