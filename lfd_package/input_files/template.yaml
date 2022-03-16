@@ -12,7 +12,6 @@
 chp_cap:    # kW
 chp_heat_power:
 chp_turn_down:
-thermal_output_to_fuel_input:
 
 # CHP Part Loads and Efficiencies
 30:
