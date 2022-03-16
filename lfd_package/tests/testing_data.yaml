@@ -40,4 +40,4 @@ chp_installed_cost: 2900.0 # $/kW
 tes_installed_cost: 0.35 # $/kWh
 
 # Energy Demand File Name
-demand_filename: default_file.csv
+demand_filename: testing_data.csv
