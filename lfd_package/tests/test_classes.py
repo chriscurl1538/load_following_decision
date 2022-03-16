@@ -3,10 +3,8 @@ Module description:
     This program tests the classes.py file
 """
 import numpy as np
-from lfd_package.tests.__init__ import ureg
 
-
-from lfd_package import classes
+from lfd_package.modules import classes
 
 
 def test_chp_class(class_info, chp_pl):
