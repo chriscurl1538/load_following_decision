@@ -11,7 +11,7 @@ Documentation action items:
     TODO: Add desired output to /docs/example_output.md
 """
 
-import plots, classes, chp as cogen, aux_boiler as boiler
+from lfd_package import plots, classes, chp as cogen, aux_boiler as boiler
 from tabulate import tabulate
 import pathlib, argparse, yaml, numpy as np
 from lfd_package.__init__ import ureg
