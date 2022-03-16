@@ -8,7 +8,9 @@ Plots to be included:
 """
 
 import matplotlib.pyplot as plt, numpy as np
-import chp as cogen, thermal_storage as storage, aux_boiler as boiler
+from lfd_package import chp as cogen
+from lfd_package import thermal_storage as storage
+from lfd_package import aux_boiler as boiler
 
 
 def plot_electrical_demand(demand=None):
