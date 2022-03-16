@@ -1,15 +1,17 @@
-import pytest, pathlib, yaml, numpy as np
-from lfd_package import classes
-
-try:
-    from yaml import CLoader as Loader
-except ImportError:
-    from yaml import Loader
+import pytest
 
 
 @pytest.fixture
 def class_info():
-    yaml_filename = 'tests/testing_data.yaml'  # these match the "dest": dest="input"
+    import pathlib, yaml, numpy as np
+    from lfd_package import classes
+
+    try:
+        from yaml import CLoader as Loader
+    except ImportError:
+        from yaml import Loader
+
+    yaml_filename = 'testing_data.yaml'  # these match the "dest": dest="input"
     cwd = pathlib.Path(__file__).parent.resolve()
 
     with open(cwd / yaml_filename) as f:
@@ -36,6 +38,8 @@ def class_info():
 
 @pytest.fixture
 def chp_pl():
+    import numpy as np
+
     part_load_list = [
         [30, 0.344],
         [40, 0.379],
