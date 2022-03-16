@@ -24,9 +24,9 @@ chp_turn_down: 3.3
 100: 0.457
 
 # Aux Boiler Information
-ab_capacity: 2000000.0  # Btu/hr
+ab_capacity: 800000.0  # Btu/hr
 ab_eff: 0.80
-ab_turn_down: 3.0
+ab_turn_down: 10.0
 
 # TES Storage Information
 tes_cap: 1000000.0  # Btu
