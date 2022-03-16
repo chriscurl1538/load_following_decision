@@ -3,8 +3,8 @@ Module Description:
     Contains  test functions for functions located in the chp.py file
 """
 
-import pytest, pathlib
-from lfd_package import chp as cogen
+from lfd_package.modules import chp as cogen
+
 
 # TODO: test units
 # TODO: test passing bad values in (namely None or trying to put negative numbers in the yaml file)
