@@ -8,7 +8,8 @@ Plots to be included:
 """
 
 import matplotlib.pyplot as plt, numpy as np
-import chp as cogen, thermal_storage as storage, aux_boiler as boiler
+from lfd_package.modules import thermal_storage as storage
+from lfd_package.modules import aux_boiler as boiler, chp as cogen
 
 
 def plot_electrical_demand(demand=None):
@@ -36,7 +37,7 @@ def plot_thermal_demand(demand=None):
     plt.plot(y)
     plt.title('Annual Heating Demand, Hourly')
     plt.ylabel('Heating Demand [{}]'.format(data[0].units))
-    plt.yticks(np.arange(y.min(), y.max(), 20000))
+    plt.yticks(np.arange(y.min(), y.max(), 2000000))
     plt.xlabel('Time (hours)')
 
     # plot
@@ -76,7 +77,7 @@ def plot_chp_heat_generated(chp=None, demand=None):
 
 
 def plot_tes_status(chp=None, demand=None, tes=None):
-    data = storage.tes_heat_stored(chp=chp, demand=demand, tes=tes)
+    data = storage.tes_heat_stored(chp=chp, demand=demand, tes=tes)[1]
 
     # Convert to base units before creating numpy array for plotting
     y = np.array([status.to_base_units().magnitude for status in data])
