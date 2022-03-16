@@ -11,10 +11,10 @@ Documentation action items:
     TODO: Add desired output to /docs/example_output.md
 """
 
-from lfd_package import plots, classes, chp as cogen, aux_boiler as boiler
-from tabulate import tabulate
+from lfd_package.modules import aux_boiler as boiler, classes, chp as cogen, plots
 import pathlib, argparse, yaml, numpy as np
-from lfd_package.__init__ import ureg
+from tabulate import tabulate
+from lfd_package.modules.__init__ import ureg
 
 
 try:
