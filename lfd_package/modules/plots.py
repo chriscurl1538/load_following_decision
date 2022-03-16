@@ -8,16 +8,18 @@ Plots to be included:
 """
 
 import matplotlib.pyplot as plt, numpy as np
-from lfd_package import chp as cogen
-from lfd_package import thermal_storage as storage
-from lfd_package import aux_boiler as boiler
+import chp as cogen, thermal_storage as storage, aux_boiler as boiler
 
 
 def plot_electrical_demand(demand=None):
-    y = demand.el
+    data = demand.el
+
+    # Convert to base units before creating numpy array for plotting
+    y = np.array([dem.to_base_units().magnitude for dem in data])
+
     plt.plot(y)
     plt.title('Annual Electrical Demand, Hourly')
-    plt.ylabel('Electrical Demand [{}]'.format(y[0].units))
+    plt.ylabel('Electrical Demand [{}]'.format(data[0].units))
     plt.yticks(np.arange(y.min(), y.max(), 5))
     plt.xlabel('Time (hours)')
 
@@ -26,10 +28,14 @@ def plot_electrical_demand(demand=None):
 
 
 def plot_thermal_demand(demand=None):
-    y = demand.hl
+    data = demand.hl
+
+    # Convert to base units before creating numpy array for plotting
+    y = np.array([dem.to_base_units().magnitude for dem in data])
+
     plt.plot(y)
     plt.title('Annual Heating Demand, Hourly')
-    plt.ylabel('Heating Demand [{}]'.format(y[0].units))
+    plt.ylabel('Heating Demand [{}]'.format(data[0].units))
     plt.yticks(np.arange(y.min(), y.max(), 20000))
     plt.xlabel('Time (hours)')
 

@@ -5,7 +5,7 @@ Module description:
 """
 
 import pathlib, pandas as pd, numpy as np
-from lfd_package.__init__ import ureg
+from __init__ import ureg
 
 
 class CHP:

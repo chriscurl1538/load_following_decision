@@ -4,9 +4,9 @@ Module Description:
     by the auxiliary boiler
 """
 
-from lfd_package import chp as cogen
-from lfd_package import thermal_storage as storage
-from lfd_package.__init__ import ureg
+import chp as cogen
+import thermal_storage as storage
+from __init__ import ureg
 
 
 def calc_aux_boiler_output(chp=None, demand=None, tes=None, ab=None):
