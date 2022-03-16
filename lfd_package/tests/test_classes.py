@@ -12,6 +12,7 @@ from lfd_package import classes
 def test_chp_class(class_info, chp_pl):
     # Assign class values
     chp = class_info[0]
+    assert chp is not None
     assert isinstance(chp, classes.CHP)
 
     assert 0 < chp.cap.magnitude <= 50
@@ -36,6 +37,7 @@ def test_chp_class(class_info, chp_pl):
 def test_aux_boiler_class(class_info):
     # Assign class values
     ab = class_info[1]
+    assert ab is not None
     assert isinstance(ab, classes.AuxBoiler)
 
     assert 0 < ab.cap
@@ -54,9 +56,11 @@ def test_aux_boiler_class(class_info):
 def test_energy_demand_class(class_info):
     # Assign class values
     demand = class_info[2]
+    assert demand is not None
     assert isinstance(demand, classes.EnergyDemand)
 
     assert isinstance(demand.demand_file_name, str)
+    assert demand.demand_file_name == "testing_data.csv"
 
     assert 0 < demand.el_cost
     # assert demand.el_cost.unit == 1/ureg.kWh
@@ -82,6 +86,7 @@ def test_energy_demand_class(class_info):
 def test_tes_class(class_info):
     # Assign class values
     tes = class_info[3]
+    assert tes is not None
     assert isinstance(tes, classes.TES)
 
     assert 0 < tes.cap
