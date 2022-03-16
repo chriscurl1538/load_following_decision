@@ -14,7 +14,7 @@ Documentation action items:
 import plots, classes, chp as cogen, aux_boiler as boiler
 from tabulate import tabulate
 import pathlib, argparse, yaml, numpy as np
-from __init__ import ureg
+from lfd_package.__init__ import ureg
 
 
 try:
@@ -55,7 +55,6 @@ def run(args):
     # Class initialization using CLI arguments
     chp = classes.CHP(capacity=data['chp_cap'], heat_power=data['chp_heat_power'],
                       turn_down_ratio=data['chp_turn_down'],
-                      thermal_output_to_fuel_input=data['thermal_output_to_fuel_input'],
                       part_load=part_load_array, cost=data['chp_installed_cost'])
     ab = classes.AuxBoiler(capacity=data['ab_capacity'], efficiency=data['ab_eff'],
                            turn_down_ratio=data['ab_turn_down'])
