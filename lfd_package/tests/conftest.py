@@ -11,8 +11,8 @@ def class_info():
     except ImportError:
         from yaml import Loader
 
-    yaml_filename = 'testing_data.yaml'  # these match the "dest": dest="input"
-    cwd = pathlib.Path(__file__).parent.resolve()
+    yaml_filename = 'default_file.yaml'  # these match the "dest": dest="input"
+    cwd = pathlib.Path(__file__).parent.parent.resolve() / 'input_files'
 
     with open(cwd / yaml_filename) as f:
         data = yaml.load(f, Loader=Loader)
