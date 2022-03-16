@@ -5,7 +5,7 @@ Module Description:
 """
 
 import chp as cogen
-from __init__ import ureg
+from lfd_package.__init__ import ureg
 
 
 def calc_heat_needs(chp=None, demand=None):

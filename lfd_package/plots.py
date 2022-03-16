@@ -8,8 +8,7 @@ Plots to be included:
 """
 
 import matplotlib.pyplot as plt, numpy as np
-import classes, chp as cogen, thermal_storage as storage, aux_boiler as boiler
-from __init__ import ureg
+import chp as cogen, thermal_storage as storage, aux_boiler as boiler
 
 
 def plot_electrical_demand(demand=None):

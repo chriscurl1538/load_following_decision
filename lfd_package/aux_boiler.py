@@ -6,7 +6,7 @@ Module Description:
 
 import chp as cogen
 import thermal_storage as storage
-from __init__ import ureg
+from lfd_package.__init__ import ureg
 
 
 def calc_aux_boiler_output(chp=None, demand=None, tes=None, ab=None):
