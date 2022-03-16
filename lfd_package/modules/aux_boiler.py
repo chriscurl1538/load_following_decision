@@ -3,10 +3,11 @@ Module Description:
     Contains functions needed to calculate the heat generated and fuel used
     by the auxiliary boiler
 """
+import math
 
-import chp as cogen
-import thermal_storage as storage
-from __init__ import ureg
+from lfd_package.modules import chp as cogen
+from lfd_package.modules import thermal_storage as storage
+from lfd_package.modules.__init__ import ureg, Q_
 
 
 def calc_aux_boiler_output(chp=None, demand=None, tes=None, ab=None):
@@ -37,68 +38,61 @@ def calc_aux_boiler_output(chp=None, demand=None, tes=None, ab=None):
         ab_cap_btu = ab.cap * data_res
         ab_min_btu = ab.min * data_res
 
-        el_demand_hourly = demand.el
-        heat_demand_hourly = demand.hl
-
-        ab_heat_hourly = []
-
         # Pull chp heat and tes heat data
         chp_heat_hourly = cogen.calc_hourly_heat_generated(chp=chp, demand=demand)
-        tes_status_hourly = storage.tes_heat_stored(chp=chp, demand=demand, tes=tes)
+        tes_charge_discharge, tes_status_hourly = storage.tes_heat_stored(chp=chp, demand=demand, tes=tes)
 
-        # Generate list of tes hourly heat discharge
-        tes_heat_hourly = []
+        ab_heat_hourly = []
+        tes_discharge = []
+        chp_heat_no_excess = []
 
-        for index, status in enumerate(tes_status_hourly):
-            assert status >= 0
-            if index == 0:
-                tes_heat = 0 * ureg.Btu
-                tes_heat_hourly.append(tes_heat)
-            elif status < tes_status_hourly[index - 1]:
-                tes_heat = abs(tes_status_hourly[index - 1] - status)
-                tes_heat_hourly.append(tes_heat)
-            elif status >= tes_status_hourly[index - 1]:
-                tes_heat = 0 * ureg.Btu
-                tes_heat_hourly.append(tes_heat)
+        # Remove waste heat production from CHP heat output data since TES captures excess
+        for index, heat in enumerate(chp_heat_hourly):
+            if demand.hl[index] < heat:
+                no_excess = demand.hl[index]
+                chp_heat_no_excess.append(no_excess)
             else:
-                raise Exception('Error in aux_boiler.py function calc_aux_boiler_output()')
+                no_excess = heat
+                chp_heat_no_excess.append(no_excess)
 
-        for i in range(heat_demand_hourly.shape[0]):
-            # Verifies acceptable input value range
-            assert el_demand_hourly[i] >= 0
-            assert heat_demand_hourly[i] >= 0
+        # Get TES discharge only
+        for index, dis in enumerate(tes_charge_discharge):
+            if dis < 0:
+                tes_discharge.append(dis)
+            else:
+                zero = Q_(0, ureg.Btu)
+                tes_discharge.append(zero)
 
-            chp_heat = chp_heat_hourly[i]
-            tes_heat = tes_heat_hourly[i]
-            sum_heat = chp_heat + tes_heat
+        # Compare CHP and TES output with demand to determine AB output
+        for index, dem in enumerate(demand.hl):
+            chp_heat = chp_heat_no_excess[index]
+            tes_heat = tes_discharge[index]      # Negative if heat is discharged, zero otherwise
+            sum_heat = chp_heat - tes_heat
 
-            # TODO: Exception has been triggered - check heat output calculations for all equipment
-            if 0 < tes_heat and sum_heat > heat_demand_hourly[i]:
-                raise Exception('chp heat output and tes heat output exceeds building heating demand by {}. '
-                                'Check chp and tes heat output calculations for errors'.format(sum_heat - heat_demand_hourly[i]))
-            elif tes_heat == 0 and sum_heat > heat_demand_hourly[i]:
-                ab_heat = 0
+            if tes_heat.magnitude < 0 and dem <= chp_heat:
+                check_closeness = math.isclose((sum_heat.magnitude - dem.magnitude), 0, abs_tol=10**-4)
+                if check_closeness is False:
+                    raise Exception('chp heat output and tes heat output exceeds building heating demand by {}. '
+                                    'Check chp and tes heat output calculations for errors'.format(sum_heat - dem))
+                else:
+                    ab_heat = Q_(0, ureg.Btu)
+                    ab_heat_hourly.append(ab_heat)
+            elif dem <= sum_heat:
+                ab_heat = Q_(0, ureg.Btu)
                 ab_heat_hourly.append(ab_heat)
-            elif sum_heat == heat_demand_hourly[i]:
-                ab_heat = 0
-                ab_heat_hourly.append(ab_heat)
-            elif sum_heat < heat_demand_hourly[i]:
-                ab_heat = abs(heat_demand_hourly[i] - sum_heat)
+            elif sum_heat < dem:
+                ab_heat = abs(dem - sum_heat)
                 ab_heat_hourly.append(ab_heat)
             else:
                 raise Exception('Error in aux_boiler.py function calc_aux_boiler_output()')
 
         # Check that hourly heat demand is within aux boiler operating parameters
         for index, i in enumerate(ab_heat_hourly):
-            if ab_min_btu < i < ab_cap_btu:
-                pass
-            elif 0 < i <= ab_min_btu:
+            if 0 < i.magnitude <= ab_min_btu.magnitude:
                 ab_heat_hourly[index] = ab_min_btu
             elif ab_cap_btu < i:
-                ab_heat_hourly[index] = ab_cap_btu
                 raise Exception('ALERT: Boiler size is insufficient to meet heating demand! Output is short by '
                                 '{} at hour number ()'.format(abs(i - ab_cap_btu)), index)
-
         return ab_heat_hourly
 
 
