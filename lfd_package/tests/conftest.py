@@ -4,7 +4,7 @@ import pytest
 @pytest.fixture
 def class_info():
     import pathlib, yaml, numpy as np
-    from lfd_package import classes
+    from lfd_package.modules import classes
 
     try:
         from yaml import CLoader as Loader
