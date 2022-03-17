@@ -1,5 +1,7 @@
-## Software Package: load_following_decision
-### Desired tables using default_file.csv and default_file.yaml
+Software Package: load_following_decision
+
+This file contains the desired table outputs using default_file.csv and
+default_file.yaml inputs
 
 ╒═════════════════════════════════╤════════════════════════════════════╕
 │                                 │ ELF                                │
