@@ -8,13 +8,13 @@ Documentation action items:
     TODO: Generate distribution archives and upload to PyPI
     (see https://packaging.python.org/en/latest/tutorials/packaging-projects/)
     TODO: Add instructions for using the testing suite to /docs/how_to_guide.md
-    TODO: Add desired output to /docs/example_output.md
+    TODO: Double check docstring accuracy
 """
 
-import plots, classes, chp as cogen, aux_boiler as boiler
-from tabulate import tabulate
+from lfd_package.modules import aux_boiler as boiler, classes, chp as cogen, plots
 import pathlib, argparse, yaml, numpy as np
-from __init__ import ureg
+from tabulate import tabulate
+from lfd_package.modules.__init__ import ureg
 
 
 try:
@@ -25,6 +25,8 @@ except ImportError:
 
 def run(args):
     """
+    Takes in information from the command line and assigns input data
+    to the package's classes.
 
     Parameters
     ----------
@@ -38,6 +40,8 @@ def run(args):
     ab: AuxBoiler class
         Initialized class using input data from .yaml file
     demand: EnergyDemand class
+        Initialized class using input data from .yaml file
+    tes: TES class
         Initialized class using input data from .yaml file
     """
     yaml_filename = args.input   # these match the "dest": dest="input"
@@ -55,7 +59,6 @@ def run(args):
     # Class initialization using CLI arguments
     chp = classes.CHP(capacity=data['chp_cap'], heat_power=data['chp_heat_power'],
                       turn_down_ratio=data['chp_turn_down'],
-                      thermal_output_to_fuel_input=data['thermal_output_to_fuel_input'],
                       part_load=part_load_array, cost=data['chp_installed_cost'])
     ab = classes.AuxBoiler(capacity=data['ab_capacity'], efficiency=data['ab_eff'],
                            turn_down_ratio=data['ab_turn_down'])
@@ -67,6 +70,21 @@ def run(args):
 
 
 def main():
+    """
+    Generates tables with cost and savings calculations and plots of equipment
+    energy use / energy generation
+
+    Returns
+    -------
+    Tables of economic information in the terminal
+    Plots including:
+        Electrical demand inputs
+        Thermal demand inputs
+        CHP Electricity Generation
+        CHP Heat Generation
+        TES Heat Storage status
+        Aux Boiler Heat output
+    """
     # Command Line Interface
     parser = argparse.ArgumentParser(description="Import equipment operating parameter data")
     parser.add_argument("--in", help="filename for .yaml file with equipment data", dest="input", type=str,
@@ -118,7 +136,7 @@ def main():
     implementation_cost = capex_chp + capex_tes
 
     # Simple Payback Period (implementation cost / annual cost savings)
-    simple_payback = implementation_cost / total_cost_savings
+    simple_payback = (implementation_cost / total_cost_savings) * ureg.year
 
     # Table: Display economic calculations
     head_comparison = ["", "ELF"]
@@ -127,10 +145,10 @@ def main():
         ["Annual Electrical Demand [kWh]", round(electric_demand)],
         ["Annual Thermal Demand [Btu]", round(thermal_demand)],
         ["Thermal Energy Savings [Btu]", round(thermal_energy_savings)],
-        ["Thermal Cost Savings [$]", round(thermal_cost_savings)],
+        ["Thermal Cost Savings [$]", round(thermal_cost_savings.magnitude, 2)],
         ["Electrical Energy Savings [kWh]", round(electric_energy_savings)],
-        ["Electrical Cost Savings [$]", round(electric_cost_savings)],
-        ["Total Cost Savings [$]", round(total_cost_savings)],
+        ["Electrical Cost Savings [$]", round(electric_cost_savings.magnitude, 2)],
+        ["Total Cost Savings [$]", round(total_cost_savings.magnitude, 2)],
         ["Simple Payback [Yrs]", round(simple_payback)]
     ]
 
@@ -141,11 +159,10 @@ def main():
     head_equipment = ["", "mCHP", "TES", "Aux Boiler"]
 
     system_properties = [
-        ["Efficiency (Full Load)", chp.pl[-1, 1], "N/A", ab.eff],
+        ["Efficiency (Full Load)", "{} %".format(chp.pl[-1, 1] * 100), "N/A", "{} %".format(ab.eff * 100)],
         ["Turn-Down Ratio", chp.td, "N/A", ab.td],
         ["Size", chp.cap, tes.cap, ab.cap],
-        ["Heat to Power Ratio", chp.hp, "N/A", "N/A"],
-        ["Heat out to Fuel in", chp.out_in, "N/A", "N/A"]
+        ["Heat to Power Ratio", chp.hp, "N/A", "N/A"]
     ]
 
     table_system_properties = tabulate(system_properties, headers=head_equipment, tablefmt="fancy_grid")
@@ -155,16 +172,16 @@ def main():
     head_units = ["", "Value"]
 
     input_data = [
-        ["Fuel Cost [$/MMBtu]", demand.fuel_cost],
-        ["Electricity Rate [$/kWh]", demand.el_cost],
-        ["CHP Installed Cost [$]", capex_chp],
-        ["TES Installed Cost [$]", capex_tes]
+        ["Fuel Cost [$/MMBtu]", round(demand.fuel_cost, 2)],
+        ["Electricity Rate [$/kWh]", round(demand.el_cost, 2)],
+        ["CHP Installed Cost [$]", round(capex_chp.magnitude, 2)],
+        ["TES Installed Cost [$]", round(capex_tes.magnitude, 2)]
     ]
 
     table_input_data = tabulate(input_data, headers=head_units, tablefmt="fancy_grid")
     print(table_input_data)
 
-    # Plots
+    # # Plots
     plots.plot_electrical_demand(demand=demand)
     plots.plot_thermal_demand(demand=demand)
     plots.plot_chp_electricity_generated(chp=chp, demand=demand)

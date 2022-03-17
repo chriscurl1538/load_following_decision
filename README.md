@@ -76,7 +76,9 @@ system is right for you.
 This project can be installed from PyPI by entering the following 
 command in your terminal:
 
-`<Enter Instructions Here>`
+`pip install load-following-decision`
+
+This will install all required dependencies automatically.
 
 **Installing from GitHub:**
 
@@ -92,7 +94,6 @@ of current known dependencies:
 
 - python>=3.7.4
 - pandas>=1.3.5
-- numpy>=1.21.5
 - PyYAML>=6.0
 - pytest>=7.0.1
 - tabulate>=0.8.9
