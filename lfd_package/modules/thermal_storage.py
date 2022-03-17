@@ -67,7 +67,8 @@ def tes_heat_stored(chp=None, demand=None, tes=None):
         Change in heat content of storage. Values are positive for heat added and
         negative for heat discharged
     status: list
-        Hourly status of TES storage. Values are heat stored in Btu.
+        Hourly status of TES storage. Values are heat stored in Btu. Calculated by
+        summing charge_or_discharge from index 0 to the current hour
     """
     if chp is not None and demand is not None and tes is not None:
         excess_and_deficit = calc_excess_and_deficit_heat(chp=chp, demand=demand)

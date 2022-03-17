@@ -25,6 +25,8 @@ except ImportError:
 
 def run(args):
     """
+    Takes in information from the command line and assigns input data
+    to the package's classes.
 
     Parameters
     ----------
@@ -38,6 +40,8 @@ def run(args):
     ab: AuxBoiler class
         Initialized class using input data from .yaml file
     demand: EnergyDemand class
+        Initialized class using input data from .yaml file
+    tes: TES class
         Initialized class using input data from .yaml file
     """
     yaml_filename = args.input   # these match the "dest": dest="input"
@@ -66,6 +70,21 @@ def run(args):
 
 
 def main():
+    """
+    Generates tables with cost and savings calculations and plots of equipment
+    energy use / energy generation
+
+    Returns
+    -------
+    Tables of economic information in the terminal
+    Plots including:
+        Electrical demand inputs
+        Thermal demand inputs
+        CHP Electricity Generation
+        CHP Heat Generation
+        TES Heat Storage status
+        Aux Boiler Heat output
+    """
     # Command Line Interface
     parser = argparse.ArgumentParser(description="Import equipment operating parameter data")
     parser.add_argument("--in", help="filename for .yaml file with equipment data", dest="input", type=str,

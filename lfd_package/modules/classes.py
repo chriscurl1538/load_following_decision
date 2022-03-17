@@ -129,6 +129,8 @@ class TES:
 
         capacity: float
             Size of the TES system in Btu (Btu = British Thermal Units)
+        cost: float
+            The incremental installation cost of the TES system (includes material cost and labor)
         """
         self.cap = capacity * ureg.Btu
         self.cost = cost * (1/ureg.kWh)

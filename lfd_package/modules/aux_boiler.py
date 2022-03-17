@@ -15,7 +15,7 @@ def calc_aux_boiler_output(chp=None, demand=None, tes=None, ab=None):
     """
     Using CHP heat output and TES heat discharge, this function determines when the
     heat demand exceeds the heat produced by the electric load following CHP system. Heat
-    demand not met by CHP and TES is then assigned to the aux boiler (added to boiler_heat list).
+    demand not met by CHP and TES is then assigned to the aux boiler (added to ab_heat_hourly list).
     Items in the list are then verified to be within boiler operating parameters.
 
     Parameters
