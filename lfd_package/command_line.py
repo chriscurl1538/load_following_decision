@@ -8,7 +8,6 @@ Documentation action items:
     TODO: Generate distribution archives and upload to PyPI
     (see https://packaging.python.org/en/latest/tutorials/packaging-projects/)
     TODO: Add instructions for using the testing suite to /docs/how_to_guide.md
-    TODO: Add desired output to /docs/example_output.md
     TODO: Double check docstring accuracy
 """
 
@@ -164,12 +163,12 @@ def main():
     print(table_input_data)
 
     # # Plots
-    # plots.plot_electrical_demand(demand=demand)
-    # plots.plot_thermal_demand(demand=demand)
-    # plots.plot_chp_electricity_generated(chp=chp, demand=demand)
-    # plots.plot_chp_heat_generated(chp=chp, demand=demand)
-    # plots.plot_tes_status(chp=chp, demand=demand, tes=tes)
-    # plots.plot_aux_boiler_output(chp=chp, demand=demand, tes=tes, ab=ab)
+    plots.plot_electrical_demand(demand=demand)
+    plots.plot_thermal_demand(demand=demand)
+    plots.plot_chp_electricity_generated(chp=chp, demand=demand)
+    plots.plot_chp_heat_generated(chp=chp, demand=demand)
+    plots.plot_tes_status(chp=chp, demand=demand, tes=tes)
+    plots.plot_aux_boiler_output(chp=chp, demand=demand, tes=tes, ab=ab)
 
 
 if __name__ == "__main__":
