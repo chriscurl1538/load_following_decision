@@ -1,5 +1,5 @@
 ## Software Package: load_following_decision
-### Desired tables and plots using default_file.csv and default_file.yaml
+### Desired tables using default_file.csv and default_file.yaml
 
 ╒═════════════════════════════════╤════════════════════════════════════╕
 │                                 │ ELF                                │
@@ -42,15 +42,3 @@
 ├──────────────────────────┼────────────────────────────────┤
 │ TES Installed Cost [$]   │ 102.57                         │
 ╘══════════════════════════╧════════════════════════════════╛
-
-
-
-![img.png](img.png)
-
-![img.png](img.png)
-
-![img.png](img.png)
-
-![img.png](img.png)
-
-![img.png](img.png)
