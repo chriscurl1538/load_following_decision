@@ -17,7 +17,7 @@ in the /input_files folder
 **Step 1: Navigate to the desired folder**
 
 This package is run from the command line. In your terminal, 
-navigate to the /load_following_decision_package folder. This 
+navigate to the /lfd_package folder. This 
 folder contains the test suite and package modules. For most 
 terminals you can change directories using the following command:
 
@@ -50,8 +50,11 @@ enter the name of the .yaml file like this:
 **Step 3: Verify output:**
 
 Using the provided default files (.csv and .yaml) you should get
-the tables and plots shown in /docs/example_output.md
+the tables shown in /docs/example_tables.md as well as the 6 plots 
+shown in the /docs/example-plots folder
 
 ### Testing the program
 
-INSTRUCTIONS FOR USING TESTING SUITE HERE
+To run the program's test suite, navigate to the /tests folder in your
+terminal and enter the command `pytest` to run all tests located in
+the test suite.
