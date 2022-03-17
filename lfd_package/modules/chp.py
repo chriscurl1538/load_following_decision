@@ -206,8 +206,8 @@ def calculate_annual_fuel_use(chp=None, demand=None):
 
     Returns
     -------
-    total_fuel: list
-        Collection of hourly fuel use values in Btu.
+    total_fuel: float
+        Annual fuel use in Btu.
     """
     if chp is not None and demand is not None:
         efficiency_list = calc_hourly_efficiency(chp=chp, demand=demand)
