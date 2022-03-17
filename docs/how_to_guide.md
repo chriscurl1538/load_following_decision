@@ -18,7 +18,8 @@ in the /input_files folder
 
 This package is run from the command line. In your terminal, 
 navigate to the /lfd_package folder. This 
-folder contains the test suite and package modules. For most 
+folder contains the test suite (located in the /tests folder) 
+and the package modules (located in the /modules folder). For most 
 terminals you can change directories using the following command:
 
 `cd directory_path`
@@ -28,7 +29,8 @@ desired folder.
 
 **Step 2: Run the program from the command line**
 
-Run the file using the following command:
+The module used to run the program is located in the /lfd_package folder
+separate from the other modules. Run the file using the following command:
 
 `python command_line.py --help`
 
