@@ -2,9 +2,6 @@
 Module Description:
     This module will create plots of data passed to the program
     as well as relevant data calculated by the program
-
-Plots to be included:
-    Aux Boiler Heat Generated
 """
 
 import matplotlib.pyplot as plt, numpy as np
@@ -12,37 +9,50 @@ from lfd_package.modules import thermal_storage as storage
 from lfd_package.modules import aux_boiler as boiler, chp as cogen
 
 
-# TODO: decrease resolution
 def plot_electrical_demand(demand=None):
-    data = demand.el
+    y = demand.el.magnitude
 
-    # Convert to base units before creating numpy array for plotting
-    y = np.array([dem.to_base_units().magnitude for dem in data])
+    # Calculate daily sums
+    daily_kwh = []
 
-    plt.plot(y)
-    plt.title('Annual Electrical Demand, Hourly')
-    plt.ylabel('Electrical Demand [{}]'.format(data[0].units))
-    plt.yticks(np.arange(y.min(), y.max(), 5))
-    plt.xlabel('Time (hours)')
+    for i in range(24, len(y) + 1, 24):
+        daily_kwh.append(y[(i - 24):i].sum())
+
+    daily_kwh_array = np.array(daily_kwh)
+
+    # set up plots
+    plt.plot(daily_kwh_array)
+    plt.title('Annual Electrical Demand, Daily')
+    plt.ylabel('Electrical Demand [{}]'.format(demand.el[0].units))
+    plt.yticks(np.arange(daily_kwh_array.min(), daily_kwh_array.max(), 20))
+    plt.xlabel('Time (days)')
 
     # plot
     plt.show()
 
 
-# TODO: decrease resolution
 def plot_thermal_demand(demand=None):
-    data = demand.hl
+    y = demand.hl.magnitude
 
-    # Convert to base units before creating numpy array for plotting
-    y = np.array([dem.to_base_units().magnitude for dem in data])
+    # Calculate daily sums
+    daily_btu = []
 
-    ytick_scale = (y.max() - y.min()) / 10
+    for i in range(24, len(y) + 1, 24):
+        daily_btu.append(y[(i - 24):i].sum())
 
-    plt.plot(y)
-    plt.title('Annual Heating Demand, Hourly')
-    plt.ylabel('Heating Demand [{}]'.format(data[0].units))
-    plt.yticks(np.arange(y.min(), y.max(), ytick_scale))
-    plt.xlabel('Time (hours)')
+    daily_btu_array = np.array(daily_btu)
+
+    if daily_btu_array.max() - daily_btu_array.min() >= 10:
+        ytick_scale = (daily_btu_array.max() - daily_btu_array.min()) / 10
+    else:
+        ytick_scale = 5
+
+    # set up plots
+    plt.plot(daily_btu_array)
+    plt.title('Annual Heating Demand, Daily')
+    plt.ylabel('Heating Demand [{}]'.format(demand.hl[0].units))
+    plt.yticks(np.arange(daily_btu_array.min(), daily_btu_array.max(), ytick_scale))
+    plt.xlabel('Time (days)')
 
     # plot
     plt.show()
@@ -63,7 +73,10 @@ def plot_chp_electricity_generated(chp=None, demand=None):
     daily_kwh_array = np.array(daily_kwh)
 
     # Set up plot
-    ytick_scale = (daily_kwh_array.max() - daily_kwh_array.min()) / 10
+    if daily_kwh_array.max() - daily_kwh_array.min() >= 10:
+        ytick_scale = (daily_kwh_array.max() - daily_kwh_array.min()) / 10
+    else:
+        ytick_scale = 5
 
     plt.plot(daily_kwh_array)
     plt.title('CHP Electricity Generation, Daily')
@@ -90,7 +103,10 @@ def plot_chp_heat_generated(chp=None, demand=None):
     daily_btu_array = np.array(daily_btu)
 
     # Set up plot
-    ytick_scale = (daily_btu_array.max() - daily_btu_array.min()) / 10
+    if daily_btu_array.max() - daily_btu_array.min() >= 10:
+        ytick_scale = (daily_btu_array.max() - daily_btu_array.min()) / 10
+    else:
+        ytick_scale = 5
 
     plt.plot(daily_btu_array)
     plt.title('CHP Heat Generated, Daily')
@@ -117,7 +133,10 @@ def plot_tes_status(chp=None, demand=None, tes=None):
     daily_btu_array = np.array(daily_btu)
 
     # Set up plot
-    ytick_scale = (daily_btu_array.max() - daily_btu_array.min()) / 10
+    if daily_btu_array.max() - daily_btu_array.min() >= 10:
+        ytick_scale = (daily_btu_array.max() - daily_btu_array.min()) / 10
+    else:
+        ytick_scale = 5
 
     plt.plot(daily_btu_array)
     plt.title('TES Status, Daily Avg')
