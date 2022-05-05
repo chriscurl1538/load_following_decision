@@ -74,38 +74,38 @@ def tes_heat_stored(chp=None, demand=None, tes=None):
         excess_and_deficit = calc_excess_and_deficit_heat(chp=chp, demand=demand)
 
         charge_or_discharge = []
-        status = []
+        soc = []
         current_status = Q_(0, ureg.Btu)
 
         for index, i in enumerate(excess_and_deficit):
             new_status = i + current_status  # Summation should fix exception raised in aux_boiler module
             if i == 0:
-                stored_heat = Q_(0, ureg.Btu)
+                stored_heat = Q_(0, ureg.Btu)   # TODO: Change to tes.start
                 charge_or_discharge.append(stored_heat)
-                status.append(current_status)
+                soc.append(current_status/tes.cap)
             elif 0 < i and new_status <= tes.cap:
                 stored_heat = i
                 charge_or_discharge.append(stored_heat)
                 current_status = new_status
-                status.append(current_status)
+                soc.append(current_status/tes.cap)
             elif 0 < i and tes.cap < new_status:
                 diff = new_status - tes.cap
                 stored_heat = i - diff
                 charge_or_discharge.append(stored_heat)
                 current_status = tes.cap
-                status.append(current_status)
+                soc.append(current_status/tes.cap)
             elif i < 0 <= new_status:
                 stored_heat = i
                 charge_or_discharge.append(stored_heat)
                 current_status = new_status
-                status.append(current_status)
+                soc.append(current_status/tes.cap)
             elif i < 0 and new_status < 0:
                 diff = new_status
                 stored_heat = abs(i - diff)
                 charge_or_discharge.append(stored_heat)
                 current_status = Q_(0, ureg.Btu)
-                status.append(current_status)
+                soc.append(current_status/tes.cap)
             else:
                 raise Exception("Error in tes_heat_stored function")
 
-        return charge_or_discharge, status
+        return charge_or_discharge, soc
