@@ -40,7 +40,7 @@ def calc_hourly_electricity_bought(chp=None, demand=None):
             assert d >= 0
 
             if chp_min_kwh <= d <= chp_max_kwh:
-                bought = 0
+                bought = 0 * ureg.kWh
                 utility_bought_list.append(bought)
             elif d < chp_min_kwh:
                 bought = d
