@@ -124,7 +124,7 @@ class EnergyDemand:
 
 
 class TES:
-    def __init__(self, capacity=None, cost=None):
+    def __init__(self, capacity=None, start=None, discharge=None, cost=None):
         """
         This class defines the operating parameters of the TES (Thermal energy storage) system
         TODO: Consider adding SOC calculation and initialization
@@ -137,4 +137,6 @@ class TES:
             The incremental installation cost of the TES system (includes material cost and labor)
         """
         self.cap = capacity * ureg.Btu
+        self.start = start * ureg.Btu
+        self.discharge = discharge * ureg('Btu/hr')
         self.cost = cost * (1/ureg.kWh)
