@@ -64,7 +64,8 @@ def run(args):
                            turn_down_ratio=data['ab_turn_down'])
     demand = classes.EnergyDemand(file_name=data['demand_filename'], electric_cost=data['electric_utility_cost'],
                                   fuel_cost=data['fuel_cost'])
-    tes = classes.TES(capacity=data['tes_cap'], cost=data['tes_installed_cost'])
+    tes = classes.TES(capacity=data['tes_cap'], start=data['tes_init'], discharge=data['tes_discharge_rate'],
+                      cost=data['tes_installed_cost'])
 
     return [chp, ab, demand, tes]
 
@@ -181,13 +182,10 @@ def main():
     table_input_data = tabulate(input_data, headers=head_units, tablefmt="fancy_grid")
     print(table_input_data)
 
-    # # Plots
-    plots.plot_electrical_demand(demand=demand)
-    plots.plot_thermal_demand(demand=demand)
-    plots.plot_chp_electricity_generated(chp=chp, demand=demand)
-    plots.plot_chp_heat_generated(chp=chp, demand=demand)
-    plots.plot_tes_status(chp=chp, demand=demand, tes=tes)
-    plots.plot_aux_boiler_output(chp=chp, demand=demand, tes=tes, ab=ab)
+    # Plots
+    plots.plot_electric(chp=chp, demand=demand)
+    plots.plot_thermal(chp=chp, demand=demand, tes=tes, ab=ab)
+    plots.plot_tes_soc(chp=chp, demand=demand, tes=tes)
 
 
 if __name__ == "__main__":
