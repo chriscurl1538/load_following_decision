@@ -68,7 +68,6 @@ class EnergyDemand:
         """
         This class defines the electricity and heating demand of a mid-
         rise apartment building.
-        TODO: For debugging problems, consider changing demand to predictable step function
 
         The data is imported from the file 'default_file.csv'
         using pandas.
@@ -127,7 +126,6 @@ class TES:
     def __init__(self, capacity=None, start=None, discharge=None, cost=None):
         """
         This class defines the operating parameters of the TES (Thermal energy storage) system
-        TODO: Consider adding SOC calculation and initialization
         TODO: Consider adding upper and lower limits for power extracted
         TODO: Change upper and lower limits for power extraction when SOC is 0 or 1
 
