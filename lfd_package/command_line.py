@@ -2,13 +2,6 @@
 Module Description:
     Command line interface - imports .yaml file and uses equipment operating parameters
     from the file to initialize the class variables.
-
-Documentation action items:
-    TODO: Update README.md with PyPI installation instructions (line 79)
-    TODO: Generate distribution archives and upload to PyPI
-    (see https://packaging.python.org/en/latest/tutorials/packaging-projects/)
-    TODO: Add instructions for using the testing suite to /docs/how_to_guide.md
-    TODO: Double check docstring accuracy
 """
 
 from lfd_package.modules import aux_boiler as boiler, classes, chp as cogen, plots
@@ -120,7 +113,7 @@ def main():
     thermal_cost_savings = thermal_cost_control - thermal_cost_elf
 
     # Electrical Energy Savings
-    electric_energy_savings = sum(cogen.calc_hourly_generated_electricity(chp=chp, demand=demand))
+    electric_energy_savings = sum(cogen.calc_electricity_bought_and_generated(chp=chp, demand=demand)[1])
 
     # Electrical Cost Savings
     electric_cost_old = demand.el_cost * demand.annual_el
