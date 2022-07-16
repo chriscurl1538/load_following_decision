@@ -80,7 +80,7 @@ def tes_heat_stored(chp=None, demand=None, tes=None):
         for index, i in enumerate(excess_and_deficit):
             new_status = i + current_status  # Summation should fix exception raised in aux_boiler module
             if i == 0:
-                stored_heat = Q_(0, ureg.Btu)   # TODO: Change to tes.start
+                stored_heat = tes.start
                 charge_or_discharge.append(stored_heat)
                 soc.append(current_status/tes.cap)
             elif 0 < i and new_status <= tes.cap:
