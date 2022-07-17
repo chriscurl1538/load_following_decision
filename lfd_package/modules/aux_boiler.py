@@ -10,7 +10,6 @@ from lfd_package.modules import thermal_storage as storage
 from lfd_package.modules.__init__ import ureg, Q_
 
 
-# TODO: Known bug - aux boiler output in plots is always zero
 def calc_aux_boiler_output(chp=None, demand=None, tes=None, ab=None):
     """
     Using CHP heat output and TES heat discharge, this function determines when the
