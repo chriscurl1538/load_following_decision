@@ -100,28 +100,49 @@ def main():
 
     # Thermal Energy Savings (current energy consumption - proposed energy consumption)
     thermal_consumption_control = thermal_demand / ab.eff
-    thermal_consumption_chp = cogen.calculate_annual_fuel_use(chp=chp, demand=demand)
-    thermal_consumption_ab = boiler.calc_annual_fuel_use(chp=chp, demand=demand, tes=tes, ab=ab)
-    thermal_consumption_elf = thermal_consumption_chp + thermal_consumption_ab
-    thermal_energy_savings = thermal_consumption_control - thermal_consumption_elf
+    elf_thermal_consumption_chp = cogen.calc_annual_fuel_use_and_costs(chp=chp, demand=demand,
+                                                                       load_following_type="ELF")[0]
+    elf_thermal_consumption_ab = boiler.calc_annual_fuel_use_and_cost(chp=chp, demand=demand, tes=tes, ab=ab,
+                                                                      load_following_type="ELF")[0]
+    elf_thermal_consumption_total = elf_thermal_consumption_chp + elf_thermal_consumption_ab
+    elf_thermal_energy_savings = thermal_consumption_control - elf_thermal_consumption_total
+
+    tlf_thermal_consumption_chp = cogen.calc_annual_fuel_use_and_costs(chp=chp, demand=demand,
+                                                                       load_following_type="TLF")[0]
+    tlf_thermal_consumption_ab = boiler.calc_annual_fuel_use_and_cost(chp=chp, demand=demand, tes=tes, ab=ab,
+                                                                      load_following_type="TLF")[0]
+    tlf_thermal_consumption_total = tlf_thermal_consumption_chp + tlf_thermal_consumption_ab
+    tlf_thermal_energy_savings = thermal_consumption_control - tlf_thermal_consumption_total
 
     # Thermal Cost Savings (current energy costs - proposed energy costs)
     thermal_cost_control = thermal_consumption_control.to(ureg.megaBtu) * demand.fuel_cost
-    thermal_cost_chp = cogen.calc_annual_fuel_cost(chp=chp, demand=demand)
-    thermal_cost_ab = boiler.calc_annual_fuel_cost(chp=chp, demand=demand, tes=tes, ab=ab)
-    thermal_cost_elf = thermal_cost_chp + thermal_cost_ab
-    thermal_cost_savings = thermal_cost_control - thermal_cost_elf
+    elf_thermal_cost_chp = cogen.calc_annual_fuel_use_and_costs(chp=chp, demand=demand, load_following_type="ELF")[1]
+    elf_thermal_cost_ab = boiler.calc_annual_fuel_use_and_cost(chp=chp, demand=demand, tes=tes, ab=ab,
+                                                               load_following_type="ELF")[1]
+    elf_thermal_cost_total = elf_thermal_cost_chp + elf_thermal_cost_ab
+    elf_thermal_cost_savings = thermal_cost_control - elf_thermal_cost_total
+
+    tlf_thermal_cost_chp = cogen.calc_annual_fuel_use_and_costs(chp=chp, demand=demand, load_following_type="TLF")[1]
+    tlf_thermal_cost_ab = boiler.calc_annual_fuel_use_and_cost(chp=chp, demand=demand, tes=tes, ab=ab,
+                                                               load_following_type="TLF")[1]
+    tlf_thermal_cost_total = tlf_thermal_cost_chp + tlf_thermal_cost_ab
+    tlf_thermal_cost_savings = thermal_cost_control - tlf_thermal_cost_total
 
     # Electrical Energy Savings
-    electric_energy_savings = sum(cogen.calc_electricity_bought_and_generated(chp=chp, demand=demand)[1])
+    elf_electric_energy_savings = sum(cogen.elf_calc_electricity_bought_and_generated(chp=chp, demand=demand)[1])
+    tlf_electric_energy_savings = sum(cogen.tlf_calc_electricity_bought_and_generated(chp=chp, demand=demand)[1])
 
-    # Electrical Cost Savings
+    # ELF Electrical Cost Savings
     electric_cost_old = demand.el_cost * demand.annual_el
-    electric_cost_new = cogen.calc_annual_electric_cost(chp=chp, demand=demand)
-    electric_cost_savings = abs(electric_cost_old - electric_cost_new)
+    elf_electric_cost_new = cogen.calc_annual_electric_cost(chp=chp, demand=demand, load_following_type="ELF")
+    elf_electric_cost_savings = electric_cost_old - elf_electric_cost_new
+
+    tlf_electric_cost_new = cogen.calc_annual_electric_cost(chp=chp, demand=demand, load_following_type="TLF")
+    tlf_electric_cost_savings = electric_cost_old - tlf_electric_cost_new
 
     # Total Cost Savings
-    total_cost_savings = electric_cost_savings + thermal_cost_savings
+    elf_total_cost_savings = elf_electric_cost_savings + elf_thermal_cost_savings
+    tlf_total_cost_savings = tlf_electric_cost_savings + tlf_thermal_cost_savings
 
     # Implementation Cost (material cost + installation cost)
     capex_chp = chp.cost * chp.cap
@@ -130,24 +151,29 @@ def main():
     implementation_cost = capex_chp + capex_tes
 
     # Simple Payback Period (implementation cost / annual cost savings)
-    simple_payback = (implementation_cost / total_cost_savings) * ureg.year
+    elf_simple_payback = (implementation_cost / elf_total_cost_savings) * ureg.year
+    tlf_simple_payback = (implementation_cost / tlf_total_cost_savings) * ureg.year
 
     # Table: Display economic calculations
-    head_comparison = ["", "ELF"]
+    head_comparison = ["", "ELF", "TLF"]
 
-    elf_costs = [
-        ["Annual Electrical Demand [kWh]", round(electric_demand)],
-        ["Annual Thermal Demand [Btu]", round(thermal_demand)],
-        ["Thermal Energy Savings [Btu]", round(thermal_energy_savings)],
-        ["Thermal Cost Savings [$]", round(thermal_cost_savings.magnitude, 2)],
-        ["Electrical Energy Savings [kWh]", round(electric_energy_savings)],
-        ["Electrical Cost Savings [$]", round(electric_cost_savings.magnitude, 2)],
-        ["Total Cost Savings [$]", round(total_cost_savings.magnitude, 2)],
-        ["Simple Payback [Yrs]", round(simple_payback)]
+    costs = [
+        ["Annual Electrical Demand [kWh]", round(electric_demand, 2), "N/A"],
+        ["Annual Thermal Demand [Btu]", round(thermal_demand, 2), "N/A"],
+        ["Thermal Energy Savings [Btu]", round(elf_thermal_energy_savings, 2), round(tlf_thermal_energy_savings, 2)],
+        ["Thermal Cost Savings [$]", round(elf_thermal_cost_savings.magnitude, 2),
+         round(tlf_thermal_cost_savings.magnitude, 2)],
+        ["Electrical Energy Savings [kWh]", round(elf_electric_energy_savings, 2),
+         round(tlf_electric_energy_savings, 2)],
+        ["Electrical Cost Savings [$]", round(elf_electric_cost_savings.magnitude, 2),
+         round(tlf_electric_cost_savings.magnitude, 2)],
+        ["Total Cost Savings [$]", round(elf_total_cost_savings.magnitude, 2),
+         round(tlf_total_cost_savings.magnitude, 2)],
+        ["Simple Payback [Yrs]", round(elf_simple_payback, 2), round(tlf_simple_payback, 2)]
     ]
 
-    table_elf_costs = tabulate(elf_costs, headers=head_comparison, tablefmt="fancy_grid")
-    print(table_elf_costs)
+    table_costs = tabulate(costs, headers=head_comparison, tablefmt="fancy_grid")
+    print(table_costs)
 
     # Table: Display system property inputs
     head_equipment = ["", "mCHP", "TES", "Aux Boiler"]
@@ -176,9 +202,13 @@ def main():
     print(table_input_data)
 
     # Plots
-    plots.plot_electric(chp=chp, demand=demand)
-    plots.plot_thermal(chp=chp, demand=demand, tes=tes, ab=ab)
-    plots.plot_tes_soc(chp=chp, demand=demand, tes=tes)
+    plots.elf_plot_electric(chp=chp, demand=demand)
+    plots.elf_plot_thermal(chp=chp, demand=demand, tes=tes, ab=ab)
+    plots.elf_plot_tes_soc(chp=chp, demand=demand, tes=tes)
+
+    plots.tlf_plot_electric(chp=chp, demand=demand)
+    plots.tlf_plot_thermal(chp=chp, demand=demand, tes=tes, ab=ab)
+    plots.tlf_plot_tes_soc(chp=chp, demand=demand, tes=tes)
 
 
 if __name__ == "__main__":
