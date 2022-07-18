@@ -42,4 +42,4 @@ chp_installed_cost: 2900.0 # $/kW
 tes_installed_cost: 0.35 # $/kWh
 
 # Energy Demand File Name
-demand_filename: simple_load_profile.csv
+demand_filename: simple_load_profile_short.csv
