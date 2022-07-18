@@ -4,6 +4,9 @@ Module Description:
     energy dispatched by the thermal energy storage (TES) system
 
 TODO: Consider how to make TES calculations optional for with/without comparison
+TODO: Potential miscalculation in calc_tes_heat_flow_and_soc.
+    TODO: Ensure SOC accounts for tes.start
+    TODO: Check that heat flow has positive discharge convention and shows negative values in plots
 """
 
 from lfd_package.modules import chp as cogen
