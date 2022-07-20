@@ -107,6 +107,9 @@ class EnergyDemand:
             float_array = np.array(float_list, dtype=float)
             return float_array
 
+        self.hl = convert_numpy_to_float(heating_demand_hourly) * ureg.Btu
+        self.el = convert_numpy_to_float(electric_demand_hourly) * ureg.kWh
+
         def sum_annual_demand(array=None):
             demand_items = []
             for demand in array:
@@ -115,11 +118,33 @@ class EnergyDemand:
             demand_sum = sum(demand_items)
             return demand_sum
 
-        self.hl = convert_numpy_to_float(heating_demand_hourly) * ureg.Btu
-        self.el = convert_numpy_to_float(electric_demand_hourly) * ureg.kWh
-
         self.annual_el = sum_annual_demand(array=self.el)
         self.annual_hl = sum_annual_demand(array=self.hl)
+
+        def create_demand_curve_array(array=None):
+            assert array.ndim == 1
+            total_days = len(array) / 24
+            reverse_sort_array = np.sort(array.magnitude, axis=0)
+            sorted_demand_array = reverse_sort_array[::-1]
+            percent_days = []
+            for i, k in enumerate(array):
+                percent = (i / 24) / total_days
+                percent_days.append(percent)
+            percent_days_array = np.array(percent_days)
+            return percent_days_array, sorted_demand_array
+
+        self.el_demand_curve_array = create_demand_curve_array(self.el)
+        self.hl_demand_curve_array = create_demand_curve_array(self.hl)
+
+        def size_mchp_system(array=None):
+            assert array.ndim == 1
+            percent_days_array, sorted_demand_array = create_demand_curve_array(array=array)
+            prod_array = np.multiply(percent_days_array, sorted_demand_array)
+            max_value = np.amax(prod_array)
+            return max_value
+
+        self.el_mchp_size_rec = size_mchp_system(self.el) * ureg.kW
+        self.hl_mchp_size_rec = size_mchp_system(self.hl) * ureg.Btu
 
 
 class TES:
