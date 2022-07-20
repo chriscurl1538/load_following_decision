@@ -11,6 +11,34 @@ from lfd_package.modules import thermal_storage as storage
 from lfd_package.modules import aux_boiler as boiler, chp as cogen
 
 
+def plot_electrical_demand_curve(demand=None):
+    y1 = demand.el_demand_curve_array[1]
+    x1 = demand.el_demand_curve_array[0]
+
+    # Set up plot
+    plt.plot(x1, y1)
+    plt.title('Electrical Demand Curve')
+    plt.ylabel('Demand (kWh)')
+    plt.yticks(np.arange(0, y1.max(), y1.max()/10))
+    plt.xlabel('Percent Days')
+
+    plt.show()
+
+
+def plot_thermal_demand_curve(demand=None):
+    y2 = demand.hl_demand_curve_array[1]
+    x2 = demand.hl_demand_curve_array[0]
+
+    # Set up plot
+    plt.plot(x2, y2)
+    plt.title('Thermal Demand Curve')
+    plt.ylabel('Demand (Btu)')
+    plt.yticks(np.arange(0, y2.max(), y2.max()/10))
+    plt.xlabel('Percent Days')
+
+    plt.show()
+
+
 """
 ELF Plots
 """
