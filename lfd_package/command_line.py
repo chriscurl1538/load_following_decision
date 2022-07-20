@@ -177,12 +177,15 @@ def main():
 
     # Table: Display system property inputs
     head_equipment = ["", "mCHP", "TES", "Aux Boiler"]
+    hpr_rec = demand.hl_mchp_size_rec.to(ureg.kWh) / (demand.el_mchp_size_rec * 1 * ureg.hours)
 
     system_properties = [
         ["Efficiency (Full Load)", "{} %".format(chp.pl[-1, 1] * 100), "N/A", "{} %".format(ab.eff * 100)],
         ["Turn-Down Ratio", chp.td, "N/A", ab.td],
-        ["Size", chp.cap, tes.cap, ab.cap],
-        ["Heat to Power Ratio", chp.hp, "N/A", "N/A"]
+        ["Size Actual", chp.cap, tes.cap, ab.cap],
+        ["Size Recommended", round(demand.el_mchp_size_rec, 2), "", ""],
+        ["Heat to Power Ratio Actual", chp.hp, "N/A", "N/A"],
+        ["Heat to Power Ratio Recommended", round(hpr_rec, 2), "N/A", "N/A"]
     ]
 
     table_system_properties = tabulate(system_properties, headers=head_equipment, tablefmt="fancy_grid")
@@ -202,6 +205,9 @@ def main():
     print(table_input_data)
 
     # Plots
+    plots.plot_electrical_demand_curve(demand=demand)
+    plots.plot_thermal_demand_curve(demand=demand)
+
     plots.elf_plot_electric(chp=chp, demand=demand)
     plots.elf_plot_thermal(chp=chp, demand=demand, tes=tes, ab=ab)
     plots.elf_plot_tes_soc(chp=chp, demand=demand, tes=tes)
