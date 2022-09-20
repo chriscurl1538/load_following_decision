@@ -44,18 +44,25 @@ def run(args):
         data = yaml.load(f, Loader=Loader)
     f.close()
 
-    part_load_list = []
-    for i in range(30, 110, 10):
-        part_load_list.append([i, data[i]])
-    part_load_array = np.array(part_load_list)
+    part_load_electrical_list = []
+    part_load_thermal_list = []
+    for i in range(50, 125, 25):
+        part_load_electrical_list.append([i, data['Electrical'][i]])
+        part_load_thermal_list.append([i, data['Thermal'][i]])
+    part_load_electrical_array = np.array(part_load_electrical_list)
+    part_load_thermal_array = np.array(part_load_thermal_list)
 
     # Class initialization using CLI arguments
-    chp = classes.CHP(capacity=data['chp_cap'], heat_power=data['chp_heat_power'],
-                      turn_down_ratio=data['chp_turn_down'],
-                      part_load=part_load_array, cost=data['chp_installed_cost'])
+    chp = classes.CHP(capacity=data['chp_cap'], fuel_type=data['fuel_type'], fuel_input_rate=data['fuel_input_rate'],
+                      heat_power=data['chp_heat_power'], turn_down_ratio=data['chp_turn_down'],
+                      part_load_electrical=part_load_electrical_array, part_load_thermal=part_load_thermal_array,
+                      chp_electric_eff=data['chp_electric_eff'], chp_thermal_eff=data['chp_thermal_eff'],
+                      cost=data['chp_installed_cost'])
     ab = classes.AuxBoiler(capacity=data['ab_capacity'], efficiency=data['ab_eff'],
                            turn_down_ratio=data['ab_turn_down'])
-    demand = classes.EnergyDemand(file_name=data['demand_filename'], electric_cost=data['electric_utility_cost'],
+    demand = classes.EnergyDemand(file_name=data['demand_filename'], net_metering_status=data['net_metering_status'],
+                                  grid_efficiency=data['grid_efficiency'],
+                                  electric_cost=data['electric_utility_cost'],
                                   fuel_cost=data['fuel_cost'])
     tes = classes.TES(capacity=data['tes_cap'], start=data['tes_init'], discharge=data['tes_discharge_rate'],
                       cost=data['tes_installed_cost'])

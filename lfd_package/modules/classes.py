@@ -9,7 +9,9 @@ from lfd_package.modules.__init__ import ureg
 
 
 class CHP:
-    def __init__(self, capacity=None, heat_power=None, turn_down_ratio=None, part_load=None, cost=None):
+    def __init__(self, capacity=None, fuel_type=None, fuel_input_rate=None, heat_power=None, turn_down_ratio=None,
+                 part_load_electrical=None, part_load_thermal=None, chp_electric_eff=None, chp_thermal_eff=None,
+                 cost=None):
         """
         This class defines the operating parameters of the mCHP system.
 
@@ -28,9 +30,14 @@ class CHP:
             The incremental installation cost of the CHP system (includes material cost and labor)
         """
         self.cap = capacity * ureg.kW
+        self.fuel_type = fuel_type
+        self.fuel_input_rate = fuel_input_rate
         self.hp = heat_power
         self.td = turn_down_ratio
-        self.pl = part_load
+        self.el_pl = part_load_electrical
+        self.el_th = part_load_thermal
+        self.el_eff = chp_electric_eff
+        self.th_eff = chp_thermal_eff
         self.cost = cost * (1/ureg.kW)
         try:
             chp_min = self.cap / self.td
@@ -64,7 +71,8 @@ class AuxBoiler:
 
 
 class EnergyDemand:
-    def __init__(self, file_name='default_file.csv', electric_cost=None, fuel_cost=None):
+    def __init__(self, file_name='default_file.csv', net_metering_status=None, grid_efficiency=None, electric_cost=None,
+                 fuel_cost=None):
         """
         This class defines the electricity and heating demand of a mid-
         rise apartment building.
@@ -96,8 +104,13 @@ class EnergyDemand:
         heating_demand_hourly = heating_demand_df.to_numpy()
 
         # Energy Costs
+        self.net_metering_status = eval(net_metering_status)
+        self.grid_efficiency = grid_efficiency
         self.el_cost = electric_cost * (1/ureg.kWh)
         self.fuel_cost = fuel_cost * (1/ureg.megaBtu)
+
+        # Quick check that net_metering_status is boolean
+        isinstance(self.net_metering_status, bool)
 
         def convert_numpy_to_float(array=None):
             float_list = []
@@ -120,31 +133,6 @@ class EnergyDemand:
 
         self.annual_el = sum_annual_demand(array=self.el)
         self.annual_hl = sum_annual_demand(array=self.hl)
-
-        def create_demand_curve_array(array=None):
-            assert array.ndim == 1
-            total_days = len(array) / 24
-            reverse_sort_array = np.sort(array.magnitude, axis=0)
-            sorted_demand_array = reverse_sort_array[::-1]
-            percent_days = []
-            for i, k in enumerate(array):
-                percent = (i / 24) / total_days
-                percent_days.append(percent)
-            percent_days_array = np.array(percent_days)
-            return percent_days_array, sorted_demand_array
-
-        self.el_demand_curve_array = create_demand_curve_array(self.el)
-        self.hl_demand_curve_array = create_demand_curve_array(self.hl)
-
-        def size_mchp_system(array=None):
-            assert array.ndim == 1
-            percent_days_array, sorted_demand_array = create_demand_curve_array(array=array)
-            prod_array = np.multiply(percent_days_array, sorted_demand_array)
-            max_value = np.amax(prod_array)
-            return max_value
-
-        self.el_mchp_size_rec = size_mchp_system(self.el) * ureg.kW
-        self.hl_mchp_size_rec = size_mchp_system(self.hl) * ureg.Btu
 
 
 class TES:

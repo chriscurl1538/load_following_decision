@@ -3,13 +3,15 @@ Module Description:
     Contains functions needed to calculate the demand, electricity cost, and fuel use of
     the micro-chp unit for both electrical load following (ELF) and thermal load following
     (TLF) cases.
+TODO: Incorporate net metering status operation condition
 """
 
 import numpy as np
+from lfd_package.modules import chp_tes_sizing as sizing
 from lfd_package.modules.__init__ import ureg
 
 
-def calc_hourly_efficiency(chp=None, demand=None, load_following_type=None):
+def calc_avg_efficiency(chp=None, demand=None, load_following_type=None):
     """
     Calculates the hourly mCHP efficiency using part-load electrical efficiency data.
 
@@ -35,8 +37,6 @@ def calc_hourly_efficiency(chp=None, demand=None, load_following_type=None):
         # Convert chp max output to kWh using data resolution
         data_res = 1 * ureg.hour
         chp_max_kwh = chp.cap * data_res
-        chp_pl = chp.pl
-        eff_list = []
 
         if load_following_type is "ELF":
             chp_electric_gen_hourly = elf_calc_electricity_bought_and_generated(chp=chp, demand=demand)[1]
@@ -45,20 +45,33 @@ def calc_hourly_efficiency(chp=None, demand=None, load_following_type=None):
         else:
             raise Exception("Error in calc_hourly_efficiency function")
 
+        # Function to calculate the exponential with constants a and b
+        def exponential(x, a, b):
+            return a * np.exp(b * x)
+
+        # Desired coefficients for equation
+        pars_el = sizing.create_efficiency_equation_coefficients(chp=chp)[0]
+        pars_th = sizing.create_efficiency_equation_coefficients(chp=chp)[1]
+
+        # Efficiency lists
+        el_eff_list = []
+        th_eff_list = []
+
         for i, k in enumerate(chp_electric_gen_hourly):
             gen = k
-            partload_actual = gen/chp_max_kwh
+            part_load_actual = gen/chp_max_kwh
 
-            # Grabs the first column and calculates difference
-            part_loads = chp_pl[:, 0]
-            desired_shape = np.shape(part_loads)
-            actual_load_array = np.full(shape=desired_shape, fill_value=partload_actual.magnitude)
-            diff = np.abs(part_loads, actual_load_array)
-            idx = diff.argmin()
+            # Calculate efficiencies
+            el_eff_item = exponential(part_load_actual, pars_el[0], pars_el[1])
+            th_eff_item = exponential(part_load_actual, pars_th[0], pars_th[1])
 
-            part_effs = chp_pl[idx, 1]
-            eff_list.append(part_effs)
-        return eff_list
+            el_eff_list.append(el_eff_item)
+            th_eff_list.append(th_eff_item)
+
+        avg_el_eff = sum(el_eff_list) / len(el_eff_list)
+        avg_th_eff = sum(th_eff_list) / len(th_eff_list)
+
+        return avg_el_eff, avg_th_eff
 
 
 def calc_annual_fuel_use_and_costs(chp=None, demand=None, load_following_type=None):
@@ -85,7 +98,8 @@ def calc_annual_fuel_use_and_costs(chp=None, demand=None, load_following_type=No
         annual fuel cost for the mCHP unit
     """
     if chp is not None and demand is not None:
-        efficiency_list = calc_hourly_efficiency(chp=chp, demand=demand, load_following_type=load_following_type)
+        avg_el_eff = calc_avg_efficiency(chp=chp, demand=demand, load_following_type=load_following_type)[0]
+
         if load_following_type is "ELF":
             chp_electric_gen_hourly = elf_calc_electricity_bought_and_generated(chp=chp, demand=demand)[1]
         elif load_following_type is "TLF":
@@ -93,20 +107,15 @@ def calc_annual_fuel_use_and_costs(chp=None, demand=None, load_following_type=No
         else:
             raise Exception("Error in calc_annual_fuel_use_and_costs function")
 
-        fuel_use = []
+        # Calculate fuel use
+        annual_electric_gen_kwh = sum(chp_electric_gen_hourly)
+        annual_fuel_use_kwh = annual_electric_gen_kwh / avg_el_eff
+        annual_fuel_use_btu = annual_fuel_use_kwh.to(ureg.Btu)
 
-        for i, k in enumerate(efficiency_list):
-            if k is not 0:
-                electricity_gen_kwh = chp_electric_gen_hourly[i]
-                fuel_kwh = electricity_gen_kwh / k
-                fuel_btu = fuel_kwh.to(ureg.Btu)
-                fuel_use.append(fuel_btu)
-            else:
-                fuel_use.append(0 * ureg.Btu)
-
-        annual_fuel_use_btu = sum(fuel_use)
+        # Calculate fuel cost
         annual_fuel_use_mmbtu = annual_fuel_use_btu.to(ureg.megaBtu)
         annual_fuel_cost = annual_fuel_use_mmbtu * demand.fuel_cost
+
         return annual_fuel_use_btu, annual_fuel_cost
 
 
@@ -134,7 +143,6 @@ def calc_annual_electric_cost(chp=None, demand=None, load_following_type=None):
         The total annual cost of electricity bought from the local utility
     """
     if demand is not None and chp is not None and load_following_type is not None:
-        electric_rate = demand.el_cost
 
         if load_following_type is "ELF":
             total_bought = sum(elf_calc_electricity_bought_and_generated(chp=chp, demand=demand)[0])
@@ -142,7 +150,7 @@ def calc_annual_electric_cost(chp=None, demand=None, load_following_type=None):
             total_bought = sum(tlf_calc_electricity_bought_and_generated(chp=chp, demand=demand)[0])
         else:
             raise Exception("Error in chp.py function, calc_annual_electric_cost")
-        annual_cost = total_bought * electric_rate
+        annual_cost = total_bought * demand.el_cost
 
         return annual_cost
 

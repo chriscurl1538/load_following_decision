@@ -12,6 +12,7 @@
 chp_cap: 50.0   # kW
 chp_heat_power: 4.0
 chp_turn_down: 3.3
+chp_system_eff: 0.75
 
 # CHP Part Loads and Efficiencies
 30: 0.344
@@ -34,6 +35,8 @@ tes_discharge_rate: 500000.0  # Btu/hr TODO: Implement into model
 tes_init: 500.0   # Btu, initial storage TODO: Implement into model
 
 # Energy Costs
+net_metering_status: False   # must be "True" or "False" (no quotes)
+grid_efficiency: 0.5   # between 0-1
 electric_utility_cost: 0.1331   # $/kWh
 fuel_cost: 3.60  # $/MMBtu
 

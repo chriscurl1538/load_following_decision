@@ -12,6 +12,7 @@
 chp_cap:    # kW
 chp_heat_power:
 chp_turn_down:
+chp_system_eff:
 
 # CHP Part Loads and Efficiencies
 30:
@@ -32,6 +33,8 @@ ab_turn_down:
 tes_cap:   # Btu
 
 # Energy Costs
+net_metering_status:    # must be "True" or "False" (no quotes)
+grid_efficiency:    # between 0-1
 electric_utility_cost:    # $/kWh
 fuel_cost:   # $/MMBtu
 

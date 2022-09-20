@@ -9,19 +9,28 @@
 # TES installed cost sourced from:
 #    https://betterbuildingssolutioncenter.energy.gov/sites/default/files/slides/Thermal%20Energy%20Storage%2C%20The%20Lowest%20Cost%20Storage.pdf
 
-chp_cap: 50.0   # kW
-chp_heat_power: 4.0
-chp_turn_down: 3.3
+# For how to calculate electrical efficiency: https://www.epa.gov/chp/methods-calculating-chp-efficiency#electric
 
-# CHP Part Loads and Efficiencies
-30: 0.344
-40: 0.379
-50: 0.407
-60: 0.420
-70: 0.427
-80: 0.437
-90: 0.449
-100: 0.457
+# CHP System Specs (https://chp.ecatalog.ornl.gov/package/39-PR12-ZC97330)
+chp_cap: 35   # kW
+fuel_type: Natural Gas # HHV of NG is 1089 Btu/ft3
+fuel_input_rate: 0.40 # MMBtu/hr
+chp_electric_eff: 0.299
+chp_thermal_eff: 0.50
+chp_turn_down: 3.3
+chp_heat_power: 1.71
+
+# CHP Electrical Part Loads and Efficiencies (HHV)
+Electrical:
+  50: 0.239
+  75: 0.272
+  100: 0.299
+
+# CHP Thermal Part Loads and Efficiencies (HHV)
+Thermal:
+  50: 0.520
+  75: 0.515
+  100: 0.500
 
 # Aux Boiler Information
 ab_capacity: 800000.0  # Btu/hr
@@ -32,6 +41,8 @@ ab_turn_down: 10.0
 tes_cap: 1000000.0  # Btu
 
 # Energy Costs
+net_metering_status: False   # must be "True" or "False" (no quotes)
+grid_efficiency: 0.5   # between 0-1
 electric_utility_cost: 0.1331   # $/kWh
 fuel_cost: 3.60  # $/MMBtu
 

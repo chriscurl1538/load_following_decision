@@ -8,12 +8,12 @@ TODO: Change plots to bar graphs for debugging
 
 import matplotlib.pyplot as plt, numpy as np
 from lfd_package.modules import thermal_storage as storage
-from lfd_package.modules import aux_boiler as boiler, chp as cogen
+from lfd_package.modules import aux_boiler as boiler, chp as cogen, chp_tes_sizing as sizing
 
 
 def plot_electrical_demand_curve(demand=None):
-    y1 = demand.el_demand_curve_array[1]
-    x1 = demand.el_demand_curve_array[0]
+    y1 = sizing.create_demand_curve_array(demand.el)[1]
+    x1 = sizing.create_demand_curve_array(demand.el)[0]
 
     # Set up plot
     plt.plot(x1, y1)
@@ -26,8 +26,8 @@ def plot_electrical_demand_curve(demand=None):
 
 
 def plot_thermal_demand_curve(demand=None):
-    y2 = demand.hl_demand_curve_array[1]
-    x2 = demand.hl_demand_curve_array[0]
+    y2 = sizing.create_demand_curve_array(demand.hl)[1]
+    x2 = sizing.create_demand_curve_array(demand.hl)[0]
 
     # Set up plot
     plt.plot(x2, y2)
