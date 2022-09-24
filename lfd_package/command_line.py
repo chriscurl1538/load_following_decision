@@ -2,9 +2,13 @@
 Module Description:
     Command line interface - imports .yaml file and uses equipment operating parameters
     from the file to initialize the class variables.
+TODO: Create tests for all modules. Check units, value ranges (negatives, zeros)
+TODO: Update docstrings with correct units, dtypes, list and array sizes.
+    List which functions the outputs are used in and which functions data inputs are pulled from
+TODO: Check through for errors in this module (such as called variables, functions that don't exist anymore)
 """
 
-from lfd_package.modules import aux_boiler as boiler, classes, chp as cogen, plots
+from lfd_package.modules import aux_boiler as boiler, classes, chp as cogen, chp_tes_sizing as sizing, plots
 import pathlib, argparse, yaml, numpy as np
 from tabulate import tabulate
 from lfd_package.modules.__init__ import ureg
@@ -54,9 +58,9 @@ def run(args):
 
     # Class initialization using CLI arguments
     chp = classes.CHP(capacity=data['chp_cap'], fuel_type=data['fuel_type'], fuel_input_rate=data['fuel_input_rate'],
-                      heat_power=data['chp_heat_power'], turn_down_ratio=data['chp_turn_down'],
-                      part_load_electrical=part_load_electrical_array, part_load_thermal=part_load_thermal_array,
-                      chp_electric_eff=data['chp_electric_eff'], chp_thermal_eff=data['chp_thermal_eff'],
+                      turn_down_ratio=data['chp_turn_down'], part_load_electrical=part_load_electrical_array,
+                      part_load_thermal=part_load_thermal_array, chp_electric_eff=data['Electrical']['100'],
+                      chp_thermal_eff=data['Thermal']['100'], percent_availability=data['percent_availability'],
                       cost=data['chp_installed_cost'])
     ab = classes.AuxBoiler(capacity=data['ab_capacity'], efficiency=data['ab_eff'],
                            turn_down_ratio=data['ab_turn_down'])
@@ -184,15 +188,16 @@ def main():
 
     # Table: Display system property inputs
     head_equipment = ["", "mCHP", "TES", "Aux Boiler"]
-    hpr_rec = demand.hl_mchp_size_rec.to(ureg.kWh) / (demand.el_mchp_size_rec * 1 * ureg.hours)
+    chp_size_rec_tlf = sizing.size_chp(load_following_type='TLF', demand=demand, ab=ab)
+    chp_size_rec_elf = sizing.size_chp(load_following_type='ELF', demand=demand, ab=ab)
 
     system_properties = [
-        ["Efficiency (Full Load)", "{} %".format(chp.pl[-1, 1] * 100), "N/A", "{} %".format(ab.eff * 100)],
+        ["Thermal Efficiency (Full Load)", "{} %".format(chp.th_eff * 100), "N/A", "{} %".format(ab.eff * 100)],
+        ["Electrical Efficiency (Full Load)", "{} %".format(chp.el_eff * 100), "N/A", "N/A"],
         ["Turn-Down Ratio", chp.td, "N/A", ab.td],
         ["Size Actual", chp.cap, tes.cap, ab.cap],
-        ["Size Recommended", round(demand.el_mchp_size_rec, 2), "", ""],
-        ["Heat to Power Ratio Actual", chp.hp, "N/A", "N/A"],
-        ["Heat to Power Ratio Recommended", round(hpr_rec, 2), "N/A", "N/A"]
+        ["ELF Size Recommended", round(chp_size_rec_elf, 2), "", ""],
+        ["TLF Size Recommended", round(chp_size_rec_tlf, 2), "", ""]
     ]
 
     table_system_properties = tabulate(system_properties, headers=head_equipment, tablefmt="fancy_grid")

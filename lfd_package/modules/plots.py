@@ -84,7 +84,7 @@ def elf_plot_electric(chp=None, demand=None):
 def elf_plot_thermal(chp=None, demand=None, tes=None, ab=None):
     data1 = cogen.elf_calc_hourly_heat_generated(chp=chp, demand=demand)
     data2 = storage.calc_tes_heat_flow_and_soc(chp=chp, demand=demand, tes=tes, load_following_type="ELF")[0]
-    data3 = boiler.calc_aux_boiler_output(chp=chp, demand=demand, tes=tes, ab=ab, load_following_type="ELF")
+    data3 = boiler.calc_aux_boiler_output_rate(chp=chp, demand=demand, tes=tes, ab=ab, load_following_type="ELF")
 
     # Convert to base units before creating numpy array for plotting
     y0 = np.array([dem.to_base_units().magnitude for dem in demand.hl])
@@ -195,7 +195,7 @@ def tlf_plot_electric(chp=None, demand=None):
 def tlf_plot_thermal(chp=None, demand=None, tes=None, ab=None):
     data1 = cogen.tlf_calc_hourly_heat_generated(chp=chp, demand=demand)
     data2 = storage.calc_tes_heat_flow_and_soc(chp=chp, demand=demand, tes=tes, load_following_type="TLF")[0]
-    data3 = boiler.calc_aux_boiler_output(chp=chp, demand=demand, tes=tes, ab=ab, load_following_type="TLF")
+    data3 = boiler.calc_aux_boiler_output_rate(chp=chp, demand=demand, tes=tes, ab=ab, load_following_type="TLF")
 
     # Convert to base units before creating numpy array for plotting
     y0 = np.array([dem.to_base_units().magnitude for dem in demand.hl])
