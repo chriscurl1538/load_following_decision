@@ -2,7 +2,6 @@
 Module description:
     This program tests the classes.py file
 """
-import numpy
 import numpy as np
 import pint
 
@@ -61,7 +60,7 @@ def test_energy_demand_class(class_info):
     assert 0 < demand.annual_hl.magnitude
 
 
-def test_chp_class(class_info, chp_pl):
+def test_chp_class(class_info):
     # Assign class values
     chp = class_info[1]
 
@@ -70,26 +69,25 @@ def test_chp_class(class_info, chp_pl):
     assert isinstance(chp, classes.CHP)
 
     # Check data types
-    assert isinstance(chp.cap, pint.Quantity)
     assert isinstance(chp.fuel_type, str)
     assert isinstance(chp.fuel_input_rate, pint.Quantity)
-    assert isinstance(chp.el_pl_eff, numpy.ndarray)
-    assert isinstance(chp.th_pl_eff, numpy.ndarray)
+    assert isinstance(chp.el_pl_eff, np.ndarray)
+    assert isinstance(chp.th_pl_eff, np.ndarray)
     assert isinstance(chp.el_nominal_eff, float or int)
     assert isinstance(chp.th_nominal_eff, float or int)
-    assert isinstance(chp.system_cost, float or int)
+    assert isinstance(chp.incremental_cost, pint.Quantity)
     assert isinstance(chp.min_pl, float or int)
     assert isinstance(chp.available_hours, pint.Quantity)
 
     # Check Pint units
-    assert chp.cap.units == ureg.kW
     assert chp.fuel_input_rate.units == ureg.Btu / ureg.hour
     assert chp.available_hours.units == ureg.hour
+    assert chp.incremental_cost.units == 1/ureg.kW
 
     # Check array sizes
-    assert chp.el_pl_eff.shape[0] == 2  # ndarray.shape[0] checks number of cols
+    assert len(chp.el_pl_eff) == 3  # checks number of rows
     assert chp.el_pl_eff.size == 6  # ndarray.size checks number of items in array
-    assert chp.th_pl_eff.shape[0] == 2
+    assert len(chp.th_pl_eff) == 3
     assert chp.th_pl_eff.size == 6
 
     # Check value ranges
@@ -115,12 +113,13 @@ def test_tes_class(class_info):
     assert isinstance(tes.cap, pint.Quantity)
     assert isinstance(tes.start, pint.Quantity)
     assert isinstance(tes.discharge, pint.Quantity)
-    assert isinstance(tes.system_cost, float or int)
+    assert isinstance(tes.system_cost, pint.Quantity)
 
     # Check Pint units
     assert tes.cap.units == ureg.Btu
     assert tes.start.units == ureg.Btu
     assert tes.discharge.units == (ureg.Btu / ureg.hour)
+    assert tes.system_cost.units == ''
 
     # Check value ranges
     assert 0 < tes.cap.magnitude

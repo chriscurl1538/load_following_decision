@@ -33,11 +33,13 @@ def create_demand_curve_array(array=None):
     if array is not None:
         assert array.ndim == 1
         total_days = len(array) / 24
-        reverse_sort_array = np.sort(array.magnitude, axis=0)
+        reverse_sort_array = np.sort(array, axis=0)
         sorted_demand_array = reverse_sort_array[::-1]
         percent_days = []
         for i, k in enumerate(array):
             percent = (i+1 / 24) / total_days
+            if 1 < percent:
+                percent = 1
             percent_days.append(percent)
         percent_days_array = np.array(percent_days)
         return percent_days_array, sorted_demand_array
@@ -51,7 +53,7 @@ def electrical_output_to_fuel_consumption(electrical_output=None):
     The data used for the fit are derived from the CHP TAP's eCatalog. The
     R^2 value of the fit is 0.9641. Link to eCatalog: https://chp.ecatalog.ornl.gov
 
-    Used in the calc_min_pes_size function
+    Used in the calc_min_pes_chp_size function
 
     Parameters
     ----------
@@ -66,6 +68,7 @@ def electrical_output_to_fuel_consumption(electrical_output=None):
     if electrical_output is not None:
         a = 3.309
         b = 20.525
+        assert electrical_output.units == ureg.kW
         fuel_consumption_kw = (a * electrical_output.magnitude + b) * ureg.kW
         return fuel_consumption_kw
 
@@ -79,7 +82,7 @@ def electrical_output_to_thermal_output(electrical_output=None):
     eCatalog. The R^2 value of the fit is 0.6016. Link to eCatalog:
     https://chp.ecatalog.ornl.gov
 
-    Used in the calc_min_pes_size function.
+    Used in the calc_min_pes_chp_size function.
     Used in the calc_avg_efficiency, elf_calc_hourly_heat_generated, and
     tlf_calc_hourly_heat_generated functions in the chp.py module
 
@@ -103,12 +106,12 @@ def electrical_output_to_thermal_output(electrical_output=None):
 
 def thermal_output_to_electrical_output(thermal_output=None):
     """
-    TODO: There is more than one solution!
+    TODO: There is more than one solution! Perhaps replace polynomial fit with linear fit?
     TODO: Docstring updated 9/24/2022
     Calculates the approximate CHP electrical output for a given thermal output.
-    The constants are from a second order polynomial fit of CHP data (<100kW)
+    The constants are from a linear fit of CHP data (<100kW)
     in excel. The data is derived from the CHP TAP eCatalog. The R^2 value of
-    the fit is 0.0.6016. eCatalog link: https://chp.ecatalog.ornl.gov
+    the fit is 0.5232. eCatalog link: https://chp.ecatalog.ornl.gov
 
     Used in the tlf_calc_electricity_bought_and_generated function in the
     chp.py module
@@ -125,27 +128,20 @@ def thermal_output_to_electrical_output(thermal_output=None):
     """
     if thermal_output is not None:
         assert thermal_output.units == ureg.kW  # TODO: Might cause error
-        a = -0.0216
-        b = 3.6225
-        c = 5.0367
+        a = 1.3428
+        b = 51.658
 
         y = symbols('y')
-        expr = a * y**2 + b * y + c - thermal_output.magnitude
+        expr = a * y + b - thermal_output.magnitude
         electrical_output_kw = solve(expr) * ureg.kW
-
-        # if len(electrical_output_kw) == 1:
-        #     return electrical_output_kw[0]
-        # else:
-        #     raise Exception('Error: More than one solution in sizing module, function
-        #     thermal_output_to_electrical_output')
-        return electrical_output_kw[0]
+        return electrical_output_kw
 
 
 def size_chp(load_following_type=None, demand=None, ab=None):
     """
     TODO: Docstring updated 9/24/2022
     Sizes the CHP system using either the max_rect_chp_size function or the
-    calc_min_pes_size function as needed depending on operating strategy (load
+    calc_min_pes_chp_size function as needed depending on operating strategy (load
     following type) and/or presence of net metering.
 
     TODO: Where is this used?
@@ -175,6 +171,7 @@ def size_chp(load_following_type=None, demand=None, ab=None):
             chp_size = calc_min_pes_chp_size(demand=demand, ab=ab)
         else:
             raise Exception("Error in size_chp function in module chp_tes_sizing.py")
+        chp_size.to(ureg.kW)
         return chp_size
 
 

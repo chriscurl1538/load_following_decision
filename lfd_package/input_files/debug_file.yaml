@@ -10,7 +10,10 @@
 chp_cap: 35   # kW
 fuel_type: "Natural Gas" # HHV of NG is 1089 Btu/ft3
 fuel_input_rate: 400000 # Btu/hr
+chp_electric_eff: 0.299
+chp_thermal_eff: 0.50
 chp_turn_down: 3.3
+chp_heat_power: 1.71
 percent_availability: 0.90
 
 # CHP Electrical Part Loads and Efficiencies (HHV)

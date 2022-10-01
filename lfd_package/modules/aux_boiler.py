@@ -41,12 +41,12 @@ def calc_aux_boiler_output_rate(chp=None, demand=None, tes=None, ab=None, load_f
     """
     if chp is not None and demand is not None and tes is not None and ab is not None:
         # Pull chp heat and tes heat data
-        tes_heat_rate_list = storage.calc_tes_heat_flow_and_soc(chp=chp, demand=demand, tes=tes,
+        tes_heat_rate_list = storage.calc_tes_heat_flow_and_soc(chp=chp, demand=demand, tes=tes, ab=ab,
                                                                 load_following_type=load_following_type)[0]
         if load_following_type is "ELF":
-            chp_heat_hourly = cogen.elf_calc_hourly_heat_generated(chp=chp, demand=demand)
+            chp_heat_hourly = cogen.elf_calc_hourly_heat_generated(chp=chp, demand=demand, ab=ab)
         elif load_following_type is "TLF":
-            chp_heat_hourly = cogen.tlf_calc_hourly_heat_generated(chp=chp, demand=demand)
+            chp_heat_hourly = cogen.tlf_calc_hourly_heat_generated(chp=chp, demand=demand, ab=ab)
         else:
             raise Exception("Error in chp.py function, calc_annual_electric_cost")
 
@@ -99,9 +99,10 @@ def calc_aux_boiler_output_rate(chp=None, demand=None, tes=None, ab=None, load_f
                 raise Exception('Error in aux_boiler.py function calc_aux_boiler_output_rate()')
 
         # Check that hourly heat demand is within aux boiler operating parameters
+        min_output = ab.min_pl * ab.cap
         for index, rate in enumerate(ab_heat_rate_hourly):
-            if 0 < rate.magnitude <= ab.min.magnitude:
-                ab_heat_rate_hourly[index] = ab.min
+            if 0 < rate.magnitude <= min_output.magnitude:
+                ab_heat_rate_hourly[index] = min_output
             elif ab.cap < rate:
                 raise Exception('ALERT: Boiler size is insufficient to meet heating demand! Output is short by '
                                 '{} at hour number ()'.format(abs(rate - ab.cap)), index)

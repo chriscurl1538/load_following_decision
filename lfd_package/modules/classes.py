@@ -76,7 +76,7 @@ class EnergyDemand:
 
 
 class CHP:
-    def __init__(self, capacity=None, fuel_type=None, fuel_input_rate=None, turn_down_ratio=None,
+    def __init__(self, fuel_type=None, fuel_input_rate=None, turn_down_ratio=None,
                  part_load_electrical=None, part_load_thermal=None, chp_electric_eff=None, chp_thermal_eff=None,
                  percent_availability=None, cost=None):
         """
@@ -85,8 +85,6 @@ class CHP:
 
         Parameters
         ----------
-        capacity: Quantity (float)
-            Size of the CHP system in kW (kilowatts)
         fuel_type: string
             Type of fuel used by the CHP system
         fuel_input_rate: Quantity (float)
@@ -118,19 +116,18 @@ class CHP:
             to a dimensionless quantity representing the installed cost of the system
             before being stored within the class. TODO: Is this material + installation labor?
         """
-        self.cap = capacity * ureg.kW
         self.fuel_type = fuel_type
         self.fuel_input_rate = fuel_input_rate * (ureg.Btu / ureg.hour)
         self.el_pl_eff = part_load_electrical
         self.th_pl_eff = part_load_thermal
         self.el_nominal_eff = chp_electric_eff
         self.th_nominal_eff = chp_thermal_eff
-        self.system_cost = cost * (1/ureg.kW) * self.cap
+        self.incremental_cost = cost * 1/ureg.kW
         try:
             chp_min_pl = 1 / turn_down_ratio
         except ZeroDivisionError:
             chp_min_pl = 0
-        self.min_pl = chp_min_pl    # TODO: Renamed - check for errors due to name and calculation fix
+        self.min_pl = chp_min_pl
         self.available_hours = percent_availability * Q_(8760, ureg.hour)
 
 
@@ -158,7 +155,7 @@ class TES:
         self.cap = capacity * ureg.Btu
         self.start = start * ureg.Btu
         self.discharge = discharge * ureg('Btu/hr')
-        self.system_cost = cost * (1/ureg.kWh) * self.cap.to('kWh')
+        self.incremental_cost = cost * (1/ureg.kWh)
 
 
 class AuxBoiler:
@@ -183,7 +180,7 @@ class AuxBoiler:
         self.cap = capacity * (ureg.Btu / ureg.hour)
         self.eff = efficiency
         try:
-            ab_min_pl = 1 / turn_down_ratio  # TODO: Renamed - check for errors due to name and calculation fix
+            ab_min_pl = 1 / turn_down_ratio
         except ZeroDivisionError:
             ab_min_pl = 0
         self.min_pl = ab_min_pl
