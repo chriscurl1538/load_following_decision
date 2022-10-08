@@ -4,8 +4,8 @@ Module description:
 """
 
 import numpy as np
-from sympy import symbols, solve
-from lfd_package.modules.__init__ import ureg
+from lfd_package.modules.__init__ import ureg, Q_
+from lfd_package.modules import thermal_storage as storage
 
 
 def create_demand_curve_array(array=None):
@@ -106,7 +106,6 @@ def electrical_output_to_thermal_output(electrical_output=None):
 
 def thermal_output_to_electrical_output(thermal_output=None):
     """
-    TODO: There is more than one solution! Perhaps replace polynomial fit with linear fit?
     TODO: Docstring updated 9/24/2022
     Calculates the approximate CHP electrical output for a given thermal output.
     The constants are from a linear fit of CHP data (<100kW)
@@ -127,14 +126,14 @@ def thermal_output_to_electrical_output(thermal_output=None):
         Approximate electrical output of CHP in units of kW
     """
     if thermal_output is not None:
-        assert thermal_output.units == ureg.kW  # TODO: Might cause error
+        assert thermal_output.units == ureg.kW
         a = 1.3428
         b = 51.658
-
-        y = symbols('y')
-        expr = a * y + b - thermal_output.magnitude
-        electrical_output_kw = solve(expr) * ureg.kW
-        return electrical_output_kw
+        electrical_output_kw = ((thermal_output.magnitude - b) / a) * ureg.kW
+        if electrical_output_kw.magnitude < 0:
+            return Q_(0, ureg.kW)
+        else:
+            return electrical_output_kw
 
 
 def size_chp(load_following_type=None, demand=None, ab=None):
@@ -162,7 +161,7 @@ def size_chp(load_following_type=None, demand=None, ab=None):
     chp_size: Quantity (float)
         Recommended size of CHP system in units of kW
     """
-    if load_following_type is not None and demand is not None and ab is not None:
+    if any(elem is None for elem in [demand, ab, load_following_type]) is False:
         if demand.net_metering_status is True:
             chp_size = calc_min_pes_chp_size(demand=demand, ab=ab)
         elif load_following_type == "ELF" and demand.net_metering_status is False:
@@ -206,6 +205,8 @@ def calc_max_rect_chp_size(array=None):
 def calc_min_pes_chp_size(demand=None, ab=None):
     """
     TODO: Docstring updated 9/24/2022
+    TODO: Probable calculation error causing over-sizing
+    TODO: Changed calculation from using min PES to using max PES. Unsure if correct
     Recommends a CHP system size using the minimum Primary Energy Savings
     (PES) method.
 
@@ -220,11 +221,11 @@ def calc_min_pes_chp_size(demand=None, ab=None):
 
     Returns
     -------
-    min_pes_size: Quantity (float)
+    max_pes_size: Quantity (float)
         Recommended size of CHP system in units of kW electrical
     """
     # TODO: Account for no net metering + TLF operation
-    if demand is not None and ab is not None:
+    if any(elem is None for elem in [demand, ab]) is False:
         chp_size_list = list(range(10, 105, 5)) * ureg.kW   # TODO: Check that units are attached to items in list
 
         grid_eff = demand.grid_efficiency
@@ -232,8 +233,8 @@ def calc_min_pes_chp_size(demand=None, ab=None):
         pes_list = []
 
         for size in chp_size_list:
-            max_fuel_consumption = electrical_output_to_fuel_consumption(size)
-            max_thermal_output = electrical_output_to_thermal_output(size)
+            max_fuel_consumption = electrical_output_to_fuel_consumption(electrical_output=size)
+            max_thermal_output = electrical_output_to_thermal_output(electrical_output=size)
             electrical_eff = size/max_fuel_consumption
             thermal_eff = max_thermal_output/max_fuel_consumption
 
@@ -244,11 +245,81 @@ def calc_min_pes_chp_size(demand=None, ab=None):
             size_list.append(size)
             pes_list.append(pes)
 
-        min_pes_value = min(pes_list)
-        min_pes_index = pes_list.index(min_pes_value)
-        min_pes_size = size_list[min_pes_index]
-        return min_pes_size
+        max_pes_value = max(pes_list)
+        max_pes_index = pes_list.index(max_pes_value)
+        max_pes_size = size_list[max_pes_index]
+        return max_pes_size
 
 
-# def size_tes():
-#     return None
+def size_tes(demand=None, chp=None, ab=None, load_following_type=None):
+    """
+    TODO: Size is calculated to be zero. Why?
+    Requires hourly heat demand data, hourly CHP heating demand coverage, and hourly heat generation by CHP.
+
+    Sizes TES by maximizing the system efficiency. Uses uncovered heat demand values and excess chp heat
+    generation values. Chooses the smallest of these two values for each day and creates a list of those
+    minimums. Then chooses the max value in that list as the recommended size.
+
+    Returns
+    -------
+
+    """
+    # Create empty lists
+    uncovered_heat_demand_hourly = []
+    daily_uncovered_heat_btu_list = []
+    excess_chp_heat_gen_hourly = []
+    daily_excess_chp_heat_btu_list = []
+    list_comparison_min_values = []
+
+    # For unit management in pint
+    hour_unit = Q_(1, ureg.hour)
+
+    # Pull needed data
+    hourly_excess_and_deficit_list = storage.calc_excess_and_deficit_chp_heat_gen(chp=chp, demand=demand, ab=ab,
+                                                                        load_following_type=load_following_type)
+    assert isinstance(hourly_excess_and_deficit_list, list)
+
+    # Separate data into excess generation list and uncovered demand list
+    for index, element in enumerate(hourly_excess_and_deficit_list):
+        if element.magnitude <= 0:
+            uncovered_heat_demand_hourly.append(Q_(abs(element.magnitude), element.units))
+            excess_chp_heat_gen_hourly.append(Q_(0, ureg.Btu / ureg.hour))
+        elif 0 < element.magnitude:
+            uncovered_heat_demand_hourly.append(Q_(0, ureg.Btu / ureg.hour))
+            excess_chp_heat_gen_hourly.append(Q_(abs(element.magnitude), element.units))
+        else:
+            raise Exception('Error in chp_tes_sizing.py function, size_tes()')
+
+    # Turn hourly lists into daily sums
+    assert len(uncovered_heat_demand_hourly) == len(excess_chp_heat_gen_hourly)
+    for index in range(24, len(uncovered_heat_demand_hourly) + 1, 24):
+        daily_uncovered_heat_btu_hour = sum(uncovered_heat_demand_hourly[(index - 24):index])
+        daily_uncovered_heat_btu = (daily_uncovered_heat_btu_hour * hour_unit).to(ureg.Btu)
+        daily_uncovered_heat_btu_list.append(daily_uncovered_heat_btu)
+
+        daily_excess_heat_btu_hour = sum(excess_chp_heat_gen_hourly[(index - 24):index])
+        daily_excess_heat_btu = (daily_excess_heat_btu_hour * hour_unit).to(ureg.Btu)
+        daily_excess_chp_heat_btu_list.append(daily_excess_heat_btu)
+
+    # Compare the two lists and pick the min for each day
+    assert len(daily_excess_chp_heat_btu_list) == len(daily_uncovered_heat_btu_list)
+    for index in range(len(daily_excess_chp_heat_btu_list)):
+        if daily_excess_chp_heat_btu_list[index] <= daily_uncovered_heat_btu_list[index]:
+            list_comparison_min_values.append(daily_excess_chp_heat_btu_list[index])
+        elif daily_uncovered_heat_btu_list[index] < daily_excess_chp_heat_btu_list[index]:
+            list_comparison_min_values.append(daily_uncovered_heat_btu_list[index])
+        else:
+            return Exception('Error in chp_tes_sizing.py function, size_tes()')
+
+    assert len(list_comparison_min_values) == len(daily_excess_chp_heat_btu_list)
+
+    # Search the resulting list of min values for the maximum, aka the TES size
+    tes_size_btu = max(list_comparison_min_values)
+    assert list_comparison_min_values[0].units == ureg.Btu
+    assert tes_size_btu.units == ureg.Btu
+
+    # TODO: Handle case where TES size is zero
+    if 0 < tes_size_btu.magnitude:
+        return tes_size_btu
+    else:
+        raise Exception('TES is not suitable (recommended size is 0)')

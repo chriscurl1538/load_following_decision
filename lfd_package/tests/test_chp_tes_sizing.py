@@ -21,10 +21,10 @@ def test_create_demand_curve_array(class_info):
     assert isinstance(func_hl[1], pint.Quantity)
 
     # Check array sizes
-    assert len(func_el[0]) == 8760
-    assert len(func_el[1]) == 8760
-    assert len(func_hl[0]) == 8760
-    assert len(func_hl[1]) == 8760
+    assert len(func_el[0]) == len(demand.el)
+    assert len(func_el[1]) == len(demand.el)
+    assert len(func_hl[0]) == len(demand.hl)
+    assert len(func_hl[1]) == len(demand.hl)
 
     # Check value ranges and pint units
     for index, element in enumerate(func_el[0]):
@@ -131,5 +131,26 @@ def test_calc_min_pes_chp_size(class_info):
     # Check Pint units
     assert func.units == ureg.kW
 
-    # Check value ranges TODO: Add maximum size value
+    # Check value ranges TODO: Add upper limit on CHP size
     assert 0 <= func.magnitude
+
+
+def test_size_tes(class_info):
+    demand = class_info[0]
+    chp = class_info[1]
+    ab = class_info[3]
+    func_elf = sizing.size_tes(demand=demand, chp=chp, ab=ab, load_following_type='ELF')
+    func_tlf = sizing.size_tes(demand=demand, chp=chp, ab=ab, load_following_type='TLF')
+
+    # Check data types
+    assert isinstance(func_elf, pint.Quantity)
+    assert isinstance(func_tlf, pint.Quantity)
+
+    # Check pint units
+    assert func_elf.units == ureg.Btu
+    assert func_tlf.units == ureg.Btu
+
+    # Check value ranges TODO: Add upper limit on TES size
+    assert 0 <= func_elf.magnitude
+    assert 0 <= func_tlf.magnitude
+

@@ -191,9 +191,9 @@ def main():
     chp_size_elf = sizing.size_chp(load_following_type='ELF', demand=demand, ab=ab)
 
     system_properties = [
-        ["Thermal Efficiency (Full Load)", "{} %".format(chp.th_pl_eff * 100), "N/A", "{} %".format(ab.eff * 100)],
-        ["Electrical Efficiency (Full Load)", "{} %".format(chp.el_pl_eff * 100), "N/A", "N/A"],
-        ["Turn-Down Ratio", chp.td, "N/A", ab.td],
+        ["Thermal Efficiency (Full Load)", "{} %".format(chp.th_nominal_eff * 100), "N/A", "{} %".format(ab.eff * 100)],
+        ["Electrical Efficiency (Full Load)", "{} %".format(chp.el_nominal_eff * 100), "N/A", "N/A"],
+        ["Minimum Load Operation", round(chp.min_pl, 2), "N/A", round(ab.min_pl, 2)],
         ["ELF Equipment Sizes", round(chp_size_elf, 2), tes.cap, ab.cap],
         ["TLF Equipment Sizes", round(chp_size_tlf, 2), tes.cap, ab.cap]
     ]
@@ -207,7 +207,8 @@ def main():
     input_data = [
         ["Fuel Cost [$/MMBtu]", round(demand.fuel_cost, 2)],
         ["Electricity Rate [$/kWh]", round(demand.el_cost, 2)],
-        ["CHP Installed Cost [$]", round(capex_chp.magnitude, 2)],
+        ["CHP Installed Cost, ELF [$]", round(capex_chp_elf.magnitude, 2)],
+        ["CHP Installed Cost, TLF [$]", round(capex_chp_tlf.magnitude, 2)],
         ["TES Installed Cost [$]", round(capex_tes.magnitude, 2)]
     ]
 
@@ -218,13 +219,13 @@ def main():
     plots.plot_electrical_demand_curve(demand=demand)
     plots.plot_thermal_demand_curve(demand=demand)
 
-    plots.elf_plot_electric(chp=chp, demand=demand)
+    plots.elf_plot_electric(chp=chp, demand=demand, ab=ab)
     plots.elf_plot_thermal(chp=chp, demand=demand, tes=tes, ab=ab)
-    plots.elf_plot_tes_soc(chp=chp, demand=demand, tes=tes)
+    plots.elf_plot_tes_soc(chp=chp, demand=demand, tes=tes, ab=ab)
 
-    plots.tlf_plot_electric(chp=chp, demand=demand)
+    plots.tlf_plot_electric(chp=chp, demand=demand, ab=ab)
     plots.tlf_plot_thermal(chp=chp, demand=demand, tes=tes, ab=ab)
-    plots.tlf_plot_tes_soc(chp=chp, demand=demand, tes=tes)
+    plots.tlf_plot_tes_soc(chp=chp, demand=demand, tes=tes, ab=ab)
 
 
 if __name__ == "__main__":
