@@ -11,7 +11,8 @@ from lfd_package.modules.__init__ import ureg
 
 def test_energy_demand_class(class_info):
     """
-    TODO: Test updated 9/24/2022
+    Updated 9/24/2022
+
     Checks that the data types, units, array sizes, and value ranges for this
     function are within expectations
 

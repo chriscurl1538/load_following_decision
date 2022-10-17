@@ -1,7 +1,6 @@
 """
 Module Description:
     Contains  test functions for functions located in the chp.py file
-TODO: Fix infinite running of pytest
 """
 
 import pint

@@ -35,7 +35,7 @@ ab_turn_down: 10.0
 
 # TES Storage Information
 tes_discharge_rate: 500000.0  # Btu/hr TODO: Implement into model
-tes_init: 250000.0   # Btu, initial storage TODO: Implement into model
+tes_init: 250000.0   # Btu, initial storage
 
 # Energy Costs
 net_metering_status: "False"   # must be "True" or "False"

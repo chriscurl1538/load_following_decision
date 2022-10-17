@@ -3,8 +3,6 @@ Module Description:
     Command line interface - imports .yaml file and uses equipment operating parameters
     from the file to initialize the class variables.
 TODO: Create counter for each function to calculate how many times each is called. Can we reduce the calculation times?
-TODO: Update aux_boiler.py docstrings (pint units, dtypes, list and array sizes, modules and functions
-    the outputs are used in
 """
 
 from lfd_package.modules import aux_boiler as boiler, classes, chp as cogen, chp_tes_sizing as sizing, plots

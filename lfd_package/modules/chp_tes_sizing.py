@@ -169,9 +169,8 @@ def size_chp(load_following_type=None, demand=None, ab=None):
         elif load_following_type == "ELF" and demand.net_metering_status is False:
             chp_size = calc_max_rect_chp_size(array=demand.el)
         elif load_following_type == "TLF" and demand.net_metering_status is False:
-            # TODO: Using the PES calculation did not work, very over-sized
             thermal_size = (calc_max_rect_chp_size(array=demand.hl)).to(ureg.kW)
-            chp_size = thermal_output_to_electrical_output(thermal_output=thermal_size)
+            chp_size = thermal_output_to_electrical_output(thermal_output=thermal_size)     # PES would over-size
         else:
             raise Exception("Error in size_chp function in module chp_tes_sizing.py")
 
@@ -262,7 +261,7 @@ def calc_min_pes_chp_size(demand=None, ab=None):
 
 def size_tes(demand=None, chp=None, ab=None, load_following_type=None):
     """
-    TODO: Size is calculated to be zero. Why?
+    TODO: Need to validate calculation, check that its reasonable
     Requires hourly heat demand data, hourly CHP heating demand coverage, and hourly heat generation by CHP.
 
     Sizes TES by maximizing the system efficiency. Uses uncovered heat demand values and excess chp heat

@@ -48,7 +48,6 @@ def class_info():
 # def chp_pl():
 #     import numpy as np
 #
-#     # TODO: UPDATE
 #     part_load_list = [
 #         [30, 0.344],
 #         [40, 0.379],

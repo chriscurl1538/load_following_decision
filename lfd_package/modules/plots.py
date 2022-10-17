@@ -2,8 +2,6 @@
 Module Description:
     This module will create plots of data passed to the program
     as well as relevant data calculated by the program
-
-TODO: Change plots to bar graphs for debugging
 """
 
 import matplotlib.pyplot as plt, numpy as np
