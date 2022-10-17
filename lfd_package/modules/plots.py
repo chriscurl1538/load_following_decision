@@ -45,13 +45,15 @@ ELF Plots
 
 
 def elf_plot_electric(chp=None, demand=None, ab=None):
+    data0 = demand.el
     data1 = cogen.elf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[1]
     data2 = cogen.elf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[0]
 
+
     # Convert to base units before creating numpy array for plotting
-    y0 = np.array([dem.to_base_units().magnitude for dem in demand.el])
-    y1 = np.array([gen.to_base_units().magnitude for gen in data1])
-    y2 = np.array([gen.to_base_units().magnitude for gen in data2])
+    y0 = np.array(data0.magnitude)
+    y1 = np.array([gen.magnitude for gen in data1])
+    y2 = np.array([gen.magnitude for gen in data2])
 
     # Calculate daily sums
     daily_kwh_dem = []
@@ -87,10 +89,10 @@ def elf_plot_thermal(chp=None, demand=None, tes=None, ab=None):
     data3 = boiler.calc_aux_boiler_output_rate(chp=chp, demand=demand, tes=tes, ab=ab, load_following_type="ELF")
 
     # Convert to base units before creating numpy array for plotting
-    y0 = np.array([dem.to_base_units().magnitude for dem in demand.hl])
-    y1 = np.array([gen.to_base_units().magnitude for gen in data1])
-    y2 = np.array([gen.to_base_units().magnitude for gen in data2])
-    y3 = np.array([gen.to_base_units().magnitude for gen in data3])
+    y0 = np.array([dem.magnitude for dem in demand.hl])
+    y1 = np.array([gen.magnitude for gen in data1])
+    y2 = np.array([gen.magnitude for gen in data2])
+    y3 = np.array([gen.magnitude for gen in data3])
 
     # Calculate daily sums
     daily_btu_dem = []
@@ -129,7 +131,7 @@ def elf_plot_tes_soc(chp=None, demand=None, tes=None, ab=None):
     data = storage.calc_tes_heat_flow_and_soc(chp=chp, demand=demand, tes=tes, ab=ab, load_following_type="ELF")[1]
 
     # Convert to base units before creating numpy array for plotting
-    y = np.array([status.to_base_units().magnitude for status in data])
+    y = np.array([status.magnitude for status in data])
 
     # Calculate daily avg for discharge plot
     daily_btu = []
@@ -156,13 +158,14 @@ TLF Plots
 
 
 def tlf_plot_electric(chp=None, demand=None, ab=None):
+    data0 = demand.el
     data1 = cogen.tlf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[1]
     data2 = cogen.tlf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[0]
 
     # Convert to base units before creating numpy array for plotting
-    y0 = np.array([dem.to_base_units().magnitude for dem in demand.el])
-    y1 = np.array([gen.to_base_units().magnitude for gen in data1])
-    y2 = np.array([gen.to_base_units().magnitude for gen in data2])
+    y0 = np.array(data0.magnitude)
+    y1 = np.array([gen.magnitude for gen in data1])
+    y2 = np.array([gen.magnitude for gen in data2])
 
     # Calculate daily sums
     daily_kwh_dem = []
@@ -198,10 +201,10 @@ def tlf_plot_thermal(chp=None, demand=None, tes=None, ab=None):
     data3 = boiler.calc_aux_boiler_output_rate(chp=chp, demand=demand, tes=tes, ab=ab, load_following_type="TLF")
 
     # Convert to base units before creating numpy array for plotting
-    y0 = np.array([dem.to_base_units().magnitude for dem in demand.hl])
-    y1 = np.array([gen.to_base_units().magnitude for gen in data1])
-    y2 = np.array([gen.to_base_units().magnitude for gen in data2])
-    y3 = np.array([gen.to_base_units().magnitude for gen in data3])
+    y0 = np.array([dem.magnitude for dem in demand.hl])
+    y1 = np.array([gen.magnitude for gen in data1])
+    y2 = np.array([gen.magnitude for gen in data2])
+    y3 = np.array([gen.magnitude for gen in data3])
 
     # Calculate daily sums
     daily_btu_dem = []
@@ -240,7 +243,7 @@ def tlf_plot_tes_soc(chp=None, demand=None, tes=None, ab=None):
     data = storage.calc_tes_heat_flow_and_soc(chp=chp, demand=demand, tes=tes, ab=ab, load_following_type="TLF")[1]
 
     # Convert to base units before creating numpy array for plotting
-    y = np.array([status.to_base_units().magnitude for status in data])
+    y = np.array([status.magnitude for status in data])
 
     # Calculate daily avg for discharge plot
     daily_btu = []

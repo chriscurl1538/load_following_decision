@@ -10,7 +10,8 @@ from lfd_package.modules import thermal_storage as storage
 
 def create_demand_curve_array(array=None):
     """
-    TODO: Docstring updated 9/24/2022
+    Docstring updated 9/24/2022
+
     Creates two 1D numpy arrays containing percent total days (days / days in 1 year)
     and associated energy demand data (thermal or electrical), respectively.
 
@@ -32,14 +33,11 @@ def create_demand_curve_array(array=None):
     """
     if array is not None:
         assert array.ndim == 1
-        total_days = len(array) / 24
         reverse_sort_array = np.sort(array, axis=0)
         sorted_demand_array = reverse_sort_array[::-1]
         percent_days = []
         for i, k in enumerate(array):
-            percent = (i+1 / 24) / total_days
-            if 1 < percent:
-                percent = 1
+            percent = ((i+1) / len(array))*100
             percent_days.append(percent)
         percent_days_array = np.array(percent_days)
         return percent_days_array, sorted_demand_array
@@ -47,7 +45,8 @@ def create_demand_curve_array(array=None):
 
 def electrical_output_to_fuel_consumption(electrical_output=None):
     """
-    TODO: Docstring updated 9/24/2022
+    Docstring updated 9/24/2022
+
     Calculates approximate CHP fuel consumption for a given electrical output.
     The constants are from a linear fit of CHP data (<100kW) created in Excel.
     The data used for the fit are derived from the CHP TAP's eCatalog. The
@@ -75,7 +74,8 @@ def electrical_output_to_fuel_consumption(electrical_output=None):
 
 def electrical_output_to_thermal_output(electrical_output=None):
     """
-    TODO: Docstring updated 9/24/2022
+    Docstring updated 9/24/2022
+
     Calculates approximate CHP thermal output for a given electrical output.
     The constants are from a second order polynomial fit of CHP data (<100kW)
     created in Excel. The data for the fit are derived from the CHP TAP's
@@ -106,7 +106,8 @@ def electrical_output_to_thermal_output(electrical_output=None):
 
 def thermal_output_to_electrical_output(thermal_output=None):
     """
-    TODO: Docstring updated 9/24/2022
+    Docstring updated 9/24/2022
+
     Calculates the approximate CHP electrical output for a given thermal output.
     The constants are from a linear fit of CHP data (<100kW)
     in excel. The data is derived from the CHP TAP eCatalog. The R^2 value of
@@ -138,12 +139,13 @@ def thermal_output_to_electrical_output(thermal_output=None):
 
 def size_chp(load_following_type=None, demand=None, ab=None):
     """
-    TODO: Docstring updated 9/24/2022
+    Docstring updated 9/24/2022
+
     Sizes the CHP system using either the max_rect_chp_size function or the
     calc_min_pes_chp_size function as needed depending on operating strategy (load
     following type) and/or presence of net metering.
 
-    TODO: Where is this used?
+    Used in chp.py module
 
     Parameters
     ----------
@@ -167,18 +169,25 @@ def size_chp(load_following_type=None, demand=None, ab=None):
         elif load_following_type == "ELF" and demand.net_metering_status is False:
             chp_size = calc_max_rect_chp_size(array=demand.el)
         elif load_following_type == "TLF" and demand.net_metering_status is False:
-            chp_size = calc_min_pes_chp_size(demand=demand, ab=ab)
+            # TODO: Using the PES calculation did not work, very over-sized
+            thermal_size = (calc_max_rect_chp_size(array=demand.hl)).to(ureg.kW)
+            chp_size = thermal_output_to_electrical_output(thermal_output=thermal_size)
         else:
             raise Exception("Error in size_chp function in module chp_tes_sizing.py")
-        chp_size.to(ureg.kW)
+
+        # Convert units
+        if chp_size.units != ureg.kW:
+            chp_size.to(ureg.kW)
+
         return chp_size
 
 
 def calc_max_rect_chp_size(array=None):
     """
-    TODO: Docstring updated 9/24/2022
+    Docstring updated 9/24/2022
+
     Calculates the recommended CHP size in kW based on the Maximum Rectangle (MR)
-    sizing method.
+    sizing method. The input array is either electrical or thermal demand.
 
     Used in the size_chp function
 
@@ -198,14 +207,15 @@ def calc_max_rect_chp_size(array=None):
         assert array.ndim == 1
         percent_days_array, sorted_demand_array = create_demand_curve_array(array=array)
         prod_array = np.multiply(percent_days_array, sorted_demand_array)
-        max_value = np.amax(prod_array)
+        max_index = np.argmax(prod_array)
+        max_value = sorted_demand_array[max_index]
         return max_value
 
 
 def calc_min_pes_chp_size(demand=None, ab=None):
     """
-    TODO: Docstring updated 9/24/2022
-    TODO: Probable calculation error causing over-sizing
+    Docstring updated 9/24/2022
+
     TODO: Changed calculation from using min PES to using max PES. Unsure if correct
     Recommends a CHP system size using the minimum Primary Energy Savings
     (PES) method.
@@ -224,9 +234,8 @@ def calc_min_pes_chp_size(demand=None, ab=None):
     max_pes_size: Quantity (float)
         Recommended size of CHP system in units of kW electrical
     """
-    # TODO: Account for no net metering + TLF operation
     if any(elem is None for elem in [demand, ab]) is False:
-        chp_size_list = list(range(10, 105, 5)) * ureg.kW   # TODO: Check that units are attached to items in list
+        chp_size_list = list(range(10, 105, 5)) * ureg.kW
 
         grid_eff = demand.grid_efficiency
         size_list = []
@@ -318,8 +327,7 @@ def size_tes(demand=None, chp=None, ab=None, load_following_type=None):
     assert list_comparison_min_values[0].units == ureg.Btu
     assert tes_size_btu.units == ureg.Btu
 
-    # TODO: Handle case where TES size is zero
-    if 0 < tes_size_btu.magnitude:
+    if 0 <= tes_size_btu.magnitude:
         return tes_size_btu
     else:
-        raise Exception('TES is not suitable (recommended size is 0)')
+        raise Exception('TES size is negative - error in size_tes() function')

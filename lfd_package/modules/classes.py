@@ -12,7 +12,8 @@ class EnergyDemand:
     def __init__(self, file_name='default_file.csv', net_metering_status=None, grid_efficiency=None, electric_cost=None,
                  fuel_cost=None):
         """
-        TODO: Docstring updated on 9/24/22
+        Docstring updated on 9/24/22
+
         This class stores information from eQuest building demand profile simulations,
         which are fed in via a .csv file. By default, this class imports data from the
         'default_file.csv' file in the /input_files folder.
@@ -80,7 +81,8 @@ class CHP:
                  part_load_electrical=None, part_load_thermal=None, chp_electric_eff=None, chp_thermal_eff=None,
                  percent_availability=None, cost=None):
         """
-        TODO: Docstring updated on 9/24/22
+        Docstring updated on 9/24/22
+
         This class defines the operating parameters of the CHP system.
 
         Parameters
@@ -132,15 +134,14 @@ class CHP:
 
 
 class TES:
-    def __init__(self, capacity=None, start=None, discharge=None, cost=None):
+    def __init__(self, start=None, discharge=None, cost=None):
         """
-        TODO: Docstring updated on 9/24/22
+        Docstring updated on 9/24/22
+
         This class defines the operating parameters of the TES (thermal energy storage) system
 
         Parameters
         ----------
-        capacity: Quantity (float)
-            The size of the TES system in units of Btu (British thermal units)
         start: Quantity (float)
             The starting energy level of the TES system when the simulation begins in units of Btu
             TODO: Change from Energy to SOC format
@@ -152,7 +153,6 @@ class TES:
             TODO: Add incremental cost for power system ($/kW) and combine with system_cost,
              then store as total cost
         """
-        self.cap = capacity * ureg.Btu
         self.start = start * ureg.Btu
         self.discharge = discharge * ureg('Btu/hr')
         self.incremental_cost = cost * (1/ureg.kWh)
@@ -161,7 +161,8 @@ class TES:
 class AuxBoiler:
     def __init__(self, capacity=None, efficiency=None, turn_down_ratio=None):
         """
-        TODO: Docstring updated on 9/24/22
+        Docstring updated on 9/24/22
+
         This class defines the operating parameters of the Auxiliary Boiler.
 
         Parameters

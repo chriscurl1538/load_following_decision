@@ -28,13 +28,13 @@ def test_create_demand_curve_array(class_info):
 
     # Check value ranges and pint units
     for index, element in enumerate(func_el[0]):
-        assert 0 <= element <= 1
+        assert 0 <= element <= 100
     for index, element in enumerate(func_el[1]):
         assert 0 <= element.magnitude
         assert isinstance(element, pint.Quantity)
         assert element.units == ureg.kW
     for index, element in enumerate(func_hl[0]):
-        assert 0 <= element <= 1
+        assert 0 <= element <= 100
     for index, element in enumerate(func_hl[1]):
         assert 0 <= element
         assert isinstance(element, pint.Quantity)

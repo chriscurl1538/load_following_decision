@@ -13,8 +13,8 @@ from lfd_package.modules.__init__ import ureg, Q_
 
 def calc_aux_boiler_output_rate(chp=None, demand=None, tes=None, ab=None, load_following_type=None):
     """
-    TODO: Add condition for net metering
-    TODO: Some objects are missing units
+    Updated 10/16/2022
+
     Using CHP heat output and TES heat discharge, this function determines when the
     heat demand exceeds the heat produced by the electric load following CHP system. Heat
     demand not met by CHP and TES is then assigned to the aux boiler (added to ab_heat_hourly list).
@@ -23,21 +23,21 @@ def calc_aux_boiler_output_rate(chp=None, demand=None, tes=None, ab=None, load_f
     Parameters
     ---------
     chp: CHP Class
-        contains initialized CHP class data using CLI inputs (see command_line.py)
+        contains initialized class data using CLI inputs (see command_line.py)
     demand: EnergyDemand Class
-        contains initialized EnergyDemand class data using CLI inputs (see command_line.py)
+        contains initialized class data using CLI inputs (see command_line.py)
     tes: TES Class
-        contains initialized TES class data using CLI inputs (see command_line.py)
+        contains initialized class data using CLI inputs (see command_line.py)
     ab: AuxBoiler Class
-        contains initialized AuxBoiler class data using CLI inputs (see command_line.py)
+        contains initialized class data using CLI inputs (see command_line.py)
     load_following_type: string
         specifies whether calculation is for electrical load following (ELF) state
         or thermal load following (TLF) state.
 
     Returns
     -------
-    ab_heat_hourly: list
-        Hourly heat output of the auxiliary boiler
+    ab_heat_rate_hourly: list (Quantity)
+        Hourly heat output of the auxiliary boiler in units of Btu/hr
     """
     if chp is not None and demand is not None and tes is not None and ab is not None:
         # Pull chp heat and tes heat data
@@ -55,7 +55,6 @@ def calc_aux_boiler_output_rate(chp=None, demand=None, tes=None, ab=None, load_f
         chp_heat_rate_minus_excess = []
 
         # Remove waste heat production from CHP heat output data since TES captures excess
-        # TODO: This might be a duplicate calculation
         for index, chp_heat_rate in enumerate(chp_heat_hourly):
             dem_item = demand.hl[index]
             if dem_item < chp_heat_rate:
@@ -66,7 +65,6 @@ def calc_aux_boiler_output_rate(chp=None, demand=None, tes=None, ab=None, load_f
                 chp_heat_rate_minus_excess.append(desired)
 
         # Get TES discharge only
-        # TODO: Check for errors
         for index, rate in enumerate(tes_heat_rate_list):
             if rate < 0:
                 tes_discharge.append(rate)
@@ -79,13 +77,14 @@ def calc_aux_boiler_output_rate(chp=None, demand=None, tes=None, ab=None, load_f
             dem_item = dem
             chp_heat_rate_item = chp_heat_rate_minus_excess[index]
             tes_heat_discharge_item = tes_discharge[index]  # Negative if heat is discharged, zero otherwise
-            sum_heat_rate = chp_heat_rate_item - tes_heat_discharge_item    # TODO: Location of pint error
+            sum_heat_rate = chp_heat_rate_item - tes_heat_discharge_item
 
             if tes_heat_discharge_item.magnitude < 0 and dem_item <= chp_heat_rate_item:
                 check_closeness = math.isclose((sum_heat_rate.magnitude - dem_item.magnitude), 0, abs_tol=10 ** -4)
                 if check_closeness is False:
                     raise Exception('chp heat output and tes heat output exceeds building heating demand by {}. '
-                                    'Check chp and tes heat output calculations for errors'.format(sum_heat_rate - dem_item))
+                                    'Check chp and tes heat output calculations for errors'.format(sum_heat_rate -
+                                                                                                   dem_item))
                 else:
                     ab_heat_rate_item = Q_(0, ureg.Btu / ureg.hour)
                     ab_heat_rate_hourly.append(ab_heat_rate_item)
@@ -111,27 +110,29 @@ def calc_aux_boiler_output_rate(chp=None, demand=None, tes=None, ab=None, load_f
 
 def calc_annual_fuel_use_and_cost(chp=None, demand=None, tes=None, ab=None, load_following_type=None):
     """
+    Updated 10/16/2022
+
     Calculates the annual fuel use and cost of fuel for the auxiliary boiler.
 
     Parameters
     ----------
     chp: CHP Class
-        contains initialized CHP class data using CLI inputs (see command_line.py)
+        contains initialized class data using CLI inputs (see command_line.py)
     demand: EnergyDemand Class
-        contains initialized EnergyDemand class data using CLI inputs (see command_line.py)
+        contains initialized class data using CLI inputs (see command_line.py)
     tes: TES Class
-        contains initialized TES class data using CLI inputs (see command_line.py)
+        contains initialized class data using CLI inputs (see command_line.py)
     ab: AuxBoiler Class
-        contains initialized AuxBoiler class data using CLI inputs (see command_line.py)
+        contains initialized class data using CLI inputs (see command_line.py)
     load_following_type: string
         specifies whether calculation is for electrical load following (ELF) state
         or thermal load following (TLF) state.
 
     Returns
     -------
-    annual_fuel_use: float
-        annual fuel use of the auxiliary boiler
-    annual_fuel_cost: float
+    annual_fuel_use_btu: Quantity
+        annual fuel use of the auxiliary boiler in units of Btu
+    annual_fuel_cost: Quantity (dimensionless)
         annual fuel cost, calculated from the annual fuel use of the boiler
     """
     # Fuel use calculation

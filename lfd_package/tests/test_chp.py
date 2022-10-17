@@ -29,10 +29,10 @@ def test_calc_avg_efficiency(class_info):
     assert func_tlf[1].units == ''
 
     # Check value ranges
-    assert 0 < func_elf[0] <= 1
-    assert 0 < func_elf[1] <= 1
-    assert 0 < func_tlf[0] <= 1
-    assert 0 < func_tlf[1] <= 1
+    assert 0 <= func_elf[0] <= 1
+    assert 0 <= func_elf[1] <= 1
+    assert 0 <= func_tlf[0] <= 1
+    assert 0 <= func_tlf[1] <= 1
 
 
 def test_calc_annual_fuel_use_and_costs(class_info):

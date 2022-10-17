@@ -38,7 +38,7 @@ def class_info():
                                   grid_efficiency=data['grid_efficiency'],
                                   electric_cost=data['electric_utility_cost'],
                                   fuel_cost=data['fuel_cost'])
-    tes = classes.TES(capacity=data['tes_cap'], start=data['tes_init'], discharge=data['tes_discharge_rate'],
+    tes = classes.TES(start=data['tes_init'], discharge=data['tes_discharge_rate'],
                       cost=data['tes_installed_cost'])
 
     return [demand, chp, tes, ab]

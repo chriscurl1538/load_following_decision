@@ -99,13 +99,25 @@ def calc_tes_heat_flow_and_soc(chp=None, demand=None, tes=None, ab=None, load_fo
         dividing current_status by the TES capacity.
     """
     if any(elem is None for elem in [chp, demand, ab, load_following_type]) is False:
+        tes_size = sizing.size_tes(demand=demand, chp=chp, ab=ab, load_following_type=load_following_type)
+
+        # Exit function if TES is not recommended
+        if tes_size.magnitude == 0:
+            zero_rate_list = []
+            zero_soc_list = []
+            list_size = len(demand.hl)
+            zero_rate_item = Q_(0, ureg.Btu / ureg.hour)
+            zero_soc_item = Q_(0, '')
+            for index in range(list_size):
+                zero_rate_list.append(zero_rate_item)
+                zero_soc_list.append(zero_soc_item)
+            return zero_rate_list, zero_soc_list
+
         excess_and_deficit = calc_excess_and_deficit_chp_heat_gen(chp=chp, demand=demand, ab=ab,
                                                                   load_following_type=load_following_type)
-
         tes_heat_rate_list_btu_hour = []
         soc_list = []
         current_status = tes.start
-        tes_size = sizing.size_tes(demand=demand, chp=chp, ab=ab, load_following_type=load_following_type)
 
         for index, heat_rate in enumerate(excess_and_deficit):
             new_status = (heat_rate * 1 * ureg.hour) + current_status

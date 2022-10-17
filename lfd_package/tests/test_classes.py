@@ -91,12 +91,11 @@ def test_chp_class(class_info):
     assert chp.th_pl_eff.size == 6
 
     # Check value ranges
-    assert 0 < chp.cap.magnitude <= 100
     assert chp.fuel_type == "Natural Gas"
     assert 0 < chp.fuel_input_rate.magnitude
     assert 0 < chp.el_nominal_eff < 1
     assert 0 < chp.th_nominal_eff < 1
-    assert 0 <= chp.system_cost
+    assert 0 <= chp.incremental_cost
     assert 0 < chp.min_pl < 1
     assert 0 < chp.available_hours.magnitude <= 8760
 
@@ -110,22 +109,19 @@ def test_tes_class(class_info):
     assert isinstance(tes, classes.TES)
 
     # Check data types
-    assert isinstance(tes.cap, pint.Quantity)
     assert isinstance(tes.start, pint.Quantity)
     assert isinstance(tes.discharge, pint.Quantity)
-    assert isinstance(tes.system_cost, pint.Quantity)
+    assert isinstance(tes.incremental_cost, pint.Quantity)
 
     # Check Pint units
-    assert tes.cap.units == ureg.Btu
     assert tes.start.units == ureg.Btu
     assert tes.discharge.units == (ureg.Btu / ureg.hour)
-    assert tes.system_cost.units == ''
+    assert tes.incremental_cost.units == (1/ureg.kWh)
 
     # Check value ranges
-    assert 0 < tes.cap.magnitude
-    assert 0 <= tes.start.magnitude <= tes.cap.magnitude
+    assert 0 <= tes.start.magnitude
     assert 0 < tes.discharge.magnitude    # TODO: Check that this is not supposed to be negative for sign convention
-    assert 0 <= tes.system_cost
+    assert 0 <= tes.incremental_cost
 
 
 def test_aux_boiler_class(class_info):
