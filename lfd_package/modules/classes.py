@@ -10,7 +10,7 @@ from lfd_package.modules.__init__ import ureg, Q_
 
 class EnergyDemand:
     def __init__(self, file_name='default_file.csv', net_metering_status=None, grid_efficiency=None, electric_cost=None,
-                 fuel_cost=None):
+                 fuel_cost=None, ng_co2e=None, nwpp_co2e=None, frcc_co2e=None, mrow_co2e=None, aznm_co2e=None):
         """
         Docstring updated on 9/24/22
 
@@ -75,9 +75,16 @@ class EnergyDemand:
         self.annual_el = sum_annual_demand(array=self.el).to(ureg.kWh)
         self.annual_hl = sum_annual_demand(array=self.hl).to(ureg.Btu)
 
+        # Emissions information
+        self.ng_co2e = ng_co2e * (ureg.kg / ureg.megaBtu)
+        self.nwpp_co2e = nwpp_co2e * (ureg.lbs / ureg.MWh)
+        self.frcc_co2e = frcc_co2e * (ureg.lbs / ureg.MWh)
+        self.mrow_co2e = mrow_co2e * (ureg.lbs / ureg.MWh)
+        self.aznm_co2e = aznm_co2e * (ureg.lbs / ureg.MWh)
+
 
 class CHP:
-    def __init__(self, fuel_type=None, fuel_input_rate=None, turn_down_ratio=None,
+    def __init__(self, fuel_input_rate=None, turn_down_ratio=None,
                  part_load_electrical=None, part_load_thermal=None, chp_electric_eff=None, chp_thermal_eff=None,
                  percent_availability=None, cost=None):
         """
@@ -118,7 +125,6 @@ class CHP:
             to a dimensionless quantity representing the installed cost of the system
             before being stored within the class. TODO: Is this material + installation labor?
         """
-        self.fuel_type = fuel_type
         self.fuel_input_rate = fuel_input_rate * (ureg.Btu / ureg.hour)
         self.el_pl_eff = part_load_electrical
         self.th_pl_eff = part_load_thermal
