@@ -1,11 +1,11 @@
 """
 Module description:
-    This program tests the chp_tes_sizing.py file
+    This program tests the sizing_calcs.py file
 """
 import numpy as np
 from random import randint
 import pint
-from lfd_package.modules import chp_tes_sizing as sizing
+from lfd_package.modules import sizing_calcs as sizing
 from lfd_package.modules.__init__ import ureg, Q_
 
 

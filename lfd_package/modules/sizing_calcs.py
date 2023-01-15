@@ -172,7 +172,7 @@ def size_chp(load_following_type=None, demand=None, ab=None):
             thermal_size = (calc_max_rect_chp_size(array=demand.hl)).to(ureg.kW)
             chp_size = thermal_output_to_electrical_output(thermal_output=thermal_size)     # PES would over-size
         else:
-            raise Exception("Error in size_chp function in module chp_tes_sizing.py")
+            raise Exception("Error in size_chp function in module sizing_calcs.py")
 
         # Convert units
         if chp_size.units != ureg.kW:
@@ -296,7 +296,7 @@ def size_tes(demand=None, chp=None, ab=None, load_following_type=None):
             uncovered_heat_demand_hourly.append(Q_(0, ureg.Btu / ureg.hour))
             excess_chp_heat_gen_hourly.append(Q_(abs(element.magnitude), element.units))
         else:
-            raise Exception('Error in chp_tes_sizing.py function, size_tes()')
+            raise Exception('Error in sizing_calcs.py function, size_tes()')
 
     # Turn hourly lists into daily sums
     assert len(uncovered_heat_demand_hourly) == len(excess_chp_heat_gen_hourly)
@@ -317,7 +317,7 @@ def size_tes(demand=None, chp=None, ab=None, load_following_type=None):
         elif daily_uncovered_heat_btu_list[index] < daily_excess_chp_heat_btu_list[index]:
             list_comparison_min_values.append(daily_uncovered_heat_btu_list[index])
         else:
-            return Exception('Error in chp_tes_sizing.py function, size_tes()')
+            return Exception('Error in sizing_calcs.py function, size_tes()')
 
     assert len(list_comparison_min_values) == len(daily_excess_chp_heat_btu_list)
 

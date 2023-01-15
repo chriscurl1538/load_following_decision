@@ -7,7 +7,7 @@ TODO: Potential miscalculation in calc_tes_heat_flow_and_soc.
     TODO: Check that heat flow has positive discharge convention (shows negative values in plots)
 """
 
-from lfd_package.modules import chp as cogen, chp_tes_sizing as sizing
+from lfd_package.modules import chp as cogen, sizing_calcs as sizing
 from lfd_package.modules.__init__ import ureg, Q_
 
 

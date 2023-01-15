@@ -5,7 +5,7 @@ Module Description:
     (TLF) cases. Also accounts for whether net metering is permitted by the local utility.
 """
 
-from lfd_package.modules import chp_tes_sizing as sizing
+from lfd_package.modules import sizing_calcs as sizing
 from lfd_package.modules.__init__ import ureg, Q_
 
 

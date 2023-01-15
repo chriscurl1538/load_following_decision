@@ -6,7 +6,7 @@ Module Description:
 
 import matplotlib.pyplot as plt, numpy as np
 from lfd_package.modules import thermal_storage as storage
-from lfd_package.modules import aux_boiler as boiler, chp as cogen, chp_tes_sizing as sizing
+from lfd_package.modules import aux_boiler as boiler, chp as cogen, sizing_calcs as sizing
 
 
 def plot_electrical_demand_curve(demand=None):
