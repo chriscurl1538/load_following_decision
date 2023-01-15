@@ -1,14 +1,12 @@
-# CHP installed cost sourced from the following link:
-#    https://understandingchp.com/chp-applications-guide/6-8-rules-of-thumb-for-chp-engineering-and-installation-costs/
+#Description:
+#  This file is for users to modify input data as needed.
+#
+#Assumptions:
+#  Fuel type is Natural Gas
+#  CHP is packaged reciprocating engine
 
-# TES installed cost sourced from:
-#    https://betterbuildingssolutioncenter.energy.gov/sites/default/files/slides/Thermal%20Energy%20Storage%2C%20The%20Lowest%20Cost%20Storage.pdf
 
-# For how to calculate electrical efficiency: https://www.epa.gov/chp/methods-calculating-chp-efficiency#electric
-
-# CHP System Specs (https://chp.ecatalog.ornl.gov/package/39-PR12-ZC97330)
-chp_cap: 35   # kW
-fuel_type: "Natural Gas" # HHV of NG is 1089 Btu/ft3
+# CHP System Specs
 fuel_input_rate: 400000 # Btu/hr
 chp_electric_eff: 0.299
 chp_thermal_eff: 0.50
@@ -28,14 +26,21 @@ Thermal:
   75: 0.515
   100: 0.500
 
-# Aux Boiler Information
+# Aux Boiler Specs
 ab_capacity: 800000.0  # Btu/hr
 ab_eff: 0.80
 ab_turn_down: 10.0
 
-# TES Storage Information
+# TES Storage Specs
 tes_discharge_rate: 500000.0  # Btu/hr TODO: Implement into model
 tes_init: 250000.0   # Btu, initial storage
+
+# NG and Grid carbon emissions data
+ng_co2e: 14.43 #kg/mmbtu (source: https://www.epa.gov/energy/greenhouse-gases-equivalencies-calculator-calculations-and-references)
+nwpp_co2e: 603.8 #lbs/mwh
+frcc_co2e: 838.2 #lbs/mwh
+mrow_co2e: 986.6 #lbs/mwh
+aznm_co2e: 850.2 #lbs/mwh
 
 # Energy Costs
 net_metering_status: "False"   # must be "True" or "False"
@@ -49,3 +54,15 @@ tes_installed_cost: 0.35 # $/kWh
 
 # Energy Demand File Name
 demand_filename: 'default_file.csv'
+
+
+#Sources:
+#
+#  CHP specs:
+#  https://chp.ecatalog.ornl.gov/package/39-PR12-ZC97330
+#
+#  CHP installed cost:
+#  https://understandingchp.com/chp-applications-guide/6-8-rules-of-thumb-for-chp-engineering-and-installation-costs/
+#
+#  TES installed cost:
+#  https://betterbuildingssolutioncenter.energy.gov/sites/default/files/slides/Thermal%20Energy%20Storage%2C%20The%20Lowest%20Cost%20Storage.pdf
