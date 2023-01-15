@@ -3,9 +3,10 @@ Module Description:
     Command line interface - imports .yaml file and uses equipment operating parameters
     from the file to initialize the class variables.
 TODO: Create counter for each function to calculate how many times each is called. Can we reduce the calculation times?
+TODO: Implement emissions.py module
 """
 
-from lfd_package.modules import aux_boiler as boiler, classes, chp as cogen, chp_tes_sizing as sizing, plots
+from lfd_package.modules import aux_boiler as boiler, classes, chp as cogen, sizing_calcs as sizing, plots
 import pathlib, argparse, yaml, numpy as np
 from tabulate import tabulate
 from lfd_package.modules.__init__ import ureg
@@ -54,7 +55,7 @@ def run(args):
     part_load_thermal_array = np.array(part_load_thermal_list)
 
     # Class initialization using CLI arguments
-    chp = classes.CHP(fuel_type=data['fuel_type'], fuel_input_rate=data['fuel_input_rate'],
+    chp = classes.CHP(fuel_input_rate=data['fuel_input_rate'],
                       turn_down_ratio=data['chp_turn_down'], part_load_electrical=part_load_electrical_array,
                       part_load_thermal=part_load_thermal_array, chp_electric_eff=data['Electrical'][100],
                       chp_thermal_eff=data['Thermal'][100], percent_availability=data['percent_availability'],
@@ -64,7 +65,9 @@ def run(args):
     demand = classes.EnergyDemand(file_name=data['demand_filename'], net_metering_status=data['net_metering_status'],
                                   grid_efficiency=data['grid_efficiency'],
                                   electric_cost=data['electric_utility_cost'],
-                                  fuel_cost=data['fuel_cost'])
+                                  fuel_cost=data['fuel_cost'], ng_co2e=data['ng_co2e'], nwpp_co2e=data['nwpp_co2e'],
+                                  frcc_co2e=data['frcc_co2e'], mrow_co2e=data['mrow_co2e'],
+                                  aznm_co2e=data['mrow_co2e'])
     tes = classes.TES(start=data['tes_init'], discharge=data['tes_discharge_rate'],
                       cost=data['tes_installed_cost'])
 
