@@ -6,7 +6,8 @@ TODO: Create counter for each function to calculate how many times each is calle
 TODO: Implement emissions.py module
 """
 
-from lfd_package.modules import aux_boiler as boiler, classes, chp as cogen, sizing_calcs as sizing, plots
+from lfd_package.modules import aux_boiler as boiler, classes, chp as cogen, \
+    sizing_calcs as sizing, plots, emissions
 import pathlib, argparse, yaml, numpy as np
 from tabulate import tabulate
 from lfd_package.modules.__init__ import ureg
@@ -111,6 +112,10 @@ def main():
     chp_size_tlf = sizing.size_chp(load_following_type='TLF', demand=demand, ab=ab)
     chp_size_elf = sizing.size_chp(load_following_type='ELF', demand=demand, ab=ab)
 
+    """
+    Energy Analysis
+    """
+
     # Thermal Energy Savings (current energy consumption - proposed energy consumption)
     thermal_consumption_control = demand.annual_hl / ab.eff
     elf_thermal_consumption_chp = cogen.calc_annual_fuel_use_and_costs(chp=chp, demand=demand, ab=ab,
@@ -127,6 +132,14 @@ def main():
     tlf_thermal_consumption_total = tlf_thermal_consumption_chp + tlf_thermal_consumption_ab
     tlf_thermal_energy_savings = thermal_consumption_control - tlf_thermal_consumption_total
 
+    # Electrical Energy Savings
+    elf_electric_energy_savings = sum(cogen.elf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[1])
+    tlf_electric_energy_savings = sum(cogen.tlf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[1])
+
+    """
+    Economic Analysis
+    """
+
     # Thermal Cost Savings (current energy costs - proposed energy costs)
     thermal_cost_control = thermal_consumption_control.to(ureg.megaBtu) * demand.fuel_cost
     elf_thermal_cost_chp = cogen.calc_annual_fuel_use_and_costs(chp=chp, demand=demand, ab=ab,
@@ -141,10 +154,6 @@ def main():
                                                                load_following_type="TLF")[1]
     tlf_thermal_cost_total = tlf_thermal_cost_chp + tlf_thermal_cost_ab
     tlf_thermal_cost_savings = thermal_cost_control - tlf_thermal_cost_total
-
-    # Electrical Energy Savings
-    elf_electric_energy_savings = sum(cogen.elf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[1])
-    tlf_electric_energy_savings = sum(cogen.tlf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[1])
 
     # ELF Electrical Cost Savings
     electric_cost_old = demand.el_cost * demand.annual_el
@@ -172,28 +181,44 @@ def main():
     elf_simple_payback = (implementation_cost_elf / elf_total_cost_savings) * ureg.year
     tlf_simple_payback = (implementation_cost_tlf / tlf_total_cost_savings) * ureg.year
 
-    # Table: Display economic calculations
-    head_comparison = ["", "ELF", "TLF"]
+    """
+    Emissions Analysis
+    """
 
-    costs = [
-        ["Annual Electrical Demand [kWh]", round(demand.annual_el, 2), "N/A"],
-        ["Annual Thermal Demand [Btu]", round(demand.annual_hl, 2), "N/A"],
-        ["Thermal Energy Savings [Btu]", round(float(elf_thermal_energy_savings.magnitude), 2), round(float(tlf_thermal_energy_savings.magnitude), 2)],
-        ["Thermal Cost Savings [$]", round(elf_thermal_cost_savings.magnitude, 2),
-         round(float(tlf_thermal_cost_savings.magnitude), 2)],
-        ["Electrical Energy Savings [kWh]", round(float(elf_electric_energy_savings.magnitude), 2),
-         round(float(tlf_electric_energy_savings.magnitude), 2)],
-        ["Electrical Cost Savings [$]", round(float(elf_electric_cost_savings.magnitude), 2),
-         round(float(tlf_electric_cost_savings.magnitude), 2)],
-        ["Total Cost Savings [$]", round(float(elf_total_cost_savings.magnitude), 2),
-         round(float(tlf_total_cost_savings.magnitude), 2)],
-        ["Simple Payback [Yrs]", round(float(elf_simple_payback.magnitude), 2), round(float(tlf_simple_payback.magnitude), 2)]
-    ]
+    # Seattle, WA
+    seattle_elf = emissions.compare_emissions(chp=chp, demand=demand, load_following_type='ELF', ab=ab,
+                                              tes=tes, state='wa', city='seattle').to('tons')
+    seattle_tlf = emissions.compare_emissions(chp=chp, demand=demand, load_following_type='TLF', ab=ab,
+                                              tes=tes, state='wa', city='seattle').to('tons')
 
-    table_costs = tabulate(costs, headers=head_comparison, tablefmt="fancy_grid")
-    print(table_costs)
+    # Miami, FL
+    miami_elf = emissions.compare_emissions(chp=chp, demand=demand, load_following_type='ELF', ab=ab,
+                                              tes=tes, state='fl', city='miami').to('tons')
+    miami_tlf = emissions.compare_emissions(chp=chp, demand=demand, load_following_type='TLF', ab=ab,
+                                              tes=tes, state='wa', city='seattle').to('tons')
 
-    # Table: Display system property inputs
+    # Duluth, MN
+    duluth_elf = emissions.compare_emissions(chp=chp, demand=demand, load_following_type='ELF', ab=ab,
+                                              tes=tes, state='mn', city='duluth').to('tons')
+    duluth_tlf = emissions.compare_emissions(chp=chp, demand=demand, load_following_type='TLF', ab=ab,
+                                              tes=tes, state='mn', city='duluth').to('tons')
+
+    # Pheonix, AZ
+    pheonix_elf = emissions.compare_emissions(chp=chp, demand=demand, load_following_type='ELF', ab=ab,
+                                              tes=tes, state='az', city='pheonix').to('tons')
+    pheonix_tlf = emissions.compare_emissions(chp=chp, demand=demand, load_following_type='TLF', ab=ab,
+                                              tes=tes, state='az', city='pheonix').to('tons')
+
+    # Helena, MT
+    helena_elf = emissions.compare_emissions(chp=chp, demand=demand, load_following_type='ELF', ab=ab,
+                                              tes=tes, state='mt', city='helena').to('tons')
+    helena_tlf = emissions.compare_emissions(chp=chp, demand=demand, load_following_type='TLF', ab=ab,
+                                              tes=tes, state='mt', city='helena').to('tons')
+
+    """
+    Table: Display system property inputs
+    """
+
     head_equipment = ["", "mCHP", "TES", "Aux Boiler"]
 
     system_properties = [
@@ -207,7 +232,10 @@ def main():
     table_system_properties = tabulate(system_properties, headers=head_equipment, tablefmt="fancy_grid")
     print(table_system_properties)
 
-    # Table: Display key input data
+    """
+    Table: Display key input data
+    """
+
     head_units = ["", "Value"]
 
     input_data = [
@@ -222,7 +250,54 @@ def main():
     table_input_data = tabulate(input_data, headers=head_units, tablefmt="fancy_grid")
     print(table_input_data)
 
-    # Plots
+    """
+    Table: Display economic calculations
+    """
+
+    head_comparison = ["", "ELF", "TLF"]
+
+    costs = [
+        ["Annual Electrical Demand [kWh]", round(demand.annual_el, 2), "N/A"],
+        ["Annual Thermal Demand [Btu]", round(demand.annual_hl, 2), "N/A"],
+        ["Thermal Energy Savings [Btu]", round(float(elf_thermal_energy_savings.magnitude), 2),
+         round(float(tlf_thermal_energy_savings.magnitude), 2)],
+        ["Thermal Cost Savings [$]", round(elf_thermal_cost_savings.magnitude, 2),
+         round(float(tlf_thermal_cost_savings.magnitude), 2)],
+        ["Electrical Energy Savings [kWh]", round(float(elf_electric_energy_savings.magnitude), 2),
+         round(float(tlf_electric_energy_savings.magnitude), 2)],
+        ["Electrical Cost Savings [$]", round(float(elf_electric_cost_savings.magnitude), 2),
+         round(float(tlf_electric_cost_savings.magnitude), 2)],
+        ["Total Cost Savings [$]", round(float(elf_total_cost_savings.magnitude), 2),
+         round(float(tlf_total_cost_savings.magnitude), 2)],
+        ["Simple Payback [Yrs]", round(float(elf_simple_payback.magnitude), 2),
+         round(float(tlf_simple_payback.magnitude), 2)]
+    ]
+
+    table_costs = tabulate(costs, headers=head_comparison, tablefmt="fancy_grid")
+    print(table_costs)
+
+    """
+    Table: Display Emissions Analysis
+    """
+
+    head_emissions = ["City, State", "Climate Zone", "CHP (ELF): Annual Delta CO2e (tons)",
+                      "CHP (TLF): Annual Delta CO2e (tons)"]
+
+    emissions_data = [
+        ["Seattle, WA", "4C - Marine", round(seattle_elf, 2), round(seattle_tlf, 2)],
+        ["Miami, FL", "1A - Warm, Humid", round(miami_elf, 2), round(miami_tlf, 2)],
+        ["Duluth, MN", "7 - Cold, Humid", round(duluth_elf, 2), round(duluth_tlf, 2)],
+        ["Pheonix, AZ", "2B - Warm, Dry", round(pheonix_elf, 2), round(pheonix_tlf, 2)],
+        ["Helena, MT", "6B - Cold, Dry", round(helena_elf, 2), round(helena_tlf, 2)]
+    ]
+
+    table_emissions = tabulate(emissions_data, headers=head_emissions, tablefmt="fancy_grid")
+    print(table_emissions)
+
+    """
+    Plots
+    """
+
     plots.plot_electrical_demand_curve(demand=demand)
     plots.plot_thermal_demand_curve(demand=demand)
 
