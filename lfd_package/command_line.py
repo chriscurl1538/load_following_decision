@@ -2,8 +2,7 @@
 Module Description:
     Command line interface - imports .yaml file and uses equipment operating parameters
     from the file to initialize the class variables.
-TODO: Create counter for each function to calculate how many times each is called. Can we reduce the calculation times?
-TODO: Implement emissions.py module
+TODO: Reduce calculation times by eliminating redundant function calls
 """
 
 from lfd_package.modules import aux_boiler as boiler, classes, chp as cogen, \
@@ -66,9 +65,7 @@ def run(args):
     demand = classes.EnergyDemand(file_name=data['demand_filename'], net_metering_status=data['net_metering_status'],
                                   grid_efficiency=data['grid_efficiency'],
                                   electric_cost=data['electric_utility_cost'],
-                                  fuel_cost=data['fuel_cost'], ng_co2e=data['ng_co2e'], nwpp_co2e=data['nwpp_co2e'],
-                                  frcc_co2e=data['frcc_co2e'], mrow_co2e=data['mrow_co2e'],
-                                  aznm_co2e=data['mrow_co2e'])
+                                  fuel_cost=data['fuel_cost'])
     tes = classes.TES(start=data['tes_init'], discharge=data['tes_discharge_rate'],
                       cost=data['tes_installed_cost'])
 
@@ -187,33 +184,33 @@ def main():
 
     # Seattle, WA
     seattle_elf = emissions.compare_emissions(chp=chp, demand=demand, load_following_type='ELF', ab=ab,
-                                              tes=tes, state='wa', city='seattle').to('tons')
+                                              tes=tes, state='wa', city='seattle')
     seattle_tlf = emissions.compare_emissions(chp=chp, demand=demand, load_following_type='TLF', ab=ab,
-                                              tes=tes, state='wa', city='seattle').to('tons')
+                                              tes=tes, state='wa', city='seattle')
 
     # Miami, FL
     miami_elf = emissions.compare_emissions(chp=chp, demand=demand, load_following_type='ELF', ab=ab,
-                                              tes=tes, state='fl', city='miami').to('tons')
+                                              tes=tes, state='fl', city='miami')
     miami_tlf = emissions.compare_emissions(chp=chp, demand=demand, load_following_type='TLF', ab=ab,
-                                              tes=tes, state='wa', city='seattle').to('tons')
+                                              tes=tes, state='wa', city='seattle')
 
     # Duluth, MN
     duluth_elf = emissions.compare_emissions(chp=chp, demand=demand, load_following_type='ELF', ab=ab,
-                                              tes=tes, state='mn', city='duluth').to('tons')
+                                              tes=tes, state='mn', city='duluth')
     duluth_tlf = emissions.compare_emissions(chp=chp, demand=demand, load_following_type='TLF', ab=ab,
-                                              tes=tes, state='mn', city='duluth').to('tons')
+                                              tes=tes, state='mn', city='duluth')
 
     # Pheonix, AZ
     pheonix_elf = emissions.compare_emissions(chp=chp, demand=demand, load_following_type='ELF', ab=ab,
-                                              tes=tes, state='az', city='pheonix').to('tons')
+                                              tes=tes, state='az', city='pheonix')
     pheonix_tlf = emissions.compare_emissions(chp=chp, demand=demand, load_following_type='TLF', ab=ab,
-                                              tes=tes, state='az', city='pheonix').to('tons')
+                                              tes=tes, state='az', city='pheonix')
 
     # Helena, MT
     helena_elf = emissions.compare_emissions(chp=chp, demand=demand, load_following_type='ELF', ab=ab,
-                                              tes=tes, state='mt', city='helena').to('tons')
+                                              tes=tes, state='mt', city='helena')
     helena_tlf = emissions.compare_emissions(chp=chp, demand=demand, load_following_type='TLF', ab=ab,
-                                              tes=tes, state='mt', city='helena').to('tons')
+                                              tes=tes, state='mt', city='helena')
 
     """
     Table: Display system property inputs
@@ -280,19 +277,96 @@ def main():
     Table: Display Emissions Analysis
     """
 
-    head_emissions = ["City, State", "Climate Zone", "CHP (ELF): Annual Delta CO2e (tons)",
-                      "CHP (TLF): Annual Delta CO2e (tons)"]
+    head_emissions_co2 = ["City, State", "Climate Zone", "CHP (ELF): Annual Delta CO2 (tons)",
+                          "CHP (TLF): Annual Delta CO2 (tons)"]
 
-    emissions_data = [
-        ["Seattle, WA", "4C - Marine", round(seattle_elf, 2), round(seattle_tlf, 2)],
-        ["Miami, FL", "1A - Warm, Humid", round(miami_elf, 2), round(miami_tlf, 2)],
-        ["Duluth, MN", "7 - Cold, Humid", round(duluth_elf, 2), round(duluth_tlf, 2)],
-        ["Pheonix, AZ", "2B - Warm, Dry", round(pheonix_elf, 2), round(pheonix_tlf, 2)],
-        ["Helena, MT", "6B - Cold, Dry", round(helena_elf, 2), round(helena_tlf, 2)]
+    emissions_data_co2 = [
+        ["Seattle, WA", "4C - Marine", round(seattle_elf['co2'].to('tons'), 2), round(seattle_tlf['co2'].to('tons'), 2)],
+        ["Miami, FL", "1A - Warm, Humid", round(miami_elf['co2'].to('tons'), 2), round(miami_tlf['co2'].to('tons'), 2)],
+        ["Duluth, MN", "7 - Cold, Humid", round(duluth_elf['co2'].to('tons'), 2), round(duluth_tlf['co2'].to('tons'), 2)],
+        ["Pheonix, AZ", "2B - Warm, Dry", round(pheonix_elf['co2'].to('tons'), 2), round(pheonix_tlf['co2'].to('tons'), 2)],
+        ["Helena, MT", "6B - Cold, Dry", round(helena_elf['co2'].to('tons'), 2), round(helena_tlf['co2'].to('tons'), 2)]
     ]
 
-    table_emissions = tabulate(emissions_data, headers=head_emissions, tablefmt="fancy_grid")
-    print(table_emissions)
+    table_emissions_co2 = tabulate(emissions_data_co2, headers=head_emissions_co2, tablefmt="fancy_grid")
+    print(table_emissions_co2)
+
+    head_emissions_nox = ["City, State", "Climate Zone", "CHP (ELF): Annual Delta NOx (tons)",
+                          "CHP (TLF): Annual Delta NOx (tons)"]
+
+    emissions_data_nox = [
+        ["Seattle, WA", "4C - Marine", round(seattle_elf['nox'].to('tons'), 2), round(seattle_tlf['nox'].to('tons'), 2)],
+        ["Miami, FL", "1A - Warm, Humid", round(miami_elf['nox'].to('tons'), 2), round(miami_tlf['nox'].to('tons'), 2)],
+        ["Duluth, MN", "7 - Cold, Humid", round(duluth_elf['nox'].to('tons'), 2), round(duluth_tlf['nox'].to('tons'), 2)],
+        ["Pheonix, AZ", "2B - Warm, Dry", round(pheonix_elf['nox'].to('tons'), 2), round(pheonix_tlf['nox'].to('tons'), 2)],
+        ["Helena, MT", "6B - Cold, Dry", round(helena_elf['nox'].to('tons'), 2), round(helena_tlf['nox'].to('tons'), 2)]
+    ]
+
+    table_emissions_nox = tabulate(emissions_data_nox, headers=head_emissions_nox, tablefmt="fancy_grid")
+    print(table_emissions_nox)
+
+    head_emissions_so2 = ["City, State", "Climate Zone", "CHP (ELF): Annual Delta SO2 (tons)",
+                          "CHP (TLF): Annual Delta SO2 (tons)"]
+
+    emissions_data_so2 = [
+        ["Seattle, WA", "4C - Marine", round(seattle_elf['so2'].to('tons'), 2), round(seattle_tlf['so2'].to('tons'), 2)],
+        ["Miami, FL", "1A - Warm, Humid", round(miami_elf['so2'].to('tons'), 2), round(miami_tlf['so2'].to('tons'), 2)],
+        ["Duluth, MN", "7 - Cold, Humid", round(duluth_elf['so2'].to('tons'), 2), round(duluth_tlf['so2'].to('tons'), 2)],
+        ["Pheonix, AZ", "2B - Warm, Dry", round(pheonix_elf['so2'].to('tons'), 2), round(pheonix_tlf['so2'].to('tons'), 2)],
+        ["Helena, MT", "6B - Cold, Dry", round(helena_elf['so2'].to('tons'), 2), round(helena_tlf['so2'].to('tons'), 2)]
+    ]
+
+    table_emissions_so2 = tabulate(emissions_data_so2, headers=head_emissions_so2, tablefmt="fancy_grid")
+    print(table_emissions_so2)
+
+    head_emissions_pm = ["City, State", "Climate Zone", "CHP (ELF): Annual Delta PM2.5 (tons)",
+                          "CHP (TLF): Annual Delta PM2.5 (tons)"]
+
+    emissions_data_pm = [
+        ["Seattle, WA", "4C - Marine", round(seattle_elf['pm'].to('tons'), 2), round(seattle_tlf['pm'].to('tons'), 2)],
+        ["Miami, FL", "1A - Warm, Humid", round(miami_elf['pm'].to('tons'), 2), round(miami_tlf['pm'].to('tons'), 2)],
+        ["Duluth, MN", "7 - Cold, Humid", round(duluth_elf['pm'].to('tons'), 2),
+         round(duluth_tlf['pm'].to('tons'), 2)],
+        ["Pheonix, AZ", "2B - Warm, Dry", round(pheonix_elf['pm'].to('tons'), 2),
+         round(pheonix_tlf['pm'].to('tons'), 2)],
+        ["Helena, MT", "6B - Cold, Dry", round(helena_elf['pm'].to('tons'), 2), round(helena_tlf['pm'].to('tons'), 2)]
+    ]
+
+    table_emissions_pm = tabulate(emissions_data_pm, headers=head_emissions_pm, tablefmt="fancy_grid")
+    print(table_emissions_pm)
+
+    head_emissions_voc = ["City, State", "Climate Zone", "CHP (ELF): Annual Delta VOC (tons)",
+                         "CHP (TLF): Annual Delta VOC (tons)"]
+
+    emissions_data_voc = [
+        ["Seattle, WA", "4C - Marine", round(seattle_elf['voc'].to('tons'), 2), round(seattle_tlf['voc'].to('tons'), 2)],
+        ["Miami, FL", "1A - Warm, Humid", round(miami_elf['voc'].to('tons'), 2), round(miami_tlf['voc'].to('tons'), 2)],
+        ["Duluth, MN", "7 - Cold, Humid", round(duluth_elf['voc'].to('tons'), 2),
+         round(duluth_tlf['voc'].to('tons'), 2)],
+        ["Pheonix, AZ", "2B - Warm, Dry", round(pheonix_elf['voc'].to('tons'), 2),
+         round(pheonix_tlf['voc'].to('tons'), 2)],
+        ["Helena, MT", "6B - Cold, Dry", round(helena_elf['voc'].to('tons'), 2), round(helena_tlf['voc'].to('tons'), 2)]
+    ]
+
+    table_emissions_voc = tabulate(emissions_data_voc, headers=head_emissions_voc, tablefmt="fancy_grid")
+    print(table_emissions_voc)
+
+    head_emissions_nh3 = ["City, State", "Climate Zone", "CHP (ELF): Annual Delta NH3 (tons)",
+                          "CHP (TLF): Annual Delta NH3 (tons)"]
+
+    emissions_data_nh3 = [
+        ["Seattle, WA", "4C - Marine", round(seattle_elf['nh3'].to('tons'), 2),
+         round(seattle_tlf['nh3'].to('tons'), 2)],
+        ["Miami, FL", "1A - Warm, Humid", round(miami_elf['nh3'].to('tons'), 2), round(miami_tlf['nh3'].to('tons'), 2)],
+        ["Duluth, MN", "7 - Cold, Humid", round(duluth_elf['nh3'].to('tons'), 2),
+         round(duluth_tlf['nh3'].to('tons'), 2)],
+        ["Pheonix, AZ", "2B - Warm, Dry", round(pheonix_elf['nh3'].to('tons'), 2),
+         round(pheonix_tlf['nh3'].to('tons'), 2)],
+        ["Helena, MT", "6B - Cold, Dry", round(helena_elf['nh3'].to('tons'), 2), round(helena_tlf['nh3'].to('tons'), 2)]
+    ]
+
+    table_emissions_nh3 = tabulate(emissions_data_nh3, headers=head_emissions_nh3, tablefmt="fancy_grid")
+    print(table_emissions_nh3)
 
     """
     Plots
