@@ -10,7 +10,7 @@ from lfd_package.modules.__init__ import ureg, Q_
 
 class EnergyDemand:
     def __init__(self, file_name='default_file.csv', net_metering_status=None, grid_efficiency=None, electric_cost=None,
-                 fuel_cost=None, ng_co2e=None, nwpp_co2e=None, frcc_co2e=None, mrow_co2e=None, aznm_co2e=None):
+                 fuel_cost=None):
         """
         Docstring updated on 9/24/22
 
@@ -76,11 +76,51 @@ class EnergyDemand:
         self.annual_hl = sum_annual_demand(array=self.hl).to(ureg.Btu)
 
         # Emissions information
-        self.ng_co2e = ng_co2e * (ureg.kg / ureg.megaBtu)
-        self.nwpp_co2e = nwpp_co2e * (ureg.lbs / ureg.MWh)
-        self.frcc_co2e = frcc_co2e * (ureg.lbs / ureg.MWh)
-        self.mrow_co2e = mrow_co2e * (ureg.lbs / ureg.MWh)
-        self.aznm_co2e = aznm_co2e * (ureg.lbs / ureg.MWh)
+        self.ng_co2e = 14.43 * (ureg.kg / ureg.megaBtu)  # source: https://www.epa.gov/energy/greenhouse-gases-equivalencies-calculator-calculations-and-references)
+
+        nw_emissions_dict = {
+            'co2': 1575 * (ureg.lbs / ureg.MWh),
+            'nox': 0.93 * (ureg.lbs / ureg.MWh),
+            'so2': 0.52 * (ureg.lbs / ureg.MWh),
+            'pm': 0.08 * (ureg.lbs / ureg.MWh),
+            'voc': 0.04 * (ureg.lbs / ureg.MWh),
+            'nh3': 0.02 * (ureg.lbs / ureg.MWh)
+        }
+
+        self.nw_emissions = nw_emissions_dict
+
+        fl_emissions_dict = {
+            'co2': 1098 * (ureg.lbs / ureg.MWh),
+            'nox': 0.34 * (ureg.lbs / ureg.MWh),
+            'so2': 0.32 * (ureg.lbs / ureg.MWh),
+            'pm': 0.07 * (ureg.lbs / ureg.MWh),
+            'voc': 0.01 * (ureg.lbs / ureg.MWh),
+            'nh3': 0.03 * (ureg.lbs / ureg.MWh)
+        }
+
+        self.fl_emissions = fl_emissions_dict
+
+        midwest_emissions_dict = {
+            'co2': 1837 * (ureg.lbs / ureg.MWh),
+            'nox': 1.18 * (ureg.lbs / ureg.MWh),
+            'so2': 1.58 * (ureg.lbs / ureg.MWh),
+            'pm': 0.11 * (ureg.lbs / ureg.MWh),
+            'voc': 0.03 * (ureg.lbs / ureg.MWh),
+            'nh3': 0.03 * (ureg.lbs / ureg.MWh)
+        }
+
+        self.midwest_emissions = midwest_emissions_dict
+
+        sw_emissions_dict = {
+            'co2': 1366 * (ureg.lbs / ureg.MWh),
+            'nox': 0.53 * (ureg.lbs / ureg.MWh),
+            'so2': 0.19 * (ureg.lbs / ureg.MWh),
+            'pm': 0.07 * (ureg.lbs / ureg.MWh),
+            'voc': 0.02 * (ureg.lbs / ureg.MWh),
+            'nh3': 0.03 * (ureg.lbs / ureg.MWh)
+        }
+
+        self.sw_emissions = sw_emissions_dict
 
 
 class CHP:
