@@ -36,7 +36,6 @@ tes_discharge_rate: 500000.0  # Btu/hr TODO: Implement into model
 tes_init: 250000.0   # Btu, initial storage
 
 # NG and Grid carbon emissions data TODO: Use for emissions increase only
-ng_co2e: 14.43 #kg/mmbtu (source: https://www.epa.gov/energy/greenhouse-gases-equivalencies-calculator-calculations-and-references)
 nwpp_co2e: 603.8 #lbs/mwh TODO: Implement
 frcc_co2e: 838.2 #lbs/mwh TODO: Implement
 mrow_co2e: 986.6 #lbs/mwh TODO: Implement
