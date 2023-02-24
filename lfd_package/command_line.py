@@ -281,16 +281,36 @@ def main():
                           "CHP (TLF): Annual Delta CO2 (tons)"]
 
     emissions_data_co2 = [
-        ["Seattle, WA", "4C - Marine", round(seattle_elf['co2'].to('tons'), 2), round(seattle_tlf['co2'].to('tons'), 2)],
-        ["Miami, FL", "1A - Warm, Humid", round(miami_elf['co2'].to('tons'), 2), round(miami_tlf['co2'].to('tons'), 2)],
-        ["Duluth, MN", "7 - Cold, Humid", round(duluth_elf['co2'].to('tons'), 2), round(duluth_tlf['co2'].to('tons'), 2)],
-        ["Pheonix, AZ", "2B - Warm, Dry", round(pheonix_elf['co2'].to('tons'), 2), round(pheonix_tlf['co2'].to('tons'), 2)],
-        ["Helena, MT", "6B - Cold, Dry", round(helena_elf['co2'].to('tons'), 2), round(helena_tlf['co2'].to('tons'), 2)]
+        ["Seattle, WA", "4C - Marine", round(seattle_elf.to('tons'), 2), round(seattle_tlf.to('tons'), 2)],
+        ["Miami, FL", "1A - Warm, Humid", round(miami_elf.to('tons'), 2), round(miami_tlf.to('tons'), 2)],
+        ["Duluth, MN", "7 - Cold, Humid", round(duluth_elf.to('tons'), 2), round(duluth_tlf.to('tons'), 2)],
+        ["Pheonix, AZ", "2B - Warm, Dry", round(pheonix_elf.to('tons'), 2), round(pheonix_tlf.to('tons'), 2)],
+        ["Helena, MT", "6B - Cold, Dry", round(helena_elf.to('tons'), 2), round(helena_tlf.to('tons'), 2)]
     ]
 
     table_emissions_co2 = tabulate(emissions_data_co2, headers=head_emissions_co2, tablefmt="fancy_grid")
     print(table_emissions_co2)
 
+    """
+    Plots
+    """
+
+    plots.plot_electrical_demand_curve(demand=demand)
+    plots.plot_thermal_demand_curve(demand=demand)
+
+    plots.elf_plot_electric(chp=chp, demand=demand, ab=ab)
+    plots.elf_plot_thermal(chp=chp, demand=demand, tes=tes, ab=ab)
+    plots.elf_plot_tes_soc(chp=chp, demand=demand, tes=tes, ab=ab)
+
+    plots.tlf_plot_electric(chp=chp, demand=demand, ab=ab)
+    plots.tlf_plot_thermal(chp=chp, demand=demand, tes=tes, ab=ab)
+    plots.tlf_plot_tes_soc(chp=chp, demand=demand, tes=tes, ab=ab)
+
+
+if __name__ == "__main__":
+    main()
+
+    """
     head_emissions_nox = ["City, State", "Climate Zone", "CHP (ELF): Annual Delta NOx (tons)",
                           "CHP (TLF): Annual Delta NOx (tons)"]
 
@@ -367,22 +387,4 @@ def main():
 
     table_emissions_nh3 = tabulate(emissions_data_nh3, headers=head_emissions_nh3, tablefmt="fancy_grid")
     print(table_emissions_nh3)
-
     """
-    Plots
-    """
-
-    plots.plot_electrical_demand_curve(demand=demand)
-    plots.plot_thermal_demand_curve(demand=demand)
-
-    plots.elf_plot_electric(chp=chp, demand=demand, ab=ab)
-    plots.elf_plot_thermal(chp=chp, demand=demand, tes=tes, ab=ab)
-    plots.elf_plot_tes_soc(chp=chp, demand=demand, tes=tes, ab=ab)
-
-    plots.tlf_plot_electric(chp=chp, demand=demand, ab=ab)
-    plots.tlf_plot_thermal(chp=chp, demand=demand, tes=tes, ab=ab)
-    plots.tlf_plot_tes_soc(chp=chp, demand=demand, tes=tes, ab=ab)
-
-
-if __name__ == "__main__":
-    main()

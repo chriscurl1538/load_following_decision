@@ -21,15 +21,15 @@ def identify_subgrid(demand=None, state=None, city=None):
         city = input("Enter city location: ")
 
     if city.lower() == 'seattle' and state.lower() == 'wa':
-        subgrid = demand.nw_emissions
+        subgrid = demand.nw_emissions_co2
     elif city.lower() == 'helena' and state.lower() == 'mt':
-        subgrid = demand.nw_emissions
+        subgrid = demand.nw_emissions_co2
     elif city.lower() == 'miami' and state.lower() == 'fl':
-        subgrid = demand.fl_emissions
+        subgrid = demand.fl_emissions_co2
     elif city.lower() == 'duluth' and state.lower() == 'mn':
-        subgrid = demand.midwest_emissions
+        subgrid = demand.midwest_emissions_co2
     elif city.lower() == 'pheonix' and state.lower() == 'az':
-        subgrid = demand.sw_emissions
+        subgrid = demand.sw_emissions_co2
     else:
         return Exception("City and State must be one of the 5 accepted locations")
     return subgrid
@@ -46,10 +46,7 @@ def calc_grid_emissions(demand=None, city=None, state=None):
     subgrid = identify_subgrid(demand=demand, city=city, state=state)
     electric_demand_annual = demand.annual_el
 
-    electric_emissions_annual = {}
-
-    for key in subgrid.keys():
-        electric_emissions_annual[key] = (electric_demand_annual * subgrid[key]).to('lbs')
+    electric_emissions_annual = (electric_demand_annual * subgrid).to('lbs')
 
     return electric_emissions_annual
 
@@ -64,6 +61,7 @@ def calc_fuel_emissions(demand=None):
     """
     heating_demand_annual = demand.annual_hl
 
+    # TODO: Change NG emissions from co2e to co2 only
     fuel_emissions_annual = (heating_demand_annual * demand.ng_co2e).to('lbs')
     assert fuel_emissions_annual.units == ureg.lbs
 
@@ -104,11 +102,11 @@ def calc_chp_emissions(chp=None, demand=None, load_following_type=None, ab=None,
                                                                   load_following_type=load_following_type, ab=ab)[0]
 
         subgrid = identify_subgrid(demand=demand, city=city, state=state)
-        for key in subgrid.keys():
-            grid_emissions[key] = (subgrid[key] * electricity_bought_annual).to('lbs')
-            chp_emissions[key] = (subgrid[key] * chp_fuel_use_annual).to('lbs')
-            boiler_emissions[key] = (subgrid[key] * ab_fuel_use_annual).to('lbs')
-            total_emissions[key] = grid_emissions[key] + chp_emissions[key] + boiler_emissions[key]
+
+        grid_emissions = (subgrid * electricity_bought_annual).to('lbs')
+        chp_emissions = (subgrid * chp_fuel_use_annual).to('lbs')
+        boiler_emissions = (subgrid * ab_fuel_use_annual).to('lbs')
+        total_emissions = grid_emissions + chp_emissions + boiler_emissions
 
         return total_emissions
 
@@ -134,26 +132,19 @@ def compare_emissions(chp=None, demand=None, load_following_type=None, ab=None, 
         Emissions decrease with CHP if value is positive
     """
     if any(elem is None for elem in [chp, demand, load_following_type, ab, tes, city, state]) is False:
-        pre_chp_total_emissions = {}
-        difference = {}
 
         pre_chp_fuel_emissions = calc_fuel_emissions(demand=demand)
         pre_chp_grid_emissions = calc_grid_emissions(demand=demand, state=state, city=city)
         chp_total_emissions = calc_chp_emissions(chp=chp, demand=demand, load_following_type=load_following_type, ab=ab,
                                                  tes=tes, city=city, state=state)
 
-        # Add fuel co2e emissions to total co2 emissions, pre-chp
-        for key in pre_chp_grid_emissions.keys():
-            if key == 'co2':
-                pre_chp_total_emissions[key] = pre_chp_fuel_emissions + pre_chp_grid_emissions[key]
-            else:
-                pre_chp_total_emissions[key] = pre_chp_grid_emissions[key]
+        # Add fuel co2 emissions to total co2 emissions, pre-chp
+        pre_chp_total_emissions = pre_chp_fuel_emissions + pre_chp_grid_emissions
 
         # Calculate difference compared to chp emissions
-        for key in pre_chp_total_emissions.keys():
-            difference[key] = pre_chp_total_emissions[key] - chp_total_emissions[key]
-            assert difference[key].units == ureg.lbs
+        difference = pre_chp_total_emissions - chp_total_emissions
+        assert difference.units == ureg.lbs
 
-        # TODO: if line in difference dict is negative, re-calculate using average co2e coefficients
+        # TODO: if difference is negative, re-calculate using average co2 coefficients
 
         return difference
