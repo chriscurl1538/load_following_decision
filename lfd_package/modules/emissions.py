@@ -78,10 +78,6 @@ def calc_chp_emissions(chp=None, demand=None, load_following_type=None, ab=None,
 
     """
     if any(elem is None for elem in [chp, demand, load_following_type, ab, tes, city, state]) is False:
-        grid_emissions = {}
-        chp_emissions = {}
-        boiler_emissions = {}
-        total_emissions = {}
 
         # Emissions from electricity bought
         if load_following_type == "ELF":
