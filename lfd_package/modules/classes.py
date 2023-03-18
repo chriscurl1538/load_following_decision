@@ -42,11 +42,11 @@ class EnergyDemand:
         df = pd.read_csv(cwd / file_name)
 
         # Plucks electrical load data from the file using row and column locations
-        electric_demand_df = df.iloc[9:, 16]
+        electric_demand_df = df.iloc[:, 1]
         electric_demand_hourly = electric_demand_df.to_numpy()
 
         # Plucks thermal load data from the file using row and column locations
-        heating_demand_df = df.iloc[9:, 29]
+        heating_demand_df = df.iloc[:, 9]
         heating_demand_hourly = heating_demand_df.to_numpy()
 
         # Energy Costs
@@ -63,8 +63,8 @@ class EnergyDemand:
             float_array = np.array(float_list, dtype=float)
             return float_array
 
-        self.hl = convert_numpy_to_float(heating_demand_hourly) * (ureg.Btu / ureg.hour)
-        self.el = convert_numpy_to_float(electric_demand_hourly) * ureg.kW
+        self.hl = convert_numpy_to_float(heating_demand_hourly) * (ureg.joules / ureg.hour)
+        self.el = convert_numpy_to_float(electric_demand_hourly) * (ureg.joules / ureg.hour)
 
         def sum_annual_demand(array=None):
             annual_hours = 8760 * ureg.hour
@@ -76,8 +76,7 @@ class EnergyDemand:
         self.annual_hl = sum_annual_demand(array=self.hl).to(ureg.Btu)
 
         # Emissions information
-        # TODO: Change NG value to CO2 only, not CO2e
-        self.ng_co2e = 14.43 * (ureg.kg / ureg.megaBtu)  # source: https://www.epa.gov/energy/greenhouse-gases-equivalencies-calculator-calculations-and-references)
+        self.ng_co2 = 14.43 * (ureg.kg / ureg.megaBtu)  # source: https://www.epa.gov/energy/greenhouse-gases-equivalencies-calculator-calculations-and-references)
 
         # nw_emissions_dict = {
         #     'co2': 1575 * (ureg.lbs / ureg.MWh),
@@ -89,6 +88,7 @@ class EnergyDemand:
         # }
 
         self.nw_emissions_co2 = 1575 * (ureg.lbs / ureg.MWh)
+        self.nwpp_emissions_co2 = 634.6 * (ureg.lbs / ureg.MWh)
 
         # fl_emissions_dict = {
         #     'co2': 1098 * (ureg.lbs / ureg.MWh),
@@ -100,6 +100,7 @@ class EnergyDemand:
         # }
 
         self.fl_emissions_co2 = 1098 * (ureg.lbs / ureg.MWh)
+        self.frcc_emissions_co2 = 832.9 * (ureg.lbs / ureg.MWh)
 
         # midwest_emissions_dict = {
         #     'co2': 1837 * (ureg.lbs / ureg.MWh),
@@ -111,6 +112,7 @@ class EnergyDemand:
         # }
 
         self.midwest_emissions_co2 = 1837 * (ureg.lbs / ureg.MWh)
+        self.mrow_emissions_co2 = 995.8 * (ureg.lbs / ureg.MWh)
 
         # sw_emissions_dict = {
         #     'co2': 1366 * (ureg.lbs / ureg.MWh),
@@ -122,6 +124,7 @@ class EnergyDemand:
         # }
 
         self.sw_emissions_co2 = 1366 * (ureg.lbs / ureg.MWh)
+        self.aznm_emissions_co2 = 819.7 * (ureg.lbs / ureg.MWh)
 
 
 class CHP:
