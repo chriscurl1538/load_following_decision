@@ -27,7 +27,7 @@ def class_info():
     part_load_thermal_array = np.array(part_load_thermal_list)
 
     # Class initialization using CLI arguments
-    chp = classes.CHP(fuel_type=data['fuel_type'], fuel_input_rate=data['fuel_input_rate'],
+    chp = classes.CHP(fuel_input_rate=data['fuel_input_rate'],
                       turn_down_ratio=data['chp_turn_down'], part_load_electrical=part_load_electrical_array,
                       part_load_thermal=part_load_thermal_array, chp_electric_eff=data['Electrical'][100],
                       chp_thermal_eff=data['Thermal'][100], percent_availability=data['percent_availability'],
