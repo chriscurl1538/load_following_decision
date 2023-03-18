@@ -27,19 +27,13 @@ Thermal:
   100: 0.500
 
 # Aux Boiler Specs
-ab_capacity: 800000.0  # Btu/hr
+ab_capacity: 8000000.0  # Btu/hr
 ab_eff: 0.80
 ab_turn_down: 10.0
 
 # TES Storage Specs
 tes_discharge_rate: 500000.0  # Btu/hr TODO: Implement into model
 tes_init: 250000.0   # Btu, initial storage
-
-# NG and Grid carbon emissions data TODO: Use for emissions increase only
-nwpp_co2e: 603.8 #lbs/mwh TODO: Implement
-frcc_co2e: 838.2 #lbs/mwh TODO: Implement
-mrow_co2e: 986.6 #lbs/mwh TODO: Implement
-aznm_co2e: 850.2 #lbs/mwh TODO: Implement
 
 # Energy Costs
 net_metering_status: "False"   # must be "True" or "False"
@@ -52,7 +46,7 @@ chp_installed_cost: 2900.0 # $/kW
 tes_installed_cost: 0.35 # $/kWh
 
 # Energy Demand File Name
-demand_filename: 'default_file.csv'
+demand_filename: 'new2004_florida_miami.csv'
 
 
 #Sources:
