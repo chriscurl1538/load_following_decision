@@ -38,6 +38,15 @@ def test_energy_demand_class(class_info):
     assert isinstance(demand.el, pint.Quantity)
     assert isinstance(demand.annual_el, pint.Quantity)
     assert isinstance(demand.annual_hl, pint.Quantity)
+    assert isinstance(demand.ng_co2, pint.Quantity)
+    assert isinstance(demand.nw_emissions_co2, pint.Quantity)
+    assert isinstance(demand.nwpp_emissions_co2, pint.Quantity)
+    assert isinstance(demand.fl_emissions_co2, pint.Quantity)
+    assert isinstance(demand.frcc_emissions_co2, pint.Quantity)
+    assert isinstance(demand.midwest_emissions_co2, pint.Quantity)
+    assert isinstance(demand.mrow_emissions_co2, pint.Quantity)
+    assert isinstance(demand.sw_emissions_co2, pint.Quantity)
+    assert isinstance(demand.aznm_emissions_co2, pint.Quantity)
 
     # Check Pint units
     assert demand.el_cost.units == 1/ureg.kWh
@@ -46,6 +55,15 @@ def test_energy_demand_class(class_info):
     assert demand.el.units == ureg.kW
     assert demand.annual_el.units == ureg.kWh
     assert demand.annual_hl.units == ureg.Btu
+    assert demand.ng_co2.units == ureg.kg / ureg.megaBtu
+    assert demand.nw_emissions_co2.units == ureg.lbs / ureg.MWh
+    assert demand.nwpp_emissions_co2.units == ureg.lbs / ureg.MWh
+    assert demand.fl_emissions_co2.units == ureg.lbs / ureg.MWh
+    assert demand.frcc_emissions_co2.units == ureg.lbs / ureg.MWh
+    assert demand.midwest_emissions_co2.units == ureg.lbs / ureg.MWh
+    assert demand.mrow_emissions_co2.units == ureg.lbs / ureg.MWh
+    assert demand.sw_emissions_co2.units == ureg.lbs / ureg.MWh
+    assert demand.aznm_emissions_co2.units == ureg.lbs / ureg.MWh
 
     # Check array sizes
     assert demand.hl.shape[0] == 8760
