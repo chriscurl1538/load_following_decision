@@ -1,14 +1,13 @@
 """
 Module description:
     Calculate CO2e emissions for grid and CHP system. Compare the two.
-    TODO: Consumed electricity ==> use average emissions coeff to calculate increase
 """
 
 from lfd_package.modules.__init__ import ureg, Q_
 from lfd_package.modules import chp as cogen, aux_boiler as boiler
 
 
-def identify_subgrid(demand=None, state=None, city=None):
+def identify_subgrid_coefficients(demand=None, state=None, city=None):
     """
     Assumes city,state is one of 5 accepted locations
 
@@ -21,18 +20,23 @@ def identify_subgrid(demand=None, state=None, city=None):
         city = input("Enter city location: ")
 
     if city.lower() == 'seattle' and state.lower() == 'wa':
-        subgrid = demand.nw_emissions_co2
+        subgrid_coefficient_marginal = demand.nw_emissions_co2
+        subgrid_coefficient_average = demand.nwpp_emissions_co2
     elif city.lower() == 'helena' and state.lower() == 'mt':
-        subgrid = demand.nw_emissions_co2
+        subgrid_coefficient_marginal = demand.nw_emissions_co2
+        subgrid_coefficient_average = demand.nwpp_emissions_co2
     elif city.lower() == 'miami' and state.lower() == 'fl':
-        subgrid = demand.fl_emissions_co2
+        subgrid_coefficient_marginal = demand.fl_emissions_co2
+        subgrid_coefficient_average = demand.frcc_emissions_co2
     elif city.lower() == 'duluth' and state.lower() == 'mn':
-        subgrid = demand.midwest_emissions_co2
+        subgrid_coefficient_marginal = demand.midwest_emissions_co2
+        subgrid_coefficient_average = demand.mrow_emissions_co2
     elif city.lower() == 'pheonix' and state.lower() == 'az':
-        subgrid = demand.sw_emissions_co2
+        subgrid_coefficient_marginal = demand.sw_emissions_co2
+        subgrid_coefficient_average = demand.aznm_emissions_co2
     else:
-        return Exception("City and State must be one of the 5 accepted locations")
-    return subgrid
+        raise Exception("City and State must be one of the 5 accepted locations")
+    return subgrid_coefficient_marginal, subgrid_coefficient_average
 
 
 def calc_grid_emissions(demand=None, city=None, state=None):
@@ -43,12 +47,14 @@ def calc_grid_emissions(demand=None, city=None, state=None):
     -------
 
     """
-    subgrid = identify_subgrid(demand=demand, city=city, state=state)
+    subgrid_coefficient_marginal, subgrid_coefficient_average = identify_subgrid_coefficients(demand=demand, city=city,
+                                                                                              state=state)
     electric_demand_annual = demand.annual_el
 
-    electric_emissions_annual = (electric_demand_annual * subgrid).to('lbs')
+    electric_emissions_annual_marg = (electric_demand_annual * subgrid_coefficient_marginal).to('lbs')
+    electric_emissions_annual_avg = (electric_demand_annual * subgrid_coefficient_average).to('lbs')
 
-    return electric_emissions_annual
+    return electric_emissions_annual_marg, electric_emissions_annual_avg
 
 
 def calc_fuel_emissions(demand=None):
@@ -61,8 +67,7 @@ def calc_fuel_emissions(demand=None):
     """
     heating_demand_annual = demand.annual_hl
 
-    # TODO: Change NG emissions from co2e to co2 only
-    fuel_emissions_annual = (heating_demand_annual * demand.ng_co2e).to('lbs')
+    fuel_emissions_annual = (heating_demand_annual * demand.ng_co2).to('lbs')
     assert fuel_emissions_annual.units == ureg.lbs
 
     return fuel_emissions_annual
@@ -82,29 +87,35 @@ def calc_chp_emissions(chp=None, demand=None, load_following_type=None, ab=None,
         # Emissions from electricity bought
         if load_following_type == "ELF":
             electricity_bought_annual = sum(cogen.elf_calc_electricity_bought_and_generated(chp=chp, demand=demand,
-                                                                                        ab=ab)[0])
+                                                                                            ab=ab)[0])
         elif load_following_type == "TLF":
             electricity_bought_annual = sum(cogen.tlf_calc_electricity_bought_and_generated(chp=chp, demand=demand,
-                                                                                        ab=ab)[0])
+                                                                                            ab=ab)[0])
         else:
-            return Exception("Error in calc_chp_emissions function")
+            raise Exception("Error in calc_chp_emissions function")
 
-        # Emissions from CHP
+        # For Emissions from CHP
         chp_fuel_use_annual = cogen.calc_annual_fuel_use_and_costs(chp=chp, demand=demand,
                                                                    load_following_type=load_following_type, ab=ab)[0]
 
-        # Emissions from boiler use
+        # For Emissions from boiler use
         ab_fuel_use_annual = boiler.calc_annual_fuel_use_and_cost(chp=chp, demand=demand, tes=tes,
                                                                   load_following_type=load_following_type, ab=ab)[0]
 
-        subgrid = identify_subgrid(demand=demand, city=city, state=state)
+        subgrid_coefficient_marg, subgrid_coefficient_avg = identify_subgrid_coefficients(demand=demand, city=city,
+                                                                                          state=state)
 
-        grid_emissions = (subgrid * electricity_bought_annual).to('lbs')
-        chp_emissions = (subgrid * chp_fuel_use_annual).to('lbs')
-        boiler_emissions = (subgrid * ab_fuel_use_annual).to('lbs')
-        total_emissions = grid_emissions + chp_emissions + boiler_emissions
+        grid_emissions_marg = (subgrid_coefficient_marg * electricity_bought_annual).to('lbs')
+        chp_emissions_marg = (subgrid_coefficient_marg * chp_fuel_use_annual).to('lbs')
+        boiler_emissions_marg = (subgrid_coefficient_marg * ab_fuel_use_annual).to('lbs')
+        total_emissions_marg = grid_emissions_marg + chp_emissions_marg + boiler_emissions_marg
 
-        return total_emissions
+        grid_emissions_avg = (subgrid_coefficient_avg * electricity_bought_annual).to('lbs')
+        chp_emissions_avg = (subgrid_coefficient_avg * chp_fuel_use_annual).to('lbs')
+        boiler_emissions_avg = (subgrid_coefficient_avg * ab_fuel_use_annual).to('lbs')
+        total_emissions_avg = grid_emissions_avg + chp_emissions_avg + boiler_emissions_avg
+
+        return total_emissions_marg, total_emissions_avg
 
 
 def compare_emissions(chp=None, demand=None, load_following_type=None, ab=None, tes=None, state=None, city=None):
@@ -130,17 +141,23 @@ def compare_emissions(chp=None, demand=None, load_following_type=None, ab=None, 
     if any(elem is None for elem in [chp, demand, load_following_type, ab, tes, city, state]) is False:
 
         pre_chp_fuel_emissions = calc_fuel_emissions(demand=demand)
-        pre_chp_grid_emissions = calc_grid_emissions(demand=demand, state=state, city=city)
-        chp_total_emissions = calc_chp_emissions(chp=chp, demand=demand, load_following_type=load_following_type, ab=ab,
-                                                 tes=tes, city=city, state=state)
+        pre_chp_grid_emissions_marg, pre_chp_grid_emissions_avg = calc_grid_emissions(demand=demand, state=state,
+                                                                                      city=city)
+        chp_total_emissions_marg, chp_total_emissions_avg = calc_chp_emissions(chp=chp, demand=demand,
+                                                                               load_following_type=load_following_type,
+                                                                               ab=ab, tes=tes, city=city, state=state)
 
         # Add fuel co2 emissions to total co2 emissions, pre-chp
-        pre_chp_total_emissions = pre_chp_fuel_emissions + pre_chp_grid_emissions
+        pre_chp_total_emissions_marg = pre_chp_fuel_emissions + pre_chp_grid_emissions_marg
 
         # Calculate difference compared to chp emissions
-        difference = pre_chp_total_emissions - chp_total_emissions
-        assert difference.units == ureg.lbs
+        difference_marg = pre_chp_total_emissions_marg - chp_total_emissions_marg
+        assert difference_marg.units == ureg.lbs
 
-        # TODO: if difference is negative, re-calculate using average co2 coefficients
-
-        return difference
+        if difference_marg.magnitude < 0:
+            pre_chp_total_emissions_avg = pre_chp_fuel_emissions + pre_chp_grid_emissions_avg
+            difference_avg = pre_chp_total_emissions_avg - chp_total_emissions_avg
+            assert difference_avg.units == ureg.lbs
+            return difference_avg
+        else:
+            return difference_marg
