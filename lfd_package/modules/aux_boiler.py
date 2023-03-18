@@ -103,8 +103,9 @@ def calc_aux_boiler_output_rate(chp=None, demand=None, tes=None, ab=None, load_f
             if 0 < rate.magnitude <= min_output.magnitude:
                 ab_heat_rate_hourly[index] = min_output
             elif ab.cap < rate:
+                short = round(abs(rate - ab.cap), 2)
                 raise Exception('ALERT: Boiler size is insufficient to meet heating demand! Output is short by '
-                                '{} at hour number ()'.format(abs(rate - ab.cap)), index)
+                                '{} at hour number {}'.format(short, index))
         return ab_heat_rate_hourly
 
 
