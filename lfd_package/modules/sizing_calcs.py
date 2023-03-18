@@ -317,7 +317,7 @@ def size_tes(demand=None, chp=None, ab=None, load_following_type=None):
         elif daily_uncovered_heat_btu_list[index] < daily_excess_chp_heat_btu_list[index]:
             list_comparison_min_values.append(daily_uncovered_heat_btu_list[index])
         else:
-            return Exception('Error in sizing_calcs.py function, size_tes()')
+            raise Exception('Error in sizing_calcs.py function, size_tes()')
 
     assert len(list_comparison_min_values) == len(daily_excess_chp_heat_btu_list)
 
