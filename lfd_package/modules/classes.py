@@ -10,7 +10,7 @@ from lfd_package.modules.__init__ import ureg, Q_
 
 class EnergyDemand:
     def __init__(self, file_name='default_file.csv', net_metering_status=None, grid_efficiency=None, electric_cost=None,
-                 fuel_cost=None):
+                 fuel_cost=None, city=None, state=None):
         """
         Docstring updated on 9/24/22
 
@@ -76,52 +76,18 @@ class EnergyDemand:
         self.annual_hl = sum_annual_demand(array=self.hl).to(ureg.Btu)
 
         # Emissions information
+        self.city = city
+        self.state = state
         self.ng_co2 = 14.43 * (ureg.kg / ureg.megaBtu)  # source: https://www.epa.gov/energy/greenhouse-gases-equivalencies-calculator-calculations-and-references)
-
-        # nw_emissions_dict = {
-        #     'co2': 1575 * (ureg.lbs / ureg.MWh),
-        #     'nox': 0.93 * (ureg.lbs / ureg.MWh),
-        #     'so2': 0.52 * (ureg.lbs / ureg.MWh),
-        #     'pm': 0.08 * (ureg.lbs / ureg.MWh),
-        #     'voc': 0.04 * (ureg.lbs / ureg.MWh),
-        #     'nh3': 0.02 * (ureg.lbs / ureg.MWh)
-        # }
 
         self.nw_emissions_co2 = 1575 * (ureg.lbs / ureg.MWh)
         self.nwpp_emissions_co2 = 634.6 * (ureg.lbs / ureg.MWh)
 
-        # fl_emissions_dict = {
-        #     'co2': 1098 * (ureg.lbs / ureg.MWh),
-        #     'nox': 0.34 * (ureg.lbs / ureg.MWh),
-        #     'so2': 0.32 * (ureg.lbs / ureg.MWh),
-        #     'pm': 0.07 * (ureg.lbs / ureg.MWh),
-        #     'voc': 0.01 * (ureg.lbs / ureg.MWh),
-        #     'nh3': 0.03 * (ureg.lbs / ureg.MWh)
-        # }
-
         self.fl_emissions_co2 = 1098 * (ureg.lbs / ureg.MWh)
         self.frcc_emissions_co2 = 832.9 * (ureg.lbs / ureg.MWh)
 
-        # midwest_emissions_dict = {
-        #     'co2': 1837 * (ureg.lbs / ureg.MWh),
-        #     'nox': 1.18 * (ureg.lbs / ureg.MWh),
-        #     'so2': 1.58 * (ureg.lbs / ureg.MWh),
-        #     'pm': 0.11 * (ureg.lbs / ureg.MWh),
-        #     'voc': 0.03 * (ureg.lbs / ureg.MWh),
-        #     'nh3': 0.03 * (ureg.lbs / ureg.MWh)
-        # }
-
         self.midwest_emissions_co2 = 1837 * (ureg.lbs / ureg.MWh)
         self.mrow_emissions_co2 = 995.8 * (ureg.lbs / ureg.MWh)
-
-        # sw_emissions_dict = {
-        #     'co2': 1366 * (ureg.lbs / ureg.MWh),
-        #     'nox': 0.53 * (ureg.lbs / ureg.MWh),
-        #     'so2': 0.19 * (ureg.lbs / ureg.MWh),
-        #     'pm': 0.07 * (ureg.lbs / ureg.MWh),
-        #     'voc': 0.02 * (ureg.lbs / ureg.MWh),
-        #     'nh3': 0.03 * (ureg.lbs / ureg.MWh)
-        # }
 
         self.sw_emissions_co2 = 1366 * (ureg.lbs / ureg.MWh)
         self.aznm_emissions_co2 = 819.7 * (ureg.lbs / ureg.MWh)
@@ -138,8 +104,6 @@ class CHP:
 
         Parameters
         ----------
-        fuel_type: string
-            Type of fuel used by the CHP system
         fuel_input_rate: Quantity (float)
             CHP fuel input rate in units of Btu/hour
         turn_down_ratio: float
@@ -194,7 +158,6 @@ class TES:
         ----------
         start: Quantity (float)
             The starting energy level of the TES system when the simulation begins in units of Btu
-            TODO: Change from Energy to SOC format
         discharge: Quantity (float)
             The maximum discharge rate of the TES system in units of Btu/hour
         cost: Quantity (float)
