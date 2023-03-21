@@ -27,7 +27,7 @@ Thermal:
   100: 0.500
 
 # Aux Boiler Specs
-ab_capacity: 8000000.0  # Btu/hr
+ab_capacity: 800000.0  # Btu/hr
 ab_eff: 0.80
 ab_turn_down: 10.0
 
@@ -36,17 +36,19 @@ tes_discharge_rate: 500000.0  # Btu/hr TODO: Implement into model
 tes_init: 250000.0   # Btu, initial storage
 
 # Energy Costs
-net_metering_status: "False"   # must be "True" or "False"
-grid_efficiency: 0.5   # between 0-1
-electric_utility_cost: 0.1331   # $/kWh
-fuel_cost: 3.60  # $/MMBtu
+net_metering_status: "True"   # must be "True" or "False" TODO: Change for each run
+grid_efficiency: 0.4   # between 0-1, national average
+electric_utility_cost: 0.1331   # $/kWh TODO: Change for each location
+fuel_cost: 3.60  # $/MMBtu TODO: Change for each location
 
 # Incremental Equipment Costs (material and installation)
-chp_installed_cost: 2900.0 # $/kW
-tes_installed_cost: 0.35 # $/kWh
+chp_installed_cost: 2900.0 # $/kW TODO: Source?
+tes_installed_cost: 0.35 # $/kWh TODO: Source?
 
 # Energy Demand File Name
-demand_filename: 'new2004_florida_miami.csv'
+demand_filename: 'pre1980_florida_miami.csv'
+city: 'miami'
+state: 'fl' # Must be two-letter abbreviation
 
 
 #Sources:
@@ -59,3 +61,6 @@ demand_filename: 'new2004_florida_miami.csv'
 #
 #  TES installed cost:
 #  https://betterbuildingssolutioncenter.energy.gov/sites/default/files/slides/Thermal%20Energy%20Storage%2C%20The%20Lowest%20Cost%20Storage.pdf
+#
+# Grid Efficiency:
+# https://www.eia.gov/todayinenergy/detail.php?id=44436
