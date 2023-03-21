@@ -7,7 +7,7 @@ from lfd_package.modules.__init__ import ureg, Q_
 from lfd_package.modules import chp as cogen, aux_boiler as boiler
 
 
-def identify_subgrid_coefficients(demand=None, state=None, city=None):
+def identify_subgrid_coefficients(demand=None):
     """
     Assumes city,state is one of 5 accepted locations
 
@@ -15,9 +15,8 @@ def identify_subgrid_coefficients(demand=None, state=None, city=None):
     -------
 
     """
-    if state is None and city is None:
-        state = input("Enter state location (use two-letter abbreviation): ")
-        city = input("Enter city location: ")
+    city = demand.city
+    state = demand.state
 
     if city.lower() == 'seattle' and state.lower() == 'wa':
         subgrid_coefficient_marginal = demand.nw_emissions_co2
@@ -39,7 +38,7 @@ def identify_subgrid_coefficients(demand=None, state=None, city=None):
     return subgrid_coefficient_marginal, subgrid_coefficient_average
 
 
-def calc_grid_emissions(demand=None, city=None, state=None):
+def calc_grid_emissions(demand=None):
     """
     Calc grid emissions for electrical demand pre-CHP retrofit
 
@@ -47,8 +46,7 @@ def calc_grid_emissions(demand=None, city=None, state=None):
     -------
 
     """
-    subgrid_coefficient_marginal, subgrid_coefficient_average = identify_subgrid_coefficients(demand=demand, city=city,
-                                                                                              state=state)
+    subgrid_coefficient_marginal, subgrid_coefficient_average = identify_subgrid_coefficients(demand=demand)
     electric_demand_annual = demand.annual_el
 
     electric_emissions_annual_marg = (electric_demand_annual * subgrid_coefficient_marginal).to('lbs')
@@ -73,7 +71,7 @@ def calc_fuel_emissions(demand=None):
     return fuel_emissions_annual
 
 
-def calc_chp_emissions(chp=None, demand=None, load_following_type=None, ab=None, tes=None, city=None, state=None):
+def calc_chp_emissions(chp=None, demand=None, load_following_type=None, ab=None, tes=None):
     """
     Calc CHP emissions using CHP efficiency data.
     Accounts for bought electricity as well.
@@ -82,7 +80,7 @@ def calc_chp_emissions(chp=None, demand=None, load_following_type=None, ab=None,
     -------
 
     """
-    if any(elem is None for elem in [chp, demand, load_following_type, ab, tes, city, state]) is False:
+    if any(elem is None for elem in [chp, demand, load_following_type, ab, tes]) is False:
 
         # Emissions from electricity bought
         if load_following_type == "ELF":
@@ -102,8 +100,7 @@ def calc_chp_emissions(chp=None, demand=None, load_following_type=None, ab=None,
         ab_fuel_use_annual = boiler.calc_annual_fuel_use_and_cost(chp=chp, demand=demand, tes=tes,
                                                                   load_following_type=load_following_type, ab=ab)[0]
 
-        subgrid_coefficient_marg, subgrid_coefficient_avg = identify_subgrid_coefficients(demand=demand, city=city,
-                                                                                          state=state)
+        subgrid_coefficient_marg, subgrid_coefficient_avg = identify_subgrid_coefficients(demand=demand)
 
         grid_emissions_marg = (subgrid_coefficient_marg * electricity_bought_annual).to('lbs')
         chp_emissions_marg = (subgrid_coefficient_marg * chp_fuel_use_annual).to('lbs')
@@ -118,7 +115,7 @@ def calc_chp_emissions(chp=None, demand=None, load_following_type=None, ab=None,
         return total_emissions_marg, total_emissions_avg
 
 
-def compare_emissions(chp=None, demand=None, load_following_type=None, ab=None, tes=None, state=None, city=None):
+def compare_emissions(chp=None, demand=None, load_following_type=None, ab=None, tes=None):
     """
     Calculates increase/decrease in CO2 emissions compared to pre-CHP conditions.
     Emissions increase if output is negative, decrease if output is positive.
@@ -130,22 +127,19 @@ def compare_emissions(chp=None, demand=None, load_following_type=None, ab=None, 
     load_following_type
     ab
     tes
-    city
-    state
 
     Returns
     -------
-    difference: dict
+    difference: pint.Quantity
         Emissions decrease with CHP if value is positive
     """
-    if any(elem is None for elem in [chp, demand, load_following_type, ab, tes, city, state]) is False:
+    if any(elem is None for elem in [chp, demand, load_following_type, ab, tes]) is False:
 
         pre_chp_fuel_emissions = calc_fuel_emissions(demand=demand)
-        pre_chp_grid_emissions_marg, pre_chp_grid_emissions_avg = calc_grid_emissions(demand=demand, state=state,
-                                                                                      city=city)
+        pre_chp_grid_emissions_marg, pre_chp_grid_emissions_avg = calc_grid_emissions(demand=demand)
         chp_total_emissions_marg, chp_total_emissions_avg = calc_chp_emissions(chp=chp, demand=demand,
                                                                                load_following_type=load_following_type,
-                                                                               ab=ab, tes=tes, city=city, state=state)
+                                                                               ab=ab, tes=tes)
 
         # Add fuel co2 emissions to total co2 emissions, pre-chp
         pre_chp_total_emissions_marg = pre_chp_fuel_emissions + pre_chp_grid_emissions_marg
