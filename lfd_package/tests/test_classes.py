@@ -139,7 +139,7 @@ def test_tes_class(class_info):
 
     # Check value ranges
     assert 0 <= tes.start.magnitude
-    assert 0 < tes.discharge.magnitude    # TODO: Check that this is not supposed to be negative for sign convention
+    assert 0 < tes.discharge.magnitude
     assert 0 <= tes.incremental_cost
 
 
