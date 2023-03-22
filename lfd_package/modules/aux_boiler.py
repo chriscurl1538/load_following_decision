@@ -47,6 +47,8 @@ def calc_aux_boiler_output_rate(chp=None, demand=None, tes=None, ab=None, load_f
             chp_heat_hourly = cogen.elf_calc_hourly_heat_generated(chp=chp, demand=demand, ab=ab)
         elif load_following_type is "TLF":
             chp_heat_hourly = cogen.tlf_calc_hourly_heat_generated(chp=chp, demand=demand, ab=ab)
+        elif load_following_type is "PP":
+            chp_heat_hourly = cogen.pp_calc_hourly_heat_generated(chp=chp, demand=demand, ab=ab)
         else:
             raise Exception("Error in chp.py function, calc_annual_electric_cost")
 
