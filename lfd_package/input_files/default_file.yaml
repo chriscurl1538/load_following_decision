@@ -12,7 +12,7 @@ chp_electric_eff: 0.299
 chp_thermal_eff: 0.50
 chp_turn_down: 3.3
 chp_heat_power: 1.71
-percent_availability: 0.90
+percent_availability: 0.90  # TODO: Implement for annual sums
 
 # CHP Electrical Part Loads and Efficiencies (HHV)
 Electrical:
@@ -36,17 +36,16 @@ tes_discharge_rate: 500000.0  # Btu/hr TODO: Implement into model
 tes_init: 250000.0   # Btu, initial storage
 
 # Energy Costs
-net_metering_status: "True"   # must be "True" or "False" TODO: Change for each run
 grid_efficiency: 0.4   # between 0-1, national average
 electric_utility_cost: 0.1331   # $/kWh TODO: Change for each location
 fuel_cost: 3.60  # $/MMBtu TODO: Change for each location
 
 # Incremental Equipment Costs (material and installation)
-chp_installed_cost: 2900.0 # $/kW TODO: Source?
-tes_installed_cost: 0.35 # $/kWh TODO: Source?
+chp_installed_cost: 2900.0 # $/kW TODO: Use more reliable source for numbers
+tes_installed_cost: 0.35 # $/kWh
 
 # Energy Demand File Name
-demand_filename: 'pre1980_florida_miami.csv'
+demand_filename: 'pre1980_arizona_pheonix.csv'
 city: 'miami'
 state: 'fl' # Must be two-letter abbreviation
 
