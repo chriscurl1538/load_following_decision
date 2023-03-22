@@ -9,7 +9,7 @@ from lfd_package.modules.__init__ import ureg, Q_
 
 
 class EnergyDemand:
-    def __init__(self, file_name='default_file.csv', net_metering_status=None, grid_efficiency=None, electric_cost=None,
+    def __init__(self, file_name='default_file.csv', grid_efficiency=None, electric_cost=None,
                  fuel_cost=None, city=None, state=None):
         """
         Docstring updated on 9/24/22
@@ -24,10 +24,6 @@ class EnergyDemand:
             This is the file name of the .csv file from which the building demand profile
             data is pulled. The user inputs this name by including it in the .yaml file located
             in the /input_files folder.
-        net_metering_status: string
-            This string reads "True" if net metering is allowed and excess electricity generated
-            can be sold to the grid and "False" otherwise. This value is converted to Boolean
-            type before being stored within the class.
         grid_efficiency: float
             This is the efficiency of the local electrical subgrid region as a decimal value
             (ie: 50% is 0.5). Dimensionless
@@ -50,7 +46,6 @@ class EnergyDemand:
         heating_demand_hourly = heating_demand_df.to_numpy()
 
         # Energy Costs
-        self.net_metering_status = eval(net_metering_status)
         self.grid_efficiency = grid_efficiency
         self.el_cost = electric_cost * (1/ureg.kWh)
         self.fuel_cost = fuel_cost * (1/ureg.megaBtu)
@@ -63,8 +58,10 @@ class EnergyDemand:
             float_array = np.array(float_list, dtype=float)
             return float_array
 
-        self.hl = convert_numpy_to_float(heating_demand_hourly) * (ureg.joules / ureg.hour)
-        self.el = convert_numpy_to_float(electric_demand_hourly) * (ureg.joules / ureg.hour)
+        heat_load_joules = convert_numpy_to_float(heating_demand_hourly) * (ureg.joules / ureg.hour)
+        self.hl = heat_load_joules.to(ureg.Btu / ureg.hours)
+        electric_load_joules = convert_numpy_to_float(electric_demand_hourly) * (ureg.joules / ureg.hour)
+        self.el = electric_load_joules.to(ureg.kW)
 
         def sum_annual_demand(array=None):
             annual_hours = 8760 * ureg.hour
