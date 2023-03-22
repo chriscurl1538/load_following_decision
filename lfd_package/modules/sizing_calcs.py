@@ -2,6 +2,7 @@
 Module description:
     These functions calculate the desired size of the CHP and TES systems
 """
+# TODO: CHP size is bigger for ELF than for PP operation (could be due to different sizing strategies)
 
 import numpy as np
 from lfd_package.modules.__init__ import ureg, Q_
@@ -97,6 +98,7 @@ def electrical_output_to_thermal_output(electrical_output=None):
         Approximate thermal output of CHP in units of kW
     """
     if electrical_output is not None:
+        assert electrical_output.units == ureg.kW
         a = -0.0216
         b = 3.6225
         c = 5.0367
@@ -164,11 +166,11 @@ def size_chp(load_following_type=None, demand=None, ab=None):
         Recommended size of CHP system in units of kW
     """
     if any(elem is None for elem in [demand, ab, load_following_type]) is False:
-        if demand.net_metering_status is True:
+        if load_following_type is "PP":
             chp_size = calc_min_pes_chp_size(demand=demand, ab=ab)
-        elif load_following_type == "ELF" and demand.net_metering_status is False:
+        elif load_following_type is "ELF":
             chp_size = calc_max_rect_chp_size(array=demand.el)
-        elif load_following_type == "TLF" and demand.net_metering_status is False:
+        elif load_following_type is "TLF":
             thermal_size = (calc_max_rect_chp_size(array=demand.hl)).to(ureg.kW)
             chp_size = thermal_output_to_electrical_output(thermal_output=thermal_size)     # PES would over-size
         else:
@@ -286,6 +288,7 @@ def size_tes(demand=None, chp=None, ab=None, load_following_type=None):
     hourly_excess_and_deficit_list = storage.calc_excess_and_deficit_chp_heat_gen(chp=chp, demand=demand, ab=ab,
                                                                         load_following_type=load_following_type)
     assert isinstance(hourly_excess_and_deficit_list, list)
+    assert hourly_excess_and_deficit_list[0].units == ureg.Btu / ureg.hour
 
     # Separate data into excess generation list and uncovered demand list
     for index, element in enumerate(hourly_excess_and_deficit_list):
