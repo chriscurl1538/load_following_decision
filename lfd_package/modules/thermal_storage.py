@@ -2,9 +2,6 @@
 Module Description:
     Contains functions needed to calculate the thermal energy stored and thermal
     energy dispatched by the thermal energy storage (TES) system
-
-TODO: Potential miscalculation in calc_tes_heat_flow_and_soc.
-    TODO: Check that heat flow has positive discharge convention (shows negative values in plots)
 """
 
 from lfd_package.modules import chp as cogen, sizing_calcs as sizing
@@ -39,14 +36,14 @@ def calc_excess_and_deficit_chp_heat_gen(chp=None, demand=None, ab=None, load_fo
     """
     if any(elem is None for elem in [chp, demand, ab, load_following_type]) is False:
         heat_demand = demand.hl
-        if demand.net_metering_status is True:
+        if load_following_type is "PP":
             electrical_output_kw = sizing.size_chp(load_following_type=load_following_type, demand=demand, ab=ab)
             chp_heat_gen_item_kw = sizing.electrical_output_to_thermal_output(electrical_output=electrical_output_kw)
             chp_heat_gen_item_btu_hour = chp_heat_gen_item_kw.to(ureg.Btu / ureg.hour)
             chp_heat_gen_hourly = [chp_heat_gen_item_btu_hour for i in range(len(demand.hl))]
-        elif load_following_type is "ELF" and demand.net_metering_status is False:
+        elif load_following_type is "ELF":
             chp_heat_gen_hourly = cogen.elf_calc_hourly_heat_generated(chp=chp, demand=demand, ab=ab)
-        elif load_following_type is "TLF" and demand.net_metering_status is False:
+        elif load_following_type is "TLF":
             chp_heat_gen_hourly = cogen.tlf_calc_hourly_heat_generated(chp=chp, demand=demand, ab=ab)
         else:
             raise Exception("Error passing load_following_type to thermal_storage.py function, "
