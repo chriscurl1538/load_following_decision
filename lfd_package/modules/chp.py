@@ -44,15 +44,15 @@ def calc_avg_efficiency(chp=None, demand=None, load_following_type=None, ab=None
             avg_el_eff = Q_(0, '')
             avg_th_eff = Q_(0, '')
             return avg_el_eff, avg_th_eff
-        if demand.net_metering_status is True:  # TODO: Need net_metering_status is False condition
+        elif load_following_type == "PP":
             fuel_use_kw = sizing.electrical_output_to_fuel_consumption(electrical_output=chp_size)
             thermal_output_kw = sizing.electrical_output_to_thermal_output(electrical_output=chp_size)
-            avg_el_eff = (chp_size / fuel_use_kw).to('')
-            avg_th_eff = (thermal_output_kw / fuel_use_kw).to('')
+            avg_el_eff = (chp_size / fuel_use_kw).to(ureg.dimensionless)
+            avg_th_eff = (thermal_output_kw / fuel_use_kw).to(ureg.dimensionless)
             return avg_el_eff, avg_th_eff
-        elif load_following_type is "ELF" and demand.net_metering_status is False:
+        elif load_following_type == "ELF":
             chp_electric_gen_hourly_kwh = elf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[1]
-        elif load_following_type is "TLF" and demand.net_metering_status is False:
+        elif load_following_type == "TLF":
             chp_electric_gen_hourly_kwh = tlf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[1]
         else:
             raise Exception("Error in calc_hourly_efficiency function")
@@ -105,15 +105,15 @@ def calc_annual_fuel_use_and_costs(chp=None, demand=None, load_following_type=No
         chp_size = sizing.size_chp(load_following_type=load_following_type, demand=demand, ab=ab)
         avg_el_eff = calc_avg_efficiency(chp=chp, demand=demand, ab=ab, load_following_type=load_following_type)[0]
 
-        if demand.net_metering_status is True:
+        if load_following_type == "PP":
             fuel_use_kw = sizing.electrical_output_to_fuel_consumption(electrical_output=chp_size)
             annual_fuel_use_btu = (fuel_use_kw * chp.available_hours).to(ureg.Btu)
             annual_fuel_use_mmbtu = annual_fuel_use_btu.to(ureg.megaBtu)
             annual_fuel_cost = annual_fuel_use_mmbtu * demand.fuel_cost
             return annual_fuel_use_btu, annual_fuel_cost
-        elif load_following_type is "ELF" and demand.net_metering_status is False:
+        elif load_following_type == "ELF":
             chp_electric_gen_hourly_kwh = elf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[1]
-        elif load_following_type is "TLF" and demand.net_metering_status is False:
+        elif load_following_type == "TLF":
             chp_electric_gen_hourly_kwh = tlf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[1]
         else:
             raise Exception("Error in calc_annual_fuel_use_and_costs function")
@@ -163,12 +163,12 @@ def calc_annual_electric_cost(chp=None, demand=None, load_following_type=None, a
     """
     if any(elem is None for elem in [chp, demand, ab, load_following_type]) is False:
         chp_size = sizing.size_chp(load_following_type=load_following_type, demand=demand, ab=ab)
-        if demand.net_metering_status is True:
+        if load_following_type == "PP":
             annual_cost = (chp_size * chp.available_hours * demand.el_cost).to('')
             return annual_cost
-        elif load_following_type is "ELF" and demand.net_metering_status is False:
+        elif load_following_type == "ELF":
             total_bought_kwh = sum(elf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[0])
-        elif load_following_type is "TLF" and demand.net_metering_status is False:
+        elif load_following_type == "TLF":
             total_bought_kwh = sum(tlf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[0])
         else:
             raise Exception("Error in chp.py function, calc_annual_electric_cost")
@@ -176,6 +176,61 @@ def calc_annual_electric_cost(chp=None, demand=None, load_following_type=None, a
         assert annual_cost.units == ''
 
         return annual_cost
+
+
+"""
+Power Purchase (PP) Functions
+"""
+
+
+def pp_calc_electricity_bought_and_generated(chp=None, demand=None, ab=None):
+    if any(elem is None for elem in [chp, demand, ab]) is False:
+        utility_bought_kwh_list = []
+        utility_sold_kwh_list = []
+        chp_gen_kwh_list = []
+
+        chp_size = sizing.size_chp(load_following_type="PP", demand=demand, ab=ab)
+        chp_hourly_kwh = (chp_size * Q_(1, ureg.hours)).to(ureg.kWh)
+
+        for dem in demand.el:     # Units of Joule/hour
+            # Verifies acceptable input value range
+            assert dem.magnitude >= 0
+            d = (dem * Q_(1, ureg.hours)).to(ureg.kWh)
+
+            if d <= chp_hourly_kwh:
+                bought = Q_(0, ureg.kWh)
+                sold = (chp_hourly_kwh - d).to(ureg.kWh)
+                utility_bought_kwh_list.append(bought)
+                chp_gen_kwh_list.append(chp_hourly_kwh)
+                utility_sold_kwh_list.append(sold)
+            elif chp_hourly_kwh < d:
+                bought = (d - chp_hourly_kwh).to(ureg.kWh)
+                sold = Q_(0, ureg.kWh)
+                utility_bought_kwh_list.append(bought)
+                chp_gen_kwh_list.append(chp_hourly_kwh)
+                utility_sold_kwh_list.append(sold)
+            else:
+                raise Exception("Error in PP calc_utility_electricity_needed function")
+
+        assert utility_bought_kwh_list[100].units == ureg.kWh
+        assert chp_gen_kwh_list[100].units == ureg.kWh
+        assert utility_sold_kwh_list[100].units == ureg.kWh
+
+        return utility_bought_kwh_list, chp_gen_kwh_list, utility_sold_kwh_list
+
+
+def pp_calc_hourly_heat_generated(chp=None, demand=None, ab=None):
+    if any(elem is None for elem in [chp, demand, ab]) is False:
+        electricity_generated = pp_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[1]
+        hourly_heat_rate = []
+
+        for i, el_gen_kwh in enumerate(electricity_generated):
+            el_gen = (el_gen_kwh / Q_(1, ureg.hours)).to(ureg.kW)
+            heat_kw = sizing.electrical_output_to_thermal_output(el_gen)
+            heat = heat_kw.to(ureg.Btu / ureg.hour)
+            hourly_heat_rate.append(heat)
+
+        return hourly_heat_rate
 
 
 """
@@ -224,6 +279,7 @@ def elf_calc_electricity_bought_and_generated(chp=None, demand=None, ab=None):
         for d in demand.el:
             # Verifies acceptable input value range
             assert d.magnitude >= 0
+            d.to(ureg.kW)
 
             if chp_min_output <= d <= chp_size:
                 bought = 0 * ureg.kWh
@@ -273,10 +329,11 @@ def elf_calc_hourly_heat_generated(chp=None, demand=None, ab=None):
         in units of Btu/hour
     """
     if any(elem is None for elem in [chp, demand, ab]) is False:
-        electricity_generated = elf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[1]
+        electricity_generated_list_kwh = elf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[1]
         hourly_heat_rate = []
 
-        for i, el_gen in enumerate(electricity_generated):
+        for i, el_gen_kwh in enumerate(electricity_generated_list_kwh):
+            el_gen = (el_gen_kwh / Q_(1, ureg.hours)).to(ureg.kW)
             heat_kw = sizing.electrical_output_to_thermal_output(el_gen)
             heat = heat_kw.to(ureg.Btu / ureg.hour)
             hourly_heat_rate.append(heat)
@@ -292,7 +349,7 @@ TLF Functions
 def tlf_calc_hourly_heat_generated(chp=None, demand=None, ab=None):
     """
     Updated 9/29/2022
-    TODO: Modify so that heat generated fills TES when empty
+    TODO: Modify so that heat generated fills TES when empty in TLF mode
     TODO: such that output = Demand + TES empty space
 
     Calculates the hourly heat generated by the CHP system.
@@ -321,7 +378,7 @@ def tlf_calc_hourly_heat_generated(chp=None, demand=None, ab=None):
         system in units of Btu/hour.
     """
     if any(elem is None for elem in [chp, demand, ab]) is False:
-        chp_size = sizing.size_chp(load_following_type='TLF', demand=demand, ab=ab)     # TODO: Size is zero (expected)
+        chp_size = sizing.size_chp(load_following_type='TLF', demand=demand, ab=ab)
         chp_min_output = (chp.min_pl * chp_size).to(ureg.kW)
 
         chp_hourly_heat_rate_list = []
