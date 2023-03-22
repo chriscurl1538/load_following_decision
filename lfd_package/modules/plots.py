@@ -7,11 +7,13 @@ Module Description:
 import matplotlib.pyplot as plt, numpy as np
 from lfd_package.modules import thermal_storage as storage
 from lfd_package.modules import aux_boiler as boiler, chp as cogen, sizing_calcs as sizing
+from lfd_package.modules.__init__ import ureg, Q_
 
 
 def plot_electrical_demand_curve(demand=None):
-    y1 = sizing.create_demand_curve_array(demand.el)[1].magnitude
-    x1 = sizing.create_demand_curve_array(demand.el)[0]
+    el_demand = demand.el.to(ureg.kW)
+    y1 = sizing.create_demand_curve_array(el_demand)[1].magnitude
+    x1 = sizing.create_demand_curve_array(el_demand)[0]
 
     # Set up plot
     plt.plot(x1, y1)
@@ -24,8 +26,9 @@ def plot_electrical_demand_curve(demand=None):
 
 
 def plot_thermal_demand_curve(demand=None):
-    y2 = sizing.create_demand_curve_array(demand.hl)[1].magnitude
-    x2 = sizing.create_demand_curve_array(demand.hl)[0]
+    hl_demand = demand.hl.to(ureg.Btu / ureg.hours)
+    y2 = sizing.create_demand_curve_array(hl_demand)[1].magnitude
+    x2 = sizing.create_demand_curve_array(hl_demand)[0]
 
     # Set up plot
     plt.plot(x2, y2)
@@ -43,7 +46,7 @@ ELF Plots
 
 
 def elf_plot_electric(chp=None, demand=None, ab=None):
-    data0 = demand.el
+    data0 = demand.el.to(ureg.kW)
     data1 = cogen.elf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[1]
     data2 = cogen.elf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[0]
 
@@ -85,9 +88,10 @@ def elf_plot_thermal(chp=None, demand=None, tes=None, ab=None):
     data1 = cogen.elf_calc_hourly_heat_generated(chp=chp, demand=demand, ab=ab)
     data2 = storage.calc_tes_heat_flow_and_soc(chp=chp, demand=demand, tes=tes, ab=ab, load_following_type="ELF")[0]
     data3 = boiler.calc_aux_boiler_output_rate(chp=chp, demand=demand, tes=tes, ab=ab, load_following_type="ELF")
+    hl_demand = demand.hl.to(ureg.Btu / ureg.hours)
 
     # Convert to base units before creating numpy array for plotting
-    y0 = np.array([dem.magnitude for dem in demand.hl])
+    y0 = np.array([dem.magnitude for dem in hl_demand])
     y1 = np.array([gen.magnitude for gen in data1])
     y2 = np.array([gen.magnitude for gen in data2])
     y3 = np.array([gen.magnitude for gen in data3])
@@ -156,7 +160,7 @@ TLF Plots
 
 
 def tlf_plot_electric(chp=None, demand=None, ab=None):
-    data0 = demand.el
+    data0 = demand.el.to(ureg.kW)
     data1 = cogen.tlf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[1]
     data2 = cogen.tlf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[0]
 
@@ -197,9 +201,10 @@ def tlf_plot_thermal(chp=None, demand=None, tes=None, ab=None):
     data1 = cogen.tlf_calc_hourly_heat_generated(chp=chp, demand=demand, ab=ab)
     data2 = storage.calc_tes_heat_flow_and_soc(chp=chp, demand=demand, tes=tes, ab=ab, load_following_type="TLF")[0]
     data3 = boiler.calc_aux_boiler_output_rate(chp=chp, demand=demand, tes=tes, ab=ab, load_following_type="TLF")
+    hl_demand = demand.hl.to(ureg.Btu / ureg.hours)
 
     # Convert to base units before creating numpy array for plotting
-    y0 = np.array([dem.magnitude for dem in demand.hl])
+    y0 = np.array([dem.magnitude for dem in hl_demand])
     y1 = np.array([gen.magnitude for gen in data1])
     y2 = np.array([gen.magnitude for gen in data2])
     y3 = np.array([gen.magnitude for gen in data3])
