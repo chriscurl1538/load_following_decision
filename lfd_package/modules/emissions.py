@@ -89,6 +89,9 @@ def calc_chp_emissions(chp=None, demand=None, load_following_type=None, ab=None,
         elif load_following_type == "TLF":
             electricity_bought_annual = sum(cogen.tlf_calc_electricity_bought_and_generated(chp=chp, demand=demand,
                                                                                             ab=ab)[0])
+        elif load_following_type == "PP":
+            electricity_bought_annual = sum(cogen.pp_calc_electricity_bought_and_generated(chp=chp, demand=demand,
+                                                                                           ab=ab)[0])
         else:
             raise Exception("Error in calc_chp_emissions function")
 
