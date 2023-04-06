@@ -48,6 +48,7 @@ def calc_grid_emissions(demand=None):
     """
     subgrid_coefficient_marginal, subgrid_coefficient_average = identify_subgrid_coefficients(demand=demand)
     electric_demand_annual = demand.annual_el
+    assert electric_demand_annual.units == ureg.kWh
 
     electric_emissions_annual_marg = (electric_demand_annual * subgrid_coefficient_marginal).to('lbs')
     electric_emissions_annual_avg = (electric_demand_annual * subgrid_coefficient_average).to('lbs')
@@ -64,6 +65,7 @@ def calc_fuel_emissions(demand=None):
 
     """
     heating_demand_annual = demand.annual_hl
+    assert heating_demand_annual.units == ureg.Btu
 
     fuel_emissions_annual = (heating_demand_annual * demand.ng_co2).to('lbs')
     assert fuel_emissions_annual.units == ureg.lbs
@@ -105,15 +107,13 @@ def calc_chp_emissions(chp=None, demand=None, load_following_type=None, ab=None,
 
         subgrid_coefficient_marg, subgrid_coefficient_avg = identify_subgrid_coefficients(demand=demand)
 
-        grid_emissions_marg = (subgrid_coefficient_marg * electricity_bought_annual).to('lbs')
-        chp_emissions_marg = (subgrid_coefficient_marg * chp_fuel_use_annual).to('lbs')
-        boiler_emissions_marg = (subgrid_coefficient_marg * ab_fuel_use_annual).to('lbs')
-        total_emissions_marg = grid_emissions_marg + chp_emissions_marg + boiler_emissions_marg
+        grid_emissions_marg = (subgrid_coefficient_marg * electricity_bought_annual).to('lbs')   # TODO: Incorrect calc
+        chp_fuel_emissions = (demand.ng_co2 * chp_fuel_use_annual).to('lbs')
+        boiler_emissions = (demand.ng_co2 * ab_fuel_use_annual).to('lbs')
+        total_emissions_marg = grid_emissions_marg + chp_fuel_emissions + boiler_emissions
 
         grid_emissions_avg = (subgrid_coefficient_avg * electricity_bought_annual).to('lbs')
-        chp_emissions_avg = (subgrid_coefficient_avg * chp_fuel_use_annual).to('lbs')
-        boiler_emissions_avg = (subgrid_coefficient_avg * ab_fuel_use_annual).to('lbs')
-        total_emissions_avg = grid_emissions_avg + chp_emissions_avg + boiler_emissions_avg
+        total_emissions_avg = grid_emissions_avg + chp_fuel_emissions + boiler_emissions
 
         return total_emissions_marg, total_emissions_avg
 
@@ -158,3 +158,7 @@ def compare_emissions(chp=None, demand=None, load_following_type=None, ab=None, 
             return difference_avg
         else:
             return difference_marg
+
+
+if __name__ == "__main__":
+    print(dir(ureg.sys.mks))
