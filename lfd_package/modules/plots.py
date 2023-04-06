@@ -2,6 +2,7 @@
 Module Description:
     This module will create plots of data passed to the program
     as well as relevant data calculated by the program
+TODO: Check if plot labels are correct (energy [kWh] vs power [kW])
 """
 
 import matplotlib.pyplot as plt, numpy as np
@@ -18,7 +19,7 @@ def plot_electrical_demand_curve(demand=None):
     # Set up plot
     plt.plot(x1, y1)
     plt.title('Electrical Demand Curve')
-    plt.ylabel('Demand (kWh)')
+    plt.ylabel('Demand (kW)')
     plt.yticks(np.arange(0, y1.max(), y1.max()/10))
     plt.xlabel('Percent Days')
 
@@ -33,7 +34,7 @@ def plot_thermal_demand_curve(demand=None):
     # Set up plot
     plt.plot(x2, y2)
     plt.title('Thermal Demand Curve')
-    plt.ylabel('Demand (Btu)')
+    plt.ylabel('Demand (Btu/hr)')
     plt.yticks(np.arange(0, y2.max(), y2.max()/10))
     plt.xlabel('Percent Days')
 
