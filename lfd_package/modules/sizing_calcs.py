@@ -2,7 +2,6 @@
 Module description:
     These functions calculate the desired size of the CHP and TES systems
 """
-# TODO: CHP size is bigger for ELF than for PP operation (could be due to different sizing strategies)
 
 import numpy as np
 from lfd_package.modules.__init__ import ureg, Q_
@@ -66,11 +65,16 @@ def electrical_output_to_fuel_consumption(electrical_output=None):
         Approximate fuel consumption of CHP in units of kW thermal
     """
     if electrical_output is not None:
-        a = 3.309
-        b = 20.525
         assert electrical_output.units == ureg.kW
-        fuel_consumption_kw = (a * electrical_output.magnitude + b) * ureg.kW
-        return fuel_consumption_kw
+
+        if electrical_output.magnitude == 0:
+            return Q_(0, ureg.kW)
+        else:
+            a = 3.309
+            b = 20.525
+            assert electrical_output.units == ureg.kW
+            fuel_consumption_kw = (a * electrical_output.magnitude + b) * ureg.kW
+            return fuel_consumption_kw
 
 
 def electrical_output_to_thermal_output(electrical_output=None):
@@ -99,11 +103,15 @@ def electrical_output_to_thermal_output(electrical_output=None):
     """
     if electrical_output is not None:
         assert electrical_output.units == ureg.kW
-        a = -0.0216
-        b = 3.6225
-        c = 5.0367
-        thermal_output_kw = (a * electrical_output.magnitude**2 + b * electrical_output.magnitude + c) * ureg.kW
-        return thermal_output_kw
+
+        if electrical_output.magnitude == 0:
+            return Q_(0, ureg.kW)
+        else:
+            a = -0.0216
+            b = 3.6225
+            c = 5.0367
+            thermal_output_kw = (a * electrical_output.magnitude**2 + b * electrical_output.magnitude + c) * ureg.kW
+            return thermal_output_kw
 
 
 def thermal_output_to_electrical_output(thermal_output=None):
@@ -130,13 +138,17 @@ def thermal_output_to_electrical_output(thermal_output=None):
     """
     if thermal_output is not None:
         assert thermal_output.units == ureg.kW
-        a = 1.3428
-        b = 51.658
-        electrical_output_kw = ((thermal_output.magnitude - b) / a) * ureg.kW
-        if electrical_output_kw.magnitude < 0:
+
+        if thermal_output.magnitude == 0:
             return Q_(0, ureg.kW)
         else:
-            return electrical_output_kw
+            a = 1.3428
+            b = 51.658
+            electrical_output_kw = ((thermal_output.magnitude - b) / a) * ureg.kW
+            if electrical_output_kw.magnitude <= 0:
+                return Q_(0, ureg.kW)
+            else:
+                return electrical_output_kw
 
 
 def size_chp(load_following_type=None, demand=None, ab=None):
@@ -180,6 +192,10 @@ def size_chp(load_following_type=None, demand=None, ab=None):
         if chp_size.units != ureg.kW:
             chp_size.to(ureg.kW)
 
+        # Lower Limit on Size - added due to error in average efficiency calc showing hourly chp gen to be all zeros
+        if chp_size < Q_(14.5, ureg.kW):
+            return Q_(0, ureg.kW)
+
         return chp_size
 
 
@@ -217,7 +233,6 @@ def calc_min_pes_chp_size(demand=None, ab=None):
     """
     Docstring updated 9/24/2022
 
-    TODO: Changed calculation from using min PES to using max PES. Unsure if correct
     Recommends a CHP system size using the minimum Primary Energy Savings
     (PES) method.
 
@@ -255,10 +270,10 @@ def calc_min_pes_chp_size(demand=None, ab=None):
             size_list.append(size)
             pes_list.append(pes)
 
-        max_pes_value = max(pes_list)
-        max_pes_index = pes_list.index(max_pes_value)
-        max_pes_size = size_list[max_pes_index]
-        return max_pes_size
+        min_pes_value = min(pes_list)
+        min_pes_index = pes_list.index(min_pes_value)
+        min_pes_size = size_list[min_pes_index]
+        return min_pes_size
 
 
 def size_tes(demand=None, chp=None, ab=None, load_following_type=None):
