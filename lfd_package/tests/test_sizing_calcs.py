@@ -131,8 +131,8 @@ def test_calc_min_pes_chp_size(class_info):
     # Check Pint units
     assert func.units == ureg.kW
 
-    # Check value ranges TODO: Add upper limit on CHP size
-    assert 0 <= func.magnitude
+    # Check value ranges
+    assert 15 <= func.magnitude <= 100
 
 
 def test_size_tes(class_info):
