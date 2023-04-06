@@ -192,14 +192,6 @@ def main():
     # tlf_simple_payback = (implementation_cost_tlf / tlf_total_cost_savings) * ureg.year
 
     """
-    Emissions Analysis
-    """
-
-    emissions_elf = emissions.compare_emissions(chp=chp, demand=demand, load_following_type='ELF', ab=ab, tes=tes)
-    emissions_tlf = emissions.compare_emissions(chp=chp, demand=demand, load_following_type='TLF', ab=ab, tes=tes)
-    emissions_pp = emissions.compare_emissions(chp=chp, demand=demand, load_following_type='PP', ab=ab, tes=tes)
-
-    """
     Table: Display system property inputs
     """
 
@@ -209,82 +201,92 @@ def main():
         ["Thermal Efficiency (Full Load)", "{} %".format(chp.th_nominal_eff * 100), "N/A", "{} %".format(ab.eff * 100)],
         ["Electrical Efficiency (Full Load)", "{} %".format(chp.el_nominal_eff * 100), "N/A", "N/A"],
         ["Minimum Load Operation", "{} %".format(round(chp.min_pl * 100, 2)), "N/A", "{} %".format(round(ab.min_pl * 100, 2))],
-        ["ELF Equipment Sizes", round(chp_size_elf.to(ureg.kW), 2), round(tes_size_elf.to(ureg.megaBtu), 2), ab.cap],
-        ["TLF Equipment Sizes", round(chp_size_tlf.to(ureg.kW), 2), round(tes_size_tlf.to(ureg.megaBtu), 2), ab.cap],
-        ["PP Equipment Sizes", round(chp_size_pp.to(ureg.kW), 2), round(tes_size_pp.to(ureg.megaBtu), 2), ab.cap]
+        ["ELF Equipment Sizes", round(chp_size_elf.to(ureg.kW), 2), round(tes_size_elf.to(ureg.Btu), 2), ab.cap],
+        ["TLF Equipment Sizes", round(chp_size_tlf.to(ureg.kW), 2), round(tes_size_tlf.to(ureg.Btu), 2), ab.cap],
+        ["PP Equipment Sizes", round(chp_size_pp.to(ureg.kW), 2), round(tes_size_pp.to(ureg.Btu), 2), ab.cap]
     ]
 
     table_system_properties = tabulate(system_properties, headers=head_equipment, tablefmt="fancy_grid")
     print(table_system_properties)
 
-    """
-    Table: Display key input data
-    """
+    # """
+    # Table: Display key input data
+    # """
+    #
+    # head_units = ["", "Value"]
+    #
+    # input_data = [
+    #     ["Location", "{}, {}".format(demand.city, demand.state)]
+    #     # ["Fuel Cost [$/MMBtu]", round(demand.fuel_cost, 2)],
+    #     # ["Electricity Rate [$/kWh]", round(demand.el_cost, 2)],
+    #     # ["CHP Installed Cost, ELF [$]", round(capex_chp_elf.to(ureg.dimensionless), 2)],
+    #     # ["CHP Installed Cost, TLF [$]", round(capex_chp_tlf, 2)],
+    #     # ["TES Installed Cost, ELF [$]", round(capex_tes_elf, 2)],
+    #     # ["TES Installed Cost, TLF [$]", round(capex_tes_tlf, 2)]
+    # ]
+    #
+    # table_input_data = tabulate(input_data, headers=head_units, tablefmt="fancy_grid")
+    # print(table_input_data)
+    #
+    # """
+    # Table: Display economic calculations
+    # """
+    #
+    # head_comparison = ["", "ELF", "TLF", "PP"]
+    #
+    # costs = [
+    #     ["Annual Electrical Demand [kWh]", round(demand.annual_el, 2), "N/A", "N/A"],
+    #     ["Annual Thermal Demand [MMBtu]", round(demand.annual_hl.to(ureg.megaBtu), 2), "N/A", "N/A"],
+    #     ["Thermal Energy Savings [MMBtu]", round(elf_thermal_energy_savings.to(ureg.megaBtu), 2),
+    #      round(tlf_thermal_energy_savings.to(ureg.megaBtu), 2), round(pp_thermal_energy_savings.to(ureg.megaBtu), 2)],
+    #     # ["Thermal Cost Savings [$]", round(elf_thermal_cost_savings, 2),
+    #     #  round(tlf_thermal_cost_savings, 2)],
+    #     ["Electrical Energy Savings [kWh]", round(elf_electric_energy_savings, 2),
+    #      round(tlf_electric_energy_savings, 2), round(pp_electric_energy_savings, 2)]
+    #     # ["Electrical Cost Savings [$]", round(elf_electric_cost_savings, 2),
+    #     #  round(tlf_electric_cost_savings, 2)],
+    #     # ["Total Cost Savings [$]", round(elf_total_cost_savings, 2),
+    #     #  round(tlf_total_cost_savings, 2)],
+    #     # ["Simple Payback [Yrs]", round(elf_simple_payback, 2),
+    #     #  round(tlf_simple_payback, 2)]
+    # ]
+    #
+    # table_costs = tabulate(costs, headers=head_comparison, tablefmt="fancy_grid")
+    # print(table_costs)
+    #
+    # """
+    # Table: Display Emissions Analysis
+    # """
+    #
+    # head_location = ["City, State", "Climate Zone"]
+    #
+    # emissions_location = [
+    #     ["Seattle, WA", "4C - Marine"],
+    #     ["Miami, FL", "1A - Warm, Humid"],
+    #     ["Duluth, MN", "7 - Cold, Humid"],
+    #     ["Pheonix, AZ", "2B - Warm, Dry"],
+    #     ["Helena, MT", "6B - Cold, Dry"]
+    # ]
+    #
+    # table_location = tabulate(emissions_location, headers=head_location, tablefmt="fancy_grid")
+    # print(table_location)
 
-    head_units = ["", "Value"]
+    head_emissions_co2 = ["City, State", "Baseline Electrical Load", "Baseline Heating Load", "Baseline Emissions",
+                          "CHP (ELF): Total Annual CO2 (tons)", "CHP (TLF): Total Annual CO2 (tons)",
+                          "CHP (PP): Total Annual CO2 (tons)"]
 
-    input_data = [
-        ["Location", "{}, {}".format(demand.city, demand.state)]
-        # ["Fuel Cost [$/MMBtu]", round(demand.fuel_cost, 2)],
-        # ["Electricity Rate [$/kWh]", round(demand.el_cost, 2)],
-        # ["CHP Installed Cost, ELF [$]", round(capex_chp_elf.to(ureg.dimensionless), 2)],
-        # ["CHP Installed Cost, TLF [$]", round(capex_chp_tlf, 2)],
-        # ["TES Installed Cost, ELF [$]", round(capex_tes_elf, 2)],
-        # ["TES Installed Cost, TLF [$]", round(capex_tes_tlf, 2)]
-    ]
-
-    table_input_data = tabulate(input_data, headers=head_units, tablefmt="fancy_grid")
-    print(table_input_data)
-
-    """
-    Table: Display economic calculations
-    """
-
-    head_comparison = ["", "ELF", "TLF", "PP"]
-
-    costs = [
-        ["Annual Electrical Demand [kWh]", round(demand.annual_el, 2), "N/A", "N/A"],
-        ["Annual Thermal Demand [MMBtu]", round(demand.annual_hl.to(ureg.megaBtu), 2), "N/A", "N/A"],
-        ["Thermal Energy Savings [MMBtu]", round(elf_thermal_energy_savings.to(ureg.megaBtu), 2),
-         round(tlf_thermal_energy_savings.to(ureg.megaBtu), 2), round(pp_thermal_energy_savings.to(ureg.megaBtu), 2)],
-        # ["Thermal Cost Savings [$]", round(elf_thermal_cost_savings, 2),
-        #  round(tlf_thermal_cost_savings, 2)],
-        ["Electrical Energy Savings [kWh]", round(elf_electric_energy_savings, 2),
-         round(tlf_electric_energy_savings, 2), round(pp_electric_energy_savings, 2)]
-        # ["Electrical Cost Savings [$]", round(elf_electric_cost_savings, 2),
-        #  round(tlf_electric_cost_savings, 2)],
-        # ["Total Cost Savings [$]", round(elf_total_cost_savings, 2),
-        #  round(tlf_total_cost_savings, 2)],
-        # ["Simple Payback [Yrs]", round(elf_simple_payback, 2),
-        #  round(tlf_simple_payback, 2)]
-    ]
-
-    table_costs = tabulate(costs, headers=head_comparison, tablefmt="fancy_grid")
-    print(table_costs)
-
-    """
-    Table: Display Emissions Analysis
-    """
-
-    head_location = ["City, State", "Climate Zone"]
+    baseline_total_co2 = emissions.calc_fuel_emissions(demand=demand) + emissions.calc_grid_emissions(demand=demand)[1]
+    tlf_total_co2 = emissions.calc_chp_emissions(chp=chp, demand=demand, load_following_type="TLF", tes=tes, ab=ab)[1]
+    elf_total_co2 = emissions.calc_chp_emissions(chp=chp, demand=demand, load_following_type="ELF", tes=tes, ab=ab)[1]
+    pp_total_co2 = emissions.calc_chp_emissions(chp=chp, demand=demand, load_following_type="PP", tes=tes, ab=ab)[1]
 
     emissions_data_co2 = [
-        ["Seattle, WA", "4C - Marine"],
-        ["Miami, FL", "1A - Warm, Humid"],
-        ["Duluth, MN", "7 - Cold, Humid"],
-        ["Pheonix, AZ", "2B - Warm, Dry"],
-        ["Helena, MT", "6B - Cold, Dry"]
-    ]
-
-    table_location = tabulate(emissions_data_co2, headers=head_location, tablefmt="fancy_grid")
-    print(table_location)
-
-    head_emissions_co2 = ["City, State", "CHP (ELF): Annual Delta CO2 (tons)", "CHP (TLF): Annual Delta CO2 (tons)",
-                          "CHP (PP): Annual Delta CO2 (tons)"]
-
-    emissions_data_co2 = [
-        ["{}, {}".format(demand.city, demand.state), round(emissions_elf.to('tons'), 2),
-         round(emissions_tlf.to('tons'), 2), round(emissions_pp.to('tons'), 2)]
+        ["{}, {}".format(demand.city, demand.state), round(demand.annual_el.to(ureg.megaWh)), round(demand.annual_hl.to(ureg.megaBtu), 2),
+         round(baseline_total_co2.to(ureg.tons)), round(elf_total_co2.to('tons')),
+         round(tlf_total_co2.to('tons')), round(pp_total_co2.to('tons'))],
+        ["In SI Units...", round(demand.annual_el.to(ureg.megaWh)), round(demand.annual_hl.to(ureg.megaWh)),
+         round(baseline_total_co2.to(ureg.metric_ton)), round(elf_total_co2.to(ureg.metric_ton)),
+         round(tlf_total_co2.to(ureg.metric_ton)), round(pp_total_co2.to(ureg.metric_ton))]
     ]
 
     table_emissions_co2 = tabulate(emissions_data_co2, headers=head_emissions_co2, tablefmt="fancy_grid")
@@ -294,96 +296,17 @@ def main():
     Plots
     """
 
-    plots.plot_electrical_demand_curve(demand=demand)
-    plots.plot_thermal_demand_curve(demand=demand)
+    # plots.plot_electrical_demand_curve(demand=demand)
+    # plots.plot_thermal_demand_curve(demand=demand)
+    #
+    # plots.elf_plot_electric(chp=chp, demand=demand, ab=ab)
+    # plots.elf_plot_thermal(chp=chp, demand=demand, tes=tes, ab=ab)
+    # plots.elf_plot_tes_soc(chp=chp, demand=demand, tes=tes, ab=ab)
 
-    plots.elf_plot_electric(chp=chp, demand=demand, ab=ab)
-    plots.elf_plot_thermal(chp=chp, demand=demand, tes=tes, ab=ab)
-    plots.elf_plot_tes_soc(chp=chp, demand=demand, tes=tes, ab=ab)
-
-    plots.tlf_plot_electric(chp=chp, demand=demand, ab=ab)
-    plots.tlf_plot_thermal(chp=chp, demand=demand, tes=tes, ab=ab)
-    plots.tlf_plot_tes_soc(chp=chp, demand=demand, tes=tes, ab=ab)
+    # plots.tlf_plot_electric(chp=chp, demand=demand, ab=ab)
+    # plots.tlf_plot_thermal(chp=chp, demand=demand, tes=tes, ab=ab)
+    # plots.tlf_plot_tes_soc(chp=chp, demand=demand, tes=tes, ab=ab)
 
 
 if __name__ == "__main__":
     main()
-
-    """
-    head_emissions_nox = ["City, State", "Climate Zone", "CHP (ELF): Annual Delta NOx (tons)",
-                          "CHP (TLF): Annual Delta NOx (tons)"]
-
-    emissions_data_nox = [
-        ["Seattle, WA", "4C - Marine", round(seattle_elf['nox'].to('tons'), 2), round(seattle_tlf['nox'].to('tons'), 2)],
-        ["Miami, FL", "1A - Warm, Humid", round(miami_elf['nox'].to('tons'), 2), round(miami_tlf['nox'].to('tons'), 2)],
-        ["Duluth, MN", "7 - Cold, Humid", round(duluth_elf['nox'].to('tons'), 2), round(duluth_tlf['nox'].to('tons'), 2)],
-        ["Pheonix, AZ", "2B - Warm, Dry", round(pheonix_elf['nox'].to('tons'), 2), round(pheonix_tlf['nox'].to('tons'), 2)],
-        ["Helena, MT", "6B - Cold, Dry", round(helena_elf['nox'].to('tons'), 2), round(helena_tlf['nox'].to('tons'), 2)]
-    ]
-
-    table_emissions_nox = tabulate(emissions_data_nox, headers=head_emissions_nox, tablefmt="fancy_grid")
-    print(table_emissions_nox)
-
-    head_emissions_so2 = ["City, State", "Climate Zone", "CHP (ELF): Annual Delta SO2 (tons)",
-                          "CHP (TLF): Annual Delta SO2 (tons)"]
-
-    emissions_data_so2 = [
-        ["Seattle, WA", "4C - Marine", round(seattle_elf['so2'].to('tons'), 2), round(seattle_tlf['so2'].to('tons'), 2)],
-        ["Miami, FL", "1A - Warm, Humid", round(miami_elf['so2'].to('tons'), 2), round(miami_tlf['so2'].to('tons'), 2)],
-        ["Duluth, MN", "7 - Cold, Humid", round(duluth_elf['so2'].to('tons'), 2), round(duluth_tlf['so2'].to('tons'), 2)],
-        ["Pheonix, AZ", "2B - Warm, Dry", round(pheonix_elf['so2'].to('tons'), 2), round(pheonix_tlf['so2'].to('tons'), 2)],
-        ["Helena, MT", "6B - Cold, Dry", round(helena_elf['so2'].to('tons'), 2), round(helena_tlf['so2'].to('tons'), 2)]
-    ]
-
-    table_emissions_so2 = tabulate(emissions_data_so2, headers=head_emissions_so2, tablefmt="fancy_grid")
-    print(table_emissions_so2)
-
-    head_emissions_pm = ["City, State", "Climate Zone", "CHP (ELF): Annual Delta PM2.5 (tons)",
-                          "CHP (TLF): Annual Delta PM2.5 (tons)"]
-
-    emissions_data_pm = [
-        ["Seattle, WA", "4C - Marine", round(seattle_elf['pm'].to('tons'), 2), round(seattle_tlf['pm'].to('tons'), 2)],
-        ["Miami, FL", "1A - Warm, Humid", round(miami_elf['pm'].to('tons'), 2), round(miami_tlf['pm'].to('tons'), 2)],
-        ["Duluth, MN", "7 - Cold, Humid", round(duluth_elf['pm'].to('tons'), 2),
-         round(duluth_tlf['pm'].to('tons'), 2)],
-        ["Pheonix, AZ", "2B - Warm, Dry", round(pheonix_elf['pm'].to('tons'), 2),
-         round(pheonix_tlf['pm'].to('tons'), 2)],
-        ["Helena, MT", "6B - Cold, Dry", round(helena_elf['pm'].to('tons'), 2), round(helena_tlf['pm'].to('tons'), 2)]
-    ]
-
-    table_emissions_pm = tabulate(emissions_data_pm, headers=head_emissions_pm, tablefmt="fancy_grid")
-    print(table_emissions_pm)
-
-    head_emissions_voc = ["City, State", "Climate Zone", "CHP (ELF): Annual Delta VOC (tons)",
-                         "CHP (TLF): Annual Delta VOC (tons)"]
-
-    emissions_data_voc = [
-        ["Seattle, WA", "4C - Marine", round(seattle_elf['voc'].to('tons'), 2), round(seattle_tlf['voc'].to('tons'), 2)],
-        ["Miami, FL", "1A - Warm, Humid", round(miami_elf['voc'].to('tons'), 2), round(miami_tlf['voc'].to('tons'), 2)],
-        ["Duluth, MN", "7 - Cold, Humid", round(duluth_elf['voc'].to('tons'), 2),
-         round(duluth_tlf['voc'].to('tons'), 2)],
-        ["Pheonix, AZ", "2B - Warm, Dry", round(pheonix_elf['voc'].to('tons'), 2),
-         round(pheonix_tlf['voc'].to('tons'), 2)],
-        ["Helena, MT", "6B - Cold, Dry", round(helena_elf['voc'].to('tons'), 2), round(helena_tlf['voc'].to('tons'), 2)]
-    ]
-
-    table_emissions_voc = tabulate(emissions_data_voc, headers=head_emissions_voc, tablefmt="fancy_grid")
-    print(table_emissions_voc)
-
-    head_emissions_nh3 = ["City, State", "Climate Zone", "CHP (ELF): Annual Delta NH3 (tons)",
-                          "CHP (TLF): Annual Delta NH3 (tons)"]
-
-    emissions_data_nh3 = [
-        ["Seattle, WA", "4C - Marine", round(seattle_elf['nh3'].to('tons'), 2),
-         round(seattle_tlf['nh3'].to('tons'), 2)],
-        ["Miami, FL", "1A - Warm, Humid", round(miami_elf['nh3'].to('tons'), 2), round(miami_tlf['nh3'].to('tons'), 2)],
-        ["Duluth, MN", "7 - Cold, Humid", round(duluth_elf['nh3'].to('tons'), 2),
-         round(duluth_tlf['nh3'].to('tons'), 2)],
-        ["Pheonix, AZ", "2B - Warm, Dry", round(pheonix_elf['nh3'].to('tons'), 2),
-         round(pheonix_tlf['nh3'].to('tons'), 2)],
-        ["Helena, MT", "6B - Cold, Dry", round(helena_elf['nh3'].to('tons'), 2), round(helena_tlf['nh3'].to('tons'), 2)]
-    ]
-
-    table_emissions_nh3 = tabulate(emissions_data_nh3, headers=head_emissions_nh3, tablefmt="fancy_grid")
-    print(table_emissions_nh3)
-    """
