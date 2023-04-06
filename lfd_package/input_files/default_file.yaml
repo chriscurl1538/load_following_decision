@@ -33,7 +33,7 @@ ab_turn_down: 10.0
 
 # TES Storage Specs
 tes_discharge_rate: 500000.0  # Btu/hr TODO: Implement into model
-tes_init: 0   # Btu, initial storage
+tes_init: 0   # Btu, initial storage TODO: Change to be in terms of SOC (percent rather than BTU)
 
 # Energy Costs
 grid_efficiency: 0.4   # between 0-1, national average
