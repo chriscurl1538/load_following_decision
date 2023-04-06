@@ -44,12 +44,8 @@ def calc_avg_efficiency(chp=None, demand=None, load_following_type=None, ab=None
             avg_el_eff = Q_(0, '')
             avg_th_eff = Q_(0, '')
             return avg_el_eff, avg_th_eff
-        elif load_following_type == "PP":
-            fuel_use_kw = sizing.electrical_output_to_fuel_consumption(electrical_output=chp_size)
-            thermal_output_kw = sizing.electrical_output_to_thermal_output(electrical_output=chp_size)
-            avg_el_eff = (chp_size / fuel_use_kw).to(ureg.dimensionless)
-            avg_th_eff = (thermal_output_kw / fuel_use_kw).to(ureg.dimensionless)
-            return avg_el_eff, avg_th_eff
+        if load_following_type == "PP":
+            chp_electric_gen_hourly_kwh = pp_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[1]
         elif load_following_type == "ELF":
             chp_electric_gen_hourly_kwh = elf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[1]
         elif load_following_type == "TLF":
@@ -61,7 +57,9 @@ def calc_avg_efficiency(chp=None, demand=None, load_following_type=None, ab=None
         for gen in chp_electric_gen_hourly_kwh:
             if gen.magnitude > 0:
                 hours_per_year += Q_(1, ureg.hours)
-        assert hours_per_year.magnitude > 0
+
+        if hours_per_year.magnitude == 0:
+            raise Exception("Error in calc_avg_efficiency function: CHP size is too small ({})".format(chp_size))
 
         avg_gen_kw = (sum(chp_electric_gen_hourly_kwh) / hours_per_year).to(ureg.kW)
         fuel_use_kw = sizing.electrical_output_to_fuel_consumption(electrical_output=avg_gen_kw)
@@ -102,15 +100,10 @@ def calc_annual_fuel_use_and_costs(chp=None, demand=None, load_following_type=No
         Annual fuel cost for the CHP unit in USD (dimensionless Quantity)
     """
     if any(elem is None for elem in [chp, demand, ab, load_following_type]) is False:
-        chp_size = sizing.size_chp(load_following_type=load_following_type, demand=demand, ab=ab)
         avg_el_eff = calc_avg_efficiency(chp=chp, demand=demand, ab=ab, load_following_type=load_following_type)[0]
 
         if load_following_type == "PP":
-            fuel_use_kw = sizing.electrical_output_to_fuel_consumption(electrical_output=chp_size)
-            annual_fuel_use_btu = (fuel_use_kw * chp.available_hours).to(ureg.Btu)
-            annual_fuel_use_mmbtu = annual_fuel_use_btu.to(ureg.megaBtu)
-            annual_fuel_cost = annual_fuel_use_mmbtu * demand.fuel_cost
-            return annual_fuel_use_btu, annual_fuel_cost
+            chp_electric_gen_hourly_kwh = pp_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[1]
         elif load_following_type == "ELF":
             chp_electric_gen_hourly_kwh = elf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[1]
         elif load_following_type == "TLF":
