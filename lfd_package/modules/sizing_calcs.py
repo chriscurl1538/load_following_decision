@@ -5,7 +5,7 @@ Module description:
 
 import numpy as np
 from lfd_package.modules.__init__ import ureg, Q_
-from lfd_package.modules import thermal_storage as storage
+from lfd_package.modules import thermal_storage as storage, chp as cogen
 
 
 def create_demand_curve_array(array=None):
@@ -50,7 +50,7 @@ def electrical_output_to_fuel_consumption(electrical_output=None):
     Calculates approximate CHP fuel consumption for a given electrical output.
     The constants are from a linear fit of CHP data (<100kW) created in Excel.
     The data used for the fit are derived from the CHP TAP's eCatalog. The
-    R^2 value of the fit is 0.9641. Link to eCatalog: https://chp.ecatalog.ornl.gov
+    R^2 value of the fit is 0.99. Link to eCatalog: https://chp.ecatalog.ornl.gov
 
     Used in the calc_min_pes_chp_size function
 
@@ -70,10 +70,9 @@ def electrical_output_to_fuel_consumption(electrical_output=None):
         if electrical_output.magnitude == 0:
             return Q_(0, ureg.kW)
         else:
-            a = 3.309
-            b = 20.525
+            a = 3.6728
             assert electrical_output.units == ureg.kW
-            fuel_consumption_kw = (a * electrical_output.magnitude + b) * ureg.kW
+            fuel_consumption_kw = (a * electrical_output.magnitude) * ureg.kW
             return fuel_consumption_kw
 
 
@@ -84,7 +83,7 @@ def electrical_output_to_thermal_output(electrical_output=None):
     Calculates approximate CHP thermal output for a given electrical output.
     The constants are from a second order polynomial fit of CHP data (<100kW)
     created in Excel. The data for the fit are derived from the CHP TAP's
-    eCatalog. The R^2 value of the fit is 0.6016. Link to eCatalog:
+    eCatalog. The R^2 value of the fit is 0.6013. Link to eCatalog:
     https://chp.ecatalog.ornl.gov
 
     Used in the calc_min_pes_chp_size function.
@@ -107,10 +106,9 @@ def electrical_output_to_thermal_output(electrical_output=None):
         if electrical_output.magnitude == 0:
             return Q_(0, ureg.kW)
         else:
-            a = -0.0216
-            b = 3.6225
-            c = 5.0367
-            thermal_output_kw = (a * electrical_output.magnitude**2 + b * electrical_output.magnitude + c) * ureg.kW
+            a = -0.0234
+            b = 3.8317
+            thermal_output_kw = (a * electrical_output.magnitude**2 + b * electrical_output.magnitude) * ureg.kW
             return thermal_output_kw
 
 
@@ -121,7 +119,7 @@ def thermal_output_to_electrical_output(thermal_output=None):
     Calculates the approximate CHP electrical output for a given thermal output.
     The constants are from a linear fit of CHP data (<100kW)
     in excel. The data is derived from the CHP TAP eCatalog. The R^2 value of
-    the fit is 0.5232. eCatalog link: https://chp.ecatalog.ornl.gov
+    the fit is 0.8955. eCatalog link: https://chp.ecatalog.ornl.gov
 
     Used in the tlf_calc_electricity_bought_and_generated function in the
     chp.py module
@@ -142,9 +140,8 @@ def thermal_output_to_electrical_output(thermal_output=None):
         if thermal_output.magnitude == 0:
             return Q_(0, ureg.kW)
         else:
-            a = 1.3428
-            b = 51.658
-            electrical_output_kw = ((thermal_output.magnitude - b) / a) * ureg.kW
+            a = 0.3965
+            electrical_output_kw = (thermal_output.magnitude * a) * ureg.kW
             if electrical_output_kw.magnitude <= 0:
                 return Q_(0, ureg.kW)
             else:
@@ -192,9 +189,10 @@ def size_chp(load_following_type=None, demand=None, ab=None):
         if chp_size.units != ureg.kW:
             chp_size.to(ureg.kW)
 
-        # Lower Limit on Size - added due to error in average efficiency calc showing hourly chp gen to be all zeros
-        if chp_size < Q_(14.5, ureg.kW):
-            return Q_(0, ureg.kW)
+        # TODO: Fix bug
+        # # Lower Limit on Size - added due to error in average efficiency calc showing hourly chp gen to be all zeros
+        # if chp_size < Q_(14.5, ureg.kW):
+        #     return Q_(0, ureg.kW)
 
         return chp_size
 
@@ -276,7 +274,7 @@ def calc_min_pes_chp_size(demand=None, ab=None):
         return min_pes_size
 
 
-def size_tes(demand=None, chp=None, ab=None, load_following_type=None):
+def size_tes(chp_size=None, demand=None, chp=None, ab=None, load_following_type=None):
     """
     TODO: Need to validate calculation, check that its reasonable
     Requires hourly heat demand data, hourly CHP heating demand coverage, and hourly heat generation by CHP.
@@ -300,7 +298,11 @@ def size_tes(demand=None, chp=None, ab=None, load_following_type=None):
     hour_unit = Q_(1, ureg.hour)
 
     # Pull needed data
-    hourly_excess_and_deficit_list = storage.calc_excess_and_deficit_chp_heat_gen(chp=chp, demand=demand, ab=ab,
+    if load_following_type == "TLF":
+        # TODO: Assume chp runs all the time
+        hourly_excess_and_deficit_list = [(electrical_output_to_thermal_output(chp_size)).to(ureg.Btu / ureg.hour) - dem for dem in demand.hl]
+    else:
+        hourly_excess_and_deficit_list = storage.calc_excess_and_deficit_chp_heat_gen(chp=chp, demand=demand, ab=ab,
                                                                         load_following_type=load_following_type)
     assert isinstance(hourly_excess_and_deficit_list, list)
     assert hourly_excess_and_deficit_list[0].units == ureg.Btu / ureg.hour
