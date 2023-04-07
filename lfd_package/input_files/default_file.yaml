@@ -29,7 +29,7 @@ Thermal:
 # Aux Boiler Specs
 ab_capacity: 1500000.0  # Btu/hr
 ab_eff: 0.80
-ab_turn_down: 10.0
+ab_turn_down: 100.0    # TODO: Change back to 10.0
 
 # TES Storage Specs
 tes_discharge_rate: 500000.0  # Btu/hr TODO: Implement into model
