@@ -2,7 +2,6 @@
 Module Description:
     This module will create plots of data passed to the program
     as well as relevant data calculated by the program
-TODO: Check if plot labels are correct (energy [kWh] vs power [kW])
 """
 
 import matplotlib.pyplot as plt, numpy as np
@@ -73,7 +72,7 @@ def elf_plot_electric(chp=None, demand=None, ab=None):
 
     # Set up plot
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3, sharex='all', sharey='all')
-    fig.suptitle('ELF Annual Electrical Demand and Generation, Daily [kWh]')
+    fig.suptitle('ELF Annual Electrical Demand and Generation, Daily Averages [kW]')
     ax1.plot(daily_kwh_dem_array)
     ax1.set_ylabel('Demand')
     ax2.plot(daily_kwh_chp_array)
@@ -116,7 +115,7 @@ def elf_plot_thermal(chp=None, demand=None, tes=None, ab=None):
 
     # Set up plot
     fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, sharex='all', sharey='all')
-    fig.suptitle('ELF Annual Thermal Demand and Generation, Daily [Btu]')
+    fig.suptitle('ELF Annual Thermal Demand and Generation, Daily Averages [Btu/hr]')
     ax1.plot(daily_btu_dem_array)
     ax1.set_ylabel('Demand')
     ax2.plot(daily_btu_chp_array)
@@ -160,10 +159,10 @@ TLF Plots
 """
 
 
-def tlf_plot_electric(chp=None, demand=None, ab=None):
+def tlf_plot_electric(chp=None, demand=None, ab=None, tes=None):
     data0 = demand.el.to(ureg.kW)
-    data1 = cogen.tlf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[1]
-    data2 = cogen.tlf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[0]
+    data1 = cogen.tlf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab, tes=tes)[1]
+    data2 = cogen.tlf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab, tes=tes)[0]
 
     # Convert to base units before creating numpy array for plotting
     y0 = np.array(data0.magnitude)
@@ -186,7 +185,7 @@ def tlf_plot_electric(chp=None, demand=None, ab=None):
 
     # Set up plot
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3, sharex='all', sharey='all')
-    fig.suptitle('TLF Annual Electrical Demand and Generation, Daily [kWh]')
+    fig.suptitle('TLF Annual Electrical Demand and Generation, Daily Averages [kW]')
     ax1.plot(daily_kwh_dem_array)
     ax1.set_ylabel('Demand')
     ax2.plot(daily_kwh_chp_array)
@@ -199,10 +198,15 @@ def tlf_plot_electric(chp=None, demand=None, ab=None):
 
 
 def tlf_plot_thermal(chp=None, demand=None, tes=None, ab=None):
-    data1 = cogen.tlf_calc_hourly_heat_generated(chp=chp, demand=demand, ab=ab)
-    data2 = storage.calc_tes_heat_flow_and_soc(chp=chp, demand=demand, tes=tes, ab=ab, load_following_type="TLF")[0]
+    data1 = cogen.tlf_calc_hourly_heat_generated(chp=chp, demand=demand, ab=ab, tes=tes)[0]
+    data2 = cogen.tlf_calc_hourly_heat_generated(chp=chp, demand=demand, tes=tes, ab=ab)[1]    # TES Heat Flow
     data3 = boiler.calc_aux_boiler_output_rate(chp=chp, demand=demand, tes=tes, ab=ab, load_following_type="TLF")
     hl_demand = demand.hl.to(ureg.Btu / ureg.hours)
+
+    # Check units
+    assert data1[100].units == ureg.Btu / ureg.hours
+    assert data2[100].units == ureg.Btu / ureg.hours
+    assert data3[100].units == ureg.Btu / ureg.hours
 
     # Convert to base units before creating numpy array for plotting
     y0 = np.array([dem.magnitude for dem in hl_demand])
@@ -229,7 +233,7 @@ def tlf_plot_thermal(chp=None, demand=None, tes=None, ab=None):
 
     # Set up plot
     fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, sharex='all', sharey='all')
-    fig.suptitle('TLF Annual Thermal Demand and Generation, Daily [Btu]')
+    fig.suptitle('TLF Annual Thermal Demand and Generation, Daily Averages [Btu/hr]')
     ax1.plot(daily_btu_dem_array)
     ax1.set_ylabel('Demand')
     ax2.plot(daily_btu_chp_array)
@@ -244,7 +248,7 @@ def tlf_plot_thermal(chp=None, demand=None, tes=None, ab=None):
 
 
 def tlf_plot_tes_soc(chp=None, demand=None, tes=None, ab=None):
-    data = storage.calc_tes_heat_flow_and_soc(chp=chp, demand=demand, tes=tes, ab=ab, load_following_type="TLF")[1]
+    data = cogen.tlf_calc_hourly_heat_generated(chp=chp, demand=demand, tes=tes, ab=ab)[2]   # TES SOC data
 
     # Convert to base units before creating numpy array for plotting
     y = np.array([status.magnitude for status in data])
