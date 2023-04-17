@@ -8,10 +8,10 @@ TODO: Check that units of inputs and outputs are as expected in each function. P
 """
 
 from lfd_package.modules import aux_boiler as boiler, classes, chp as cogen, \
-    sizing_calcs as sizing, plots, emissions
+    sizing_calcs as sizing, plots, emissions, thermal_storage as storage
 import pathlib, argparse, yaml, numpy as np
 from tabulate import tabulate
-from lfd_package.modules.__init__ import ureg
+from lfd_package.modules.__init__ import ureg, Q_
 
 
 try:
@@ -140,10 +140,40 @@ def main():
     pp_thermal_consumption_total = pp_thermal_consumption_chp + pp_thermal_consumption_ab
     pp_thermal_energy_savings = thermal_consumption_control - pp_thermal_consumption_total
 
+    # Thermal Demand Met by Equipment
+    # TODO: Fix CHP heat gen summation unit error in table
+    elf_chp_thermal_gen = sum(cogen.elf_calc_hourly_heat_generated(chp=chp, demand=demand, ab=ab))
+    tlf_chp_thermal_gen = sum(cogen.tlf_calc_hourly_heat_generated(chp=chp, demand=demand, ab=ab, tes=tes)[0])
+    pp_chp_thermal_gen = sum(cogen.pp_calc_hourly_heat_generated(chp=chp, demand=demand, ab=ab))
+
+    # TODO: Fix TES heat rate summation unit error in table
+    elf_tes_heat_flow_list = storage.calc_tes_heat_flow_and_soc(chp_size=chp_size_elf, load_following_type="ELF",
+                                                                  chp=chp, demand=demand, tes=tes, ab=ab)[0]
+    elf_tes_thermal_dispatch = -1 * sum(item for item in elf_tes_heat_flow_list if item < 0)
+    tlf_tes_heat_flow_list = cogen.tlf_calc_hourly_heat_generated(chp=chp, demand=demand, tes=tes, ab=ab)[1]
+    tlf_tes_thermal_dispatch = -1 * sum(item for item in tlf_tes_heat_flow_list if item < 0)
+    pp_tes_heat_flow_list = storage.calc_tes_heat_flow_and_soc(chp_size=chp_size_pp, load_following_type="PP",
+                                                                  chp=chp, demand=demand, tes=tes, ab=ab)[0]
+    pp_tes_thermal_dispatch = -1 * sum(item for item in pp_tes_heat_flow_list if item < 0)
+
+    elf_boiler_dispatch = sum(boiler.calc_aux_boiler_output_rate(chp_size=chp_size_elf, chp=chp, demand=demand, tes=tes,
+                                                                 ab=ab, load_following_type="ELF"))
+    tlf_boiler_dispatch = sum(boiler.calc_aux_boiler_output_rate(chp_size=chp_size_tlf, chp=chp, demand=demand, tes=tes,
+                                                                 ab=ab, load_following_type="TLF"))
+    pp_boiler_dispatch = sum(boiler.calc_aux_boiler_output_rate(chp_size=chp_size_pp, chp=chp, demand=demand, tes=tes,
+                                                                ab=ab, load_following_type="PP"))
+
     # Electrical Energy Savings
-    elf_electric_energy_savings = sum(cogen.elf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[1])
-    tlf_electric_energy_savings = sum(cogen.tlf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab, tes=tes)[1])
-    pp_electric_energy_savings = sum(cogen.pp_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[1])
+    elf_electricity_bought_list, elf_electric_gen_list = cogen.elf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)
+    elf_electric_energy_savings = sum(elf_electric_gen_list)
+    elf_electricity_bought = sum(elf_electricity_bought_list)
+    tlf_electricity_bought_list, tlf_electric_gen_list = cogen.tlf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab, tes=tes)
+    tlf_electric_energy_savings = sum(tlf_electric_gen_list)
+    tlf_electricity_bought = sum(tlf_electricity_bought_list)
+    pp_electricity_bought_list, pp_electric_gen_list, pp_electricity_sold_list = cogen.pp_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)
+    pp_electric_energy_savings = sum(pp_electric_gen_list)
+    pp_electricity_bought = sum(pp_electricity_bought_list)
+    pp_electricity_sold = sum(pp_electricity_sold_list)
 
     """
     Economic Analysis
@@ -183,7 +213,7 @@ def main():
     # Total Cost Savings
     elf_total_cost_savings = elf_electric_cost_savings + elf_thermal_cost_savings
     tlf_total_cost_savings = tlf_electric_cost_savings + tlf_thermal_cost_savings
-    pp_total_cost_savings = pp_electric_cost_savings + pp_thermal_cost_savings
+    pp_total_cost_savings = pp_electric_cost_savings + pp_thermal_cost_savings  # TODO: Account for sold electricity
 
     # Implementation Cost (material cost + installation cost)
     capex_chp_elf = chp.incremental_cost * chp_size_elf
@@ -239,10 +269,35 @@ def main():
     # print(table_input_data)
 
     """
+    Table: Display Energy Generation by Equipment Type
+    """
+
+    head_energy = ["", "ELF", "TLF", "PP"]
+
+    energy = [
+        ["Annual Electrical Demand [kWh]", round(demand.annual_el, 2), "N/A", "N/A"],
+        ["CHP Electrical Generation", round(elf_electric_energy_savings.to(ureg.kWh), 2),
+         round(tlf_electric_energy_savings.to(ureg.kWh), 2), round(pp_electric_energy_savings.to(ureg.kWh), 2)],
+        ["Electrical Energy Bought", round(elf_electricity_bought, 2), round(tlf_electricity_bought, 2),
+         round(pp_electricity_bought, 2)],
+        ["Electrical Energy Sold", 0, 0, round(pp_electricity_sold, 2)],
+        ["Annual Thermal Demand [MMBtu]", round(demand.annual_hl.to(ureg.megaBtu), 2), "N/A", "N/A"],
+        ["CHP Thermal Generation", round(elf_chp_thermal_gen, 2),
+         round(tlf_chp_thermal_gen, 2), round(pp_chp_thermal_gen, 2)],
+        ["TES Thermal Dispatched", round(elf_tes_thermal_dispatch, 2),
+         round(tlf_tes_thermal_dispatch, 2), round(pp_tes_thermal_dispatch, 2)],
+        ["Boiler Thermal Generation", round(elf_boiler_dispatch, 2), round(tlf_boiler_dispatch, 2),
+         round(pp_boiler_dispatch, 2)]
+    ]
+
+    table_energy = tabulate(energy, headers=head_energy, tablefmt="fancy_grid")
+    print(table_energy)
+
+    """
     Table: Display economic calculations
     """
 
-    head_comparison = ["", "ELF", "TLF", "PP"]
+    head_costs = ["", "ELF", "TLF", "PP"]
 
     costs = [
         ["Annual Electrical Demand [kWh]", round(demand.annual_el, 2), "N/A", "N/A"],
@@ -260,7 +315,7 @@ def main():
         ["Simple Payback [Yrs]", round(elf_simple_payback, 2), round(tlf_simple_payback, 2), round(pp_simple_payback)]
     ]
 
-    table_costs = tabulate(costs, headers=head_comparison, tablefmt="fancy_grid")
+    table_costs = tabulate(costs, headers=head_costs, tablefmt="fancy_grid")
     print(table_costs)
 
     # """
@@ -315,6 +370,10 @@ def main():
     plots.tlf_plot_electric(chp=chp, demand=demand, ab=ab, tes=tes)
     plots.tlf_plot_thermal(chp=chp, demand=demand, tes=tes, ab=ab)
     plots.tlf_plot_tes_soc(chp=chp, demand=demand, tes=tes, ab=ab)
+
+    plots.pp_plot_electric(chp=chp, demand=demand, ab=ab)
+    plots.pp_plot_thermal(chp=chp, demand=demand, tes=tes, ab=ab)
+    plots.pp_plot_tes_soc(chp=chp, demand=demand, tes=tes, ab=ab)
 
 
 if __name__ == "__main__":
