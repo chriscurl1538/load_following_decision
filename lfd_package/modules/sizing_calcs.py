@@ -227,12 +227,16 @@ def calc_max_rect_chp_size(array=None):
         return max_value
 
 
+# TODO: Check this sizing calculation - comes out as 100 kW CHP size
 def calc_min_pes_chp_size(demand=None, ab=None):
     """
     Docstring updated 9/24/2022
 
     Recommends a CHP system size using the minimum Primary Energy Savings
-    (PES) method.
+    (PES) method. A high PES value indicates that the associated CHP size
+    saves the maximum energy compared to the baseline case. A low PES value
+    indicates that the associated CHP size is the most profitable (but saves
+    the least energy compared to the baseline case)
 
     Used in the size_chp function
 
