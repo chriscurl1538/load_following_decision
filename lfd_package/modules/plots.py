@@ -270,3 +270,123 @@ def tlf_plot_tes_soc(chp=None, demand=None, tes=None, ab=None):
 
     # plot
     plt.show()
+
+
+"""
+PP Plots
+"""
+
+def pp_plot_electric(chp=None, demand=None, ab=None):
+    data0 = demand.el.to(ureg.kW)
+    data1 = cogen.pp_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[1]
+    data2 = cogen.pp_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[0]
+    data3 = cogen.pp_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[2]    # Data3 is Sold
+
+
+    # Convert to base units before creating numpy array for plotting
+    y0 = np.array(data0.magnitude)
+    y1 = np.array([gen.magnitude for gen in data1])
+    y2 = np.array([buy.magnitude for buy in data2])
+    y3 = np.array([sell.magnitude for sell in data3])
+
+    # Calculate daily sums
+    daily_kwh_dem = []
+    daily_kwh_chp = []
+    daily_kwh_buy = []
+    daily_kwh_sold = []
+
+    for i in range(24, len(y0) + 1, 24):
+        daily_kwh_dem.append(y0[(i - 24):i].sum())
+        daily_kwh_chp.append(y1[(i - 24):i].sum())
+        daily_kwh_buy.append(y2[(i - 24):i].sum())
+        daily_kwh_sold.append(y3[(i - 24):i].sum())
+
+    daily_kwh_dem_array = np.array(daily_kwh_dem)
+    daily_kwh_chp_array = np.array(daily_kwh_chp)
+    daily_kwh_buy_array = np.array(daily_kwh_buy)
+    daily_kwh_sell_array = np.array(daily_kwh_sold)
+
+    # Set up plot
+    fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, sharex='all', sharey='all')
+    fig.suptitle('PP Annual Electrical Demand, Generation, and Exports, Daily Averages [kW]')
+    ax1.plot(daily_kwh_dem_array)
+    ax1.set_ylabel('Demand')
+    ax2.plot(daily_kwh_chp_array)
+    ax2.set_ylabel('CHP')
+    ax3.plot(daily_kwh_buy_array)
+    ax3.set_ylabel('Electricity Bought')
+    ax4.plot(daily_kwh_sell_array)
+    ax4.set_ylabel('Electricity Sold')
+    ax4.set_xlabel('Time (days)')
+
+    plt.show()
+
+
+def pp_plot_thermal(chp=None, demand=None, tes=None, ab=None):
+    data1 = cogen.pp_calc_hourly_heat_generated(chp=chp, demand=demand, ab=ab)
+    data2 = storage.calc_tes_heat_flow_and_soc(chp=chp, demand=demand, tes=tes, ab=ab, load_following_type="PP")[0]
+    data3 = boiler.calc_aux_boiler_output_rate(chp=chp, demand=demand, tes=tes, ab=ab, load_following_type="PP")
+    hl_demand = demand.hl.to(ureg.Btu / ureg.hours)
+
+    # Convert to base units before creating numpy array for plotting
+    y0 = np.array([dem.magnitude for dem in hl_demand])
+    y1 = np.array([gen.magnitude for gen in data1])
+    y2 = np.array([tes.magnitude for tes in data2])
+    y3 = np.array([boil.magnitude for boil in data3])
+
+    # Calculate daily sums
+    daily_btu_dem = []
+    daily_btu_chp = []
+    daily_btu_tes = []
+    daily_btu_ab = []
+
+    for i in range(24, len(y0) + 1, 24):
+        daily_btu_dem.append(y0[(i - 24):i].sum())
+        daily_btu_chp.append(y1[(i - 24):i].sum())
+        daily_btu_tes.append(y2[(i - 24):i].sum())
+        daily_btu_ab.append(y3[(i - 24):i].sum())
+
+    daily_btu_dem_array = np.array(daily_btu_dem)
+    daily_btu_chp_array = np.array(daily_btu_chp)
+    daily_btu_tes_array = np.array(daily_btu_tes)
+    daily_btu_ab_array = np.array(daily_btu_ab)
+
+    # Set up plot
+    fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, sharex='all', sharey='all')
+    fig.suptitle('PP Annual Thermal Demand and Generation, Daily Averages [Btu/hr]')
+    ax1.plot(daily_btu_dem_array)
+    ax1.set_ylabel('Demand')
+    ax2.plot(daily_btu_chp_array)
+    ax2.set_ylabel('CHP')
+    ax3.plot(daily_btu_tes_array)
+    ax3.set_ylabel('TES Discharge')
+    ax4.plot(daily_btu_ab_array)
+    ax4.set_ylabel('Aux Boiler')
+    ax4.set_xlabel('Time (days)')
+
+    plt.show()
+
+
+def pp_plot_tes_soc(chp=None, demand=None, tes=None, ab=None):
+    data = storage.calc_tes_heat_flow_and_soc(chp=chp, demand=demand, tes=tes, ab=ab, load_following_type="PP")[1]
+
+    # Convert to base units before creating numpy array for plotting
+    y = np.array([status.magnitude for status in data])
+
+    # Calculate daily avg for discharge plot
+    daily_btu = []
+
+    for i in range(24, len(y) + 1, 24):
+        daily_btu.append(np.average(y[(i - 24):i]))
+
+    daily_btu_array = np.array(daily_btu)
+
+    # Set up plots
+    plt.plot(daily_btu_array)
+    plt.title('PP TES SOC, Daily Avg')
+    plt.ylabel('SOC')
+    plt.yticks(np.arange(0, 1, 0.1))
+    plt.xlabel('Time (days)')
+
+    # plot
+    plt.show()
