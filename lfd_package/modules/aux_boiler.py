@@ -11,7 +11,8 @@ from lfd_package.modules import thermal_storage as storage
 from lfd_package.modules.__init__ import ureg, Q_
 
 
-def calc_aux_boiler_output_rate(chp=None, demand=None, tes=None, ab=None, load_following_type=None):
+# TODO: Aux boiler output is far too high (see plots)
+def calc_aux_boiler_output_rate(chp_size=None, chp=None, demand=None, tes=None, ab=None, load_following_type=None):
     """
     Updated 10/16/2022
 
@@ -41,14 +42,18 @@ def calc_aux_boiler_output_rate(chp=None, demand=None, tes=None, ab=None, load_f
     """
     if chp is not None and demand is not None and tes is not None and ab is not None:
         # Pull chp heat and tes heat data
-        tes_heat_rate_list = storage.calc_tes_heat_flow_and_soc(chp=chp, demand=demand, tes=tes, ab=ab,
-                                                                load_following_type=load_following_type)[0]
+
         if load_following_type is "ELF":
             chp_heat_hourly = cogen.elf_calc_hourly_heat_generated(chp=chp, demand=demand, ab=ab)
+            tes_heat_rate_list = storage.calc_tes_heat_flow_and_soc(chp_size=chp_size, chp=chp, demand=demand, tes=tes,
+                                                                    ab=ab, load_following_type=load_following_type)[0]
         elif load_following_type is "TLF":
-            chp_heat_hourly = cogen.tlf_calc_hourly_heat_generated(chp=chp, demand=demand, ab=ab)
+            chp_heat_hourly = cogen.tlf_calc_hourly_heat_generated(chp=chp, demand=demand, ab=ab, tes=tes)[0]
+            tes_heat_rate_list = cogen.tlf_calc_hourly_heat_generated(chp=chp, demand=demand, ab=ab, tes=tes)[1]
         elif load_following_type is "PP":
             chp_heat_hourly = cogen.pp_calc_hourly_heat_generated(chp=chp, demand=demand, ab=ab)
+            tes_heat_rate_list = storage.calc_tes_heat_flow_and_soc(chp_size=chp_size, chp=chp, demand=demand, tes=tes,
+                                                                    ab=ab, load_following_type=load_following_type)[0]
         else:
             raise Exception("Error in chp.py function, calc_annual_electric_cost")
 
@@ -79,14 +84,14 @@ def calc_aux_boiler_output_rate(chp=None, demand=None, tes=None, ab=None, load_f
             dem_item = dem
             chp_heat_rate_item = chp_heat_rate_minus_excess[index]
             tes_heat_discharge_item = tes_discharge[index]  # Negative if heat is discharged, zero otherwise
-            sum_heat_rate = chp_heat_rate_item - tes_heat_discharge_item
+            sum_heat_rate = chp_heat_rate_item + abs(tes_heat_discharge_item)
 
             if tes_heat_discharge_item.magnitude < 0 and dem_item <= chp_heat_rate_item:
                 check_closeness = math.isclose((sum_heat_rate.magnitude - dem_item.magnitude), 0, abs_tol=10 ** -4)
                 if check_closeness is False:
-                    raise Exception('chp heat output and tes heat output exceeds building heating demand by {}. '
-                                    'Check chp and tes heat output calculations for errors'.format(sum_heat_rate -
-                                                                                                   dem_item))
+                    raise Exception('chp heat output and tes heat output exceeds building heating demand by {} at '
+                                    'index {}. Check chp and tes heat output calculations for '
+                                    'errors'.format(sum_heat_rate - dem_item, index))
                 else:
                     ab_heat_rate_item = Q_(0, ureg.Btu / ureg.hour)
                     ab_heat_rate_hourly.append(ab_heat_rate_item)
@@ -94,12 +99,13 @@ def calc_aux_boiler_output_rate(chp=None, demand=None, tes=None, ab=None, load_f
                 ab_heat_rate_item = Q_(0, ureg.Btu / ureg.hour)
                 ab_heat_rate_hourly.append(ab_heat_rate_item)
             elif sum_heat_rate < dem_item:
-                ab_heat_rate_item = abs(dem_item - sum_heat_rate)
+                ab_heat_rate_item = dem_item - sum_heat_rate
                 ab_heat_rate_hourly.append(ab_heat_rate_item)
             else:
                 raise Exception('Error in aux_boiler.py function calc_aux_boiler_output_rate()')
 
         # Check that hourly heat demand is within aux boiler operating parameters
+        # TODO: We may have to assume that the boiler turndown is non-existent - test this section
         min_output = ab.min_pl * ab.cap
         for index, rate in enumerate(ab_heat_rate_hourly):
             if 0 < rate.magnitude <= min_output.magnitude:
@@ -111,7 +117,7 @@ def calc_aux_boiler_output_rate(chp=None, demand=None, tes=None, ab=None, load_f
         return ab_heat_rate_hourly
 
 
-def calc_annual_fuel_use_and_cost(chp=None, demand=None, tes=None, ab=None, load_following_type=None):
+def calc_annual_fuel_use_and_cost(chp_size=None, chp=None, demand=None, tes=None, ab=None, load_following_type=None):
     """
     Updated 10/16/2022
 
@@ -139,7 +145,7 @@ def calc_annual_fuel_use_and_cost(chp=None, demand=None, tes=None, ab=None, load
         annual fuel cost, calculated from the annual fuel use of the boiler
     """
     # Fuel use calculation
-    ab_output_rate_list = calc_aux_boiler_output_rate(chp=chp, demand=demand, tes=tes, ab=ab,
+    ab_output_rate_list = calc_aux_boiler_output_rate(chp_size=chp_size, chp=chp, demand=demand, tes=tes, ab=ab,
                                                       load_following_type=load_following_type)
     annual_heat_output = sum(ab_output_rate_list) * (1 * ureg.hour)
     annual_fuel_use_btu = annual_heat_output / ab.eff
