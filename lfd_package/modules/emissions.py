@@ -38,7 +38,7 @@ def identify_subgrid_coefficients(demand=None):
     return subgrid_coefficient_marginal, subgrid_coefficient_average
 
 
-def calc_grid_emissions(demand=None):
+def calc_baseline_grid_emissions(demand=None):
     """
     Calc grid emissions for electrical demand pre-CHP retrofit
 
@@ -56,7 +56,7 @@ def calc_grid_emissions(demand=None):
     return electric_emissions_annual_marg, electric_emissions_annual_avg
 
 
-def calc_fuel_emissions(demand=None):
+def calc_baseline_fuel_emissions(demand=None):
     """
     Calc NG emissions for heating demand pre-CHP retrofit
 
@@ -90,7 +90,7 @@ def calc_chp_emissions(chp=None, demand=None, load_following_type=None, ab=None,
                                                                                             ab=ab)[0])
         elif load_following_type == "TLF":
             electricity_bought_annual = sum(cogen.tlf_calc_electricity_bought_and_generated(chp=chp, demand=demand,
-                                                                                            ab=ab)[0])
+                                                                                            ab=ab, tes=tes)[0])
         elif load_following_type == "PP":
             electricity_bought_annual = sum(cogen.pp_calc_electricity_bought_and_generated(chp=chp, demand=demand,
                                                                                            ab=ab)[0])
@@ -98,7 +98,7 @@ def calc_chp_emissions(chp=None, demand=None, load_following_type=None, ab=None,
             raise Exception("Error in calc_chp_emissions function")
 
         # For Emissions from CHP
-        chp_fuel_use_annual = cogen.calc_annual_fuel_use_and_costs(chp=chp, demand=demand,
+        chp_fuel_use_annual = cogen.calc_annual_fuel_use_and_costs(chp=chp, demand=demand, tes=tes,
                                                                    load_following_type=load_following_type, ab=ab)[0]
 
         # For Emissions from boiler use
@@ -116,48 +116,6 @@ def calc_chp_emissions(chp=None, demand=None, load_following_type=None, ab=None,
         total_emissions_avg = grid_emissions_avg + chp_fuel_emissions + boiler_emissions
 
         return total_emissions_marg, total_emissions_avg
-
-
-def compare_emissions(chp=None, demand=None, load_following_type=None, ab=None, tes=None):
-    """
-    Calculates increase/decrease in CO2 emissions compared to pre-CHP conditions.
-    Emissions increase if output is negative, decrease if output is positive.
-
-    Parameters
-    ----------
-    chp
-    demand
-    load_following_type
-    ab
-    tes
-
-    Returns
-    -------
-    difference: pint.Quantity
-        Emissions decrease with CHP if value is positive
-    """
-    if any(elem is None for elem in [chp, demand, load_following_type, ab, tes]) is False:
-
-        pre_chp_fuel_emissions = calc_fuel_emissions(demand=demand)
-        pre_chp_grid_emissions_marg, pre_chp_grid_emissions_avg = calc_grid_emissions(demand=demand)
-        chp_total_emissions_marg, chp_total_emissions_avg = calc_chp_emissions(chp=chp, demand=demand,
-                                                                               load_following_type=load_following_type,
-                                                                               ab=ab, tes=tes)
-
-        # Add fuel co2 emissions to total co2 emissions, pre-chp
-        pre_chp_total_emissions_marg = pre_chp_fuel_emissions + pre_chp_grid_emissions_marg
-
-        # Calculate difference compared to chp emissions
-        difference_marg = pre_chp_total_emissions_marg - chp_total_emissions_marg
-        assert difference_marg.units == ureg.lbs
-
-        if difference_marg.magnitude < 0:
-            pre_chp_total_emissions_avg = pre_chp_fuel_emissions + pre_chp_grid_emissions_avg
-            difference_avg = pre_chp_total_emissions_avg - chp_total_emissions_avg
-            assert difference_avg.units == ureg.lbs
-            return difference_avg
-        else:
-            return difference_marg
 
 
 if __name__ == "__main__":
