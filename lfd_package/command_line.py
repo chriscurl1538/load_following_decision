@@ -62,12 +62,12 @@ def run(args):
                       part_load_thermal=part_load_thermal_array, chp_electric_eff=data['Electrical'][100],
                       chp_thermal_eff=data['Thermal'][100], percent_availability=data['percent_availability'],
                       cost=data['chp_installed_cost'])
-    ab = classes.AuxBoiler(capacity=data['ab_capacity'], efficiency=data['ab_eff'],
-                           turn_down_ratio=data['ab_turn_down'])
     demand = classes.EnergyDemand(file_name=data['demand_filename'],
                                   grid_efficiency=data['grid_efficiency'],
                                   electric_cost=data['electric_utility_cost'],
                                   fuel_cost=data['fuel_cost'], city=data['city'], state=data['state'])
+    ab = classes.AuxBoiler(capacity=data['ab_capacity'], efficiency=data['ab_eff'],
+                           turn_down_ratio=data['ab_turn_down'])
     tes = classes.TES(start=data['tes_init'], discharge=data['tes_discharge_rate'],
                       cost=data['tes_installed_cost'])
 
@@ -276,12 +276,14 @@ def main():
 
     energy = [
         ["Annual Electrical Demand [kWh]", round(demand.annual_el, 2), "N/A", "N/A"],
+        ["Peak Electrical Demand [kW]", round(demand.peak_el, 2), "N/A", "N/A"],
         ["CHP Electrical Generation", round(elf_electric_energy_savings.to(ureg.kWh), 2),
          round(tlf_electric_energy_savings.to(ureg.kWh), 2), round(pp_electric_energy_savings.to(ureg.kWh), 2)],
         ["Electrical Energy Bought", round(elf_electricity_bought, 2), round(tlf_electricity_bought, 2),
          round(pp_electricity_bought, 2)],
         ["Electrical Energy Sold", 0, 0, round(pp_electricity_sold, 2)],
         ["Annual Thermal Demand [MMBtu]", round(demand.annual_hl.to(ureg.megaBtu), 2), "N/A", "N/A"],
+        ["Peak Thermal Demand [Btu/hr]", round(demand.peak_hl, 2), "N/A", "N/A"],
         ["CHP Thermal Generation", round(elf_chp_thermal_gen, 2),
          round(tlf_chp_thermal_gen, 2), round(pp_chp_thermal_gen, 2)],
         ["TES Thermal Dispatched", round(elf_tes_thermal_dispatch, 2),
@@ -297,43 +299,30 @@ def main():
     Table: Display economic calculations
     """
 
-    head_costs = ["", "ELF", "TLF", "PP"]
-
-    costs = [
-        ["Annual Electrical Demand [kWh]", round(demand.annual_el, 2), "N/A", "N/A"],
-        ["Annual Thermal Demand [MMBtu]", round(demand.annual_hl.to(ureg.megaBtu), 2), "N/A", "N/A"],
-        ["Thermal Energy Savings [MMBtu]", round(elf_thermal_energy_savings.to(ureg.megaBtu), 2),
-         round(tlf_thermal_energy_savings.to(ureg.megaBtu), 2), round(pp_thermal_energy_savings.to(ureg.megaBtu), 2)],
-        ["Thermal Cost Savings [$]", round(elf_thermal_cost_savings, 2), round(tlf_thermal_cost_savings, 2),
-         round(pp_thermal_cost_savings, 2)],
-        ["Electrical Energy Savings [kWh]", round(elf_electric_energy_savings, 2),
-         round(tlf_electric_energy_savings, 2), round(pp_electric_energy_savings, 2)],
-        ["Electrical Cost Savings [$]", round(elf_electric_cost_savings, 2), round(tlf_electric_cost_savings, 2),
-         round(pp_electric_cost_savings, 2)],
-        ["Total Cost Savings [$]", round(elf_total_cost_savings, 2), round(tlf_total_cost_savings, 2),
-         round(pp_total_cost_savings, 2)],
-        ["Simple Payback [Yrs]", round(elf_simple_payback, 2), round(tlf_simple_payback, 2), round(pp_simple_payback)]
-    ]
-
-    table_costs = tabulate(costs, headers=head_costs, tablefmt="fancy_grid")
-    print(table_costs)
-
-    # """
-    # Table: Display Emissions Analysis
-    # """
+    # head_costs = ["", "ELF", "TLF", "PP"]
     #
-    # head_location = ["City, State", "Climate Zone"]
-    #
-    # emissions_location = [
-    #     ["Seattle, WA", "4C - Marine"],
-    #     ["Miami, FL", "1A - Warm, Humid"],
-    #     ["Duluth, MN", "7 - Cold, Humid"],
-    #     ["Pheonix, AZ", "2B - Warm, Dry"],
-    #     ["Helena, MT", "6B - Cold, Dry"]
+    # costs = [
+    #     ["Annual Electrical Demand [kWh]", round(demand.annual_el, 2), "N/A", "N/A"],
+    #     ["Annual Thermal Demand [MMBtu]", round(demand.annual_hl.to(ureg.megaBtu), 2), "N/A", "N/A"],
+    #     ["Thermal Energy Savings [MMBtu]", round(elf_thermal_energy_savings.to(ureg.megaBtu), 2),
+    #      round(tlf_thermal_energy_savings.to(ureg.megaBtu), 2), round(pp_thermal_energy_savings.to(ureg.megaBtu), 2)],
+    #     ["Thermal Cost Savings [$]", round(elf_thermal_cost_savings, 2), round(tlf_thermal_cost_savings, 2),
+    #      round(pp_thermal_cost_savings, 2)],
+    #     ["Electrical Energy Savings [kWh]", round(elf_electric_energy_savings, 2),
+    #      round(tlf_electric_energy_savings, 2), round(pp_electric_energy_savings, 2)],
+    #     ["Electrical Cost Savings [$]", round(elf_electric_cost_savings, 2), round(tlf_electric_cost_savings, 2),
+    #      round(pp_electric_cost_savings, 2)],
+    #     ["Total Cost Savings [$]", round(elf_total_cost_savings, 2), round(tlf_total_cost_savings, 2),
+    #      round(pp_total_cost_savings, 2)],
+    #     ["Simple Payback [Yrs]", round(elf_simple_payback, 2), round(tlf_simple_payback, 2), round(pp_simple_payback)]
     # ]
     #
-    # table_location = tabulate(emissions_location, headers=head_location, tablefmt="fancy_grid")
-    # print(table_location)
+    # table_costs = tabulate(costs, headers=head_costs, tablefmt="fancy_grid")
+    # print(table_costs)
+
+    """
+    Table: Display Emissions Analysis
+    """
 
     head_emissions_co2 = ["City, State", "Baseline Electrical Load", "Baseline Heating Load", "Baseline Emissions",
                           "CHP (ELF): Total Annual CO2 (tons)", "CHP (TLF): Total Annual CO2 (tons)",
@@ -360,20 +349,22 @@ def main():
     Plots
     """
 
-    plots.plot_electrical_demand_curve(demand=demand)
-    plots.plot_thermal_demand_curve(demand=demand)
-
-    plots.elf_plot_electric(chp=chp, demand=demand, ab=ab)
-    plots.elf_plot_thermal(chp=chp, demand=demand, tes=tes, ab=ab)
-    plots.elf_plot_tes_soc(chp=chp, demand=demand, tes=tes, ab=ab)
-
-    plots.tlf_plot_electric(chp=chp, demand=demand, ab=ab, tes=tes)
-    plots.tlf_plot_thermal(chp=chp, demand=demand, tes=tes, ab=ab)
-    plots.tlf_plot_tes_soc(chp=chp, demand=demand, tes=tes, ab=ab)
-
-    plots.pp_plot_electric(chp=chp, demand=demand, ab=ab)
-    plots.pp_plot_thermal(chp=chp, demand=demand, tes=tes, ab=ab)
-    plots.pp_plot_tes_soc(chp=chp, demand=demand, tes=tes, ab=ab)
+    # plots.plot_max_rectangle_example(demand=demand, chp_size=chp_size_elf)
+    #
+    # plots.plot_electrical_demand_curve(demand=demand)
+    # plots.plot_thermal_demand_curve(demand=demand)
+    #
+    # plots.elf_plot_electric(chp=chp, demand=demand, ab=ab)
+    # plots.elf_plot_thermal(chp=chp, demand=demand, tes=tes, ab=ab)
+    # plots.elf_plot_tes_soc(chp=chp, demand=demand, tes=tes, ab=ab)
+    #
+    # plots.tlf_plot_electric(chp=chp, demand=demand, ab=ab, tes=tes)
+    # plots.tlf_plot_thermal(chp=chp, demand=demand, tes=tes, ab=ab)
+    # plots.tlf_plot_tes_soc(chp=chp, demand=demand, tes=tes, ab=ab)
+    #
+    # plots.pp_plot_electric(chp=chp, demand=demand, ab=ab)
+    # plots.pp_plot_thermal(chp=chp, demand=demand, tes=tes, ab=ab)
+    # plots.pp_plot_tes_soc(chp=chp, demand=demand, tes=tes, ab=ab)
 
 
 if __name__ == "__main__":
