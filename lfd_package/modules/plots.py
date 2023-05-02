@@ -10,6 +10,27 @@ from lfd_package.modules import aux_boiler as boiler, chp as cogen, sizing_calcs
 from lfd_package.modules.__init__ import ureg, Q_
 
 
+def plot_max_rectangle_example(demand=None, chp_size=None):
+    el_demand = demand.el.to(ureg.kW)
+    y1 = sizing.create_demand_curve_array(el_demand)[1].magnitude
+    x1 = sizing.create_demand_curve_array(el_demand)[0]
+
+    y2_value = chp_size.magnitude
+    y2_index = min(range(len(y1)), key=lambda i: abs(y1[i] - y2_value))
+    x2_value = x1[y2_index]
+
+    # Set up plot
+    plt.plot(x1, y1, label='Electrical Demand Curve')
+    plt.vlines(x=x2_value, colors='purple', ymin=0, ymax=y2_value, linestyles='--')
+    plt.plot((0, x2_value), (y2_value, y2_value), color='purple', label='Max Rectangle CHP Size', linestyle='--')
+    plt.ylabel('Demand (kW)')
+    plt.yticks(np.arange(0, y1.max(), y1.max()/10))
+    plt.xlabel('Percent Hours')
+    plt.legend()
+
+    plt.show()
+
+
 def plot_electrical_demand_curve(demand=None):
     el_demand = demand.el.to(ureg.kW)
     y1 = sizing.create_demand_curve_array(el_demand)[1].magnitude
@@ -20,7 +41,7 @@ def plot_electrical_demand_curve(demand=None):
     plt.title('Electrical Demand Curve')
     plt.ylabel('Demand (kW)')
     plt.yticks(np.arange(0, y1.max(), y1.max()/10))
-    plt.xlabel('Percent Days')
+    plt.xlabel('Percent Hours')
 
     plt.show()
 
@@ -35,7 +56,7 @@ def plot_thermal_demand_curve(demand=None):
     plt.title('Thermal Demand Curve')
     plt.ylabel('Demand (Btu/hr)')
     plt.yticks(np.arange(0, y2.max(), y2.max()/10))
-    plt.xlabel('Percent Days')
+    plt.xlabel('Percent Hours')
 
     plt.show()
 
