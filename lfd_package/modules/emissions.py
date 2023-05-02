@@ -33,6 +33,12 @@ def identify_subgrid_coefficients(demand=None):
     elif city.lower() == 'pheonix' and state.lower() == 'az':
         subgrid_coefficient_marginal = demand.sw_emissions_co2
         subgrid_coefficient_average = demand.aznm_emissions_co2
+    elif city.lower() == 'fairbanks' and state.lower() == 'ak':
+        subgrid_coefficient_marginal = demand.akgd_emissions_co2    # TODO: Change to marginal
+        subgrid_coefficient_average = demand.akgd_emissions_co2
+    elif city.lower() == 'chicago' and state.lower() == 'il':
+        subgrid_coefficient_marginal = demand.rfcw_emissions_co2    # TODO: Change to marginal
+        subgrid_coefficient_average = demand.rfcw_emissions_co2
     else:
         raise Exception("City and State must be one of the 5 accepted locations")
     return subgrid_coefficient_marginal, subgrid_coefficient_average
