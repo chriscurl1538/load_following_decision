@@ -63,6 +63,9 @@ class EnergyDemand:
         electric_load_joules = convert_numpy_to_float(electric_demand_hourly) * (ureg.joules / ureg.hour)
         self.el = electric_load_joules.to(ureg.kW)
 
+        self.peak_hl = max(self.hl)
+        self.peak_el = max(self.el)
+
         def sum_annual_demand(array=None):
             annual_hours = 8760 * ureg.hour
             avg_dem = sum(array) / len(array)
@@ -77,17 +80,21 @@ class EnergyDemand:
         self.state = state
         self.ng_co2 = 14.43 * (ureg.kg / ureg.megaBtu)  # source: https://www.epa.gov/energy/greenhouse-gases-equivalencies-calculator-calculations-and-references)
 
+        # Marginal Emissions
         self.nw_emissions_co2 = 1575 * (ureg.lbs / ureg.MWh)
-        self.nwpp_emissions_co2 = 634.6 * (ureg.lbs / ureg.MWh)
-
         self.fl_emissions_co2 = 1098 * (ureg.lbs / ureg.MWh)
-        self.frcc_emissions_co2 = 832.9 * (ureg.lbs / ureg.MWh)
-
         self.midwest_emissions_co2 = 1837 * (ureg.lbs / ureg.MWh)
-        self.mrow_emissions_co2 = 995.8 * (ureg.lbs / ureg.MWh)
-
         self.sw_emissions_co2 = 1366 * (ureg.lbs / ureg.MWh)
-        self.aznm_emissions_co2 = 819.7 * (ureg.lbs / ureg.MWh)
+        # TODO: Add for illinois
+        # TODO: Add for alaska
+
+        # Average Emissions (accounts for losses)
+        self.nwpp_emissions_co2 = 662.5 * (ureg.lbs / ureg.MWh)
+        self.frcc_emissions_co2 = 870.4 * (ureg.lbs / ureg.MWh)
+        self.mrow_emissions_co2 = 1040.6 * (ureg.lbs / ureg.MWh)
+        self.aznm_emissions_co2 = 855.8 * (ureg.lbs / ureg.MWh)
+        self.akgd_emissions_co2 = 1114.7 * (ureg.lbs / ureg.MWh)
+        self.rfcw_emissions_co2 = 1093.2 * (ureg.lbs / ureg.MWh)
 
 
 class CHP:
