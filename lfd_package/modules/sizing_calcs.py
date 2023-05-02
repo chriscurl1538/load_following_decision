@@ -5,7 +5,7 @@ Module description:
 
 import numpy as np
 from lfd_package.modules.__init__ import ureg, Q_
-from lfd_package.modules import thermal_storage as storage, chp as cogen
+from lfd_package.modules import thermal_storage as storage
 
 
 def create_demand_curve_array(array=None):
@@ -70,7 +70,7 @@ def electrical_output_to_fuel_consumption(electrical_output=None):
         if electrical_output.magnitude == 0:
             return Q_(0, ureg.kW)
         else:
-            a = 3.6728
+            a = 3.6376
             assert electrical_output.units == ureg.kW
             fuel_consumption_kw = (a * electrical_output.magnitude) * ureg.kW
             return fuel_consumption_kw
@@ -81,9 +81,9 @@ def electrical_output_to_thermal_output(electrical_output=None):
     Docstring updated 9/24/2022
 
     Calculates approximate CHP thermal output for a given electrical output.
-    The constants are from a second order polynomial fit of CHP data (<100kW)
+    The constants are from a linear fit of CHP data (<100kW)
     created in Excel. The data for the fit are derived from the CHP TAP's
-    eCatalog. The R^2 value of the fit is 0.6013. Link to eCatalog:
+    eCatalog. The R^2 value of the fit is 0.97. Link to eCatalog:
     https://chp.ecatalog.ornl.gov
 
     Used in the calc_min_pes_chp_size function.
@@ -106,9 +106,8 @@ def electrical_output_to_thermal_output(electrical_output=None):
         if electrical_output.magnitude == 0:
             return Q_(0, ureg.kW)
         else:
-            a = -0.0234
-            b = 3.8317
-            thermal_output_kw = (a * electrical_output.magnitude**2 + b * electrical_output.magnitude) * ureg.kW
+            a = 1.8721
+            thermal_output_kw = (a * electrical_output.magnitude) * ureg.kW
             return thermal_output_kw
 
 
@@ -119,7 +118,7 @@ def thermal_output_to_electrical_output(thermal_output=None):
     Calculates the approximate CHP electrical output for a given thermal output.
     The constants are from a linear fit of CHP data (<100kW)
     in excel. The data is derived from the CHP TAP eCatalog. The R^2 value of
-    the fit is 0.8955. eCatalog link: https://chp.ecatalog.ornl.gov
+    the fit is 0.97. eCatalog link: https://chp.ecatalog.ornl.gov
 
     Used in the tlf_calc_electricity_bought_and_generated function in the
     chp.py module
@@ -140,7 +139,7 @@ def thermal_output_to_electrical_output(thermal_output=None):
         if thermal_output.magnitude == 0:
             return Q_(0, ureg.kW)
         else:
-            a = 0.3965
+            a = 0.5188
             electrical_output_kw = (thermal_output.magnitude * a) * ureg.kW
             if electrical_output_kw.magnitude <= 0:
                 return Q_(0, ureg.kW)
