@@ -66,10 +66,10 @@ ELF Plots
 """
 
 
-def elf_plot_electric(chp=None, demand=None, ab=None):
+def elf_plot_electric(elf_electric_gen_list=None, elf_electricity_bought_list=None, demand=None):
     data0 = demand.el.to(ureg.kW)
-    data1 = cogen.elf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[1]
-    data2 = cogen.elf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[0]
+    data1 = elf_electric_gen_list
+    data2 = elf_electricity_bought_list
 
 
     # Convert to base units before creating numpy array for plotting
@@ -105,10 +105,10 @@ def elf_plot_electric(chp=None, demand=None, ab=None):
     plt.show()
 
 
-def elf_plot_thermal(chp=None, demand=None, tes=None, ab=None):
-    data1 = cogen.elf_calc_hourly_heat_generated(chp=chp, demand=demand, ab=ab)
-    data2 = storage.calc_tes_heat_flow_and_soc(chp=chp, demand=demand, tes=tes, ab=ab, load_following_type="ELF")[0]
-    data3 = boiler.calc_aux_boiler_output_rate(chp=chp, demand=demand, tes=tes, ab=ab, load_following_type="ELF")
+def elf_plot_thermal(elf_chp_gen_btuh=None, elf_tes_heat_flow_list=None, elf_boiler_dispatch_hourly=None, demand=None):
+    data1 = elf_chp_gen_btuh
+    data2 = elf_tes_heat_flow_list
+    data3 = elf_boiler_dispatch_hourly
     hl_demand = demand.hl.to(ureg.Btu / ureg.hours)
 
     # Convert to base units before creating numpy array for plotting
@@ -150,8 +150,8 @@ def elf_plot_thermal(chp=None, demand=None, tes=None, ab=None):
     plt.show()
 
 
-def elf_plot_tes_soc(chp=None, demand=None, tes=None, ab=None):
-    data = storage.calc_tes_heat_flow_and_soc(chp=chp, demand=demand, tes=tes, ab=ab, load_following_type="ELF")[1]
+def elf_plot_tes_soc(elf_tes_soc=None):
+    data = elf_tes_soc
 
     # Convert to base units before creating numpy array for plotting
     y = np.array([status.magnitude for status in data])
@@ -180,10 +180,10 @@ TLF Plots
 """
 
 
-def tlf_plot_electric(chp=None, demand=None, ab=None, tes=None):
+def tlf_plot_electric(tlf_electric_gen_list=None, tlf_electricity_bought_list=None, demand=None):
     data0 = demand.el.to(ureg.kW)
-    data1 = cogen.tlf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab, tes=tes)[1]
-    data2 = cogen.tlf_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab, tes=tes)[0]
+    data1 = tlf_electric_gen_list
+    data2 = tlf_electricity_bought_list
 
     # Convert to base units before creating numpy array for plotting
     y0 = np.array(data0.magnitude)
@@ -218,10 +218,10 @@ def tlf_plot_electric(chp=None, demand=None, ab=None, tes=None):
     plt.show()
 
 
-def tlf_plot_thermal(chp=None, demand=None, tes=None, ab=None):
-    data1 = cogen.tlf_calc_hourly_heat_generated(chp=chp, demand=demand, ab=ab, tes=tes)[0]
-    data2 = cogen.tlf_calc_hourly_heat_generated(chp=chp, demand=demand, tes=tes, ab=ab)[1]    # TES Heat Flow
-    data3 = boiler.calc_aux_boiler_output_rate(chp=chp, demand=demand, tes=tes, ab=ab, load_following_type="TLF")
+def tlf_plot_thermal(tlf_chp_gen_btuh=None, tlf_tes_heat_flow_list=None, tlf_boiler_dispatch_hourly=None, demand=None):
+    data1 = tlf_chp_gen_btuh
+    data2 = tlf_tes_heat_flow_list
+    data3 = tlf_boiler_dispatch_hourly
     hl_demand = demand.hl.to(ureg.Btu / ureg.hours)
 
     # Check units
@@ -268,8 +268,8 @@ def tlf_plot_thermal(chp=None, demand=None, tes=None, ab=None):
     plt.show()
 
 
-def tlf_plot_tes_soc(chp=None, demand=None, tes=None, ab=None):
-    data = cogen.tlf_calc_hourly_heat_generated(chp=chp, demand=demand, tes=tes, ab=ab)[2]   # TES SOC data
+def tlf_plot_tes_soc(tlf_tes_soc_list=None):
+    data = tlf_tes_soc_list   # TES SOC data
 
     # Convert to base units before creating numpy array for plotting
     y = np.array([status.magnitude for status in data])
@@ -297,12 +297,12 @@ def tlf_plot_tes_soc(chp=None, demand=None, tes=None, ab=None):
 PP Plots
 """
 
-def pp_plot_electric(chp=None, demand=None, ab=None):
-    data0 = demand.el.to(ureg.kW)
-    data1 = cogen.pp_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[1]
-    data2 = cogen.pp_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[0]
-    data3 = cogen.pp_calc_electricity_bought_and_generated(chp=chp, demand=demand, ab=ab)[2]    # Data3 is Sold
 
+def pp_plot_electric(pp_electric_gen_list=None, pp_electricity_bought_list=None, pp_electricity_sold_list=None, demand=None):
+    data0 = demand.el.to(ureg.kW)
+    data1 = pp_electric_gen_list
+    data2 = pp_electricity_bought_list
+    data3 = pp_electricity_sold_list
 
     # Convert to base units before creating numpy array for plotting
     y0 = np.array(data0.magnitude)
@@ -343,10 +343,10 @@ def pp_plot_electric(chp=None, demand=None, ab=None):
     plt.show()
 
 
-def pp_plot_thermal(chp=None, demand=None, tes=None, ab=None):
-    data1 = cogen.pp_calc_hourly_heat_generated(chp=chp, demand=demand, ab=ab)
-    data2 = storage.calc_tes_heat_flow_and_soc(chp=chp, demand=demand, tes=tes, ab=ab, load_following_type="PP")[0]
-    data3 = boiler.calc_aux_boiler_output_rate(chp=chp, demand=demand, tes=tes, ab=ab, load_following_type="PP")
+def pp_plot_thermal(pp_chp_gen_btuh=None, pp_tes_heat_flow_list=None, pp_boiler_dispatch_hourly=None, demand=None):
+    data1 = pp_chp_gen_btuh
+    data2 = pp_tes_heat_flow_list
+    data3 = pp_boiler_dispatch_hourly
     hl_demand = demand.hl.to(ureg.Btu / ureg.hours)
 
     # Convert to base units before creating numpy array for plotting
@@ -388,8 +388,8 @@ def pp_plot_thermal(chp=None, demand=None, tes=None, ab=None):
     plt.show()
 
 
-def pp_plot_tes_soc(chp=None, demand=None, tes=None, ab=None):
-    data = storage.calc_tes_heat_flow_and_soc(chp=chp, demand=demand, tes=tes, ab=ab, load_following_type="PP")[1]
+def pp_plot_tes_soc(pp_tes_soc=None):
+    data = pp_tes_soc
 
     # Convert to base units before creating numpy array for plotting
     y = np.array([status.magnitude for status in data])
