@@ -7,32 +7,13 @@
 
 
 # CHP System Specs
-fuel_input_rate: 400000 # Btu/hr
-chp_electric_eff: 0.299
-chp_thermal_eff: 0.50
 chp_turn_down: 3.3
-chp_heat_power: 1.71
-percent_availability: 0.90  # TODO: This may actually need to be calculated rather than given
-
-# CHP Electrical Part Loads and Efficiencies (HHV)
-Electrical:
-  50: 0.239
-  75: 0.272
-  100: 0.299
-
-# CHP Thermal Part Loads and Efficiencies (HHV)
-Thermal:
-  50: 0.520
-  75: 0.515
-  100: 0.500
 
 # Aux Boiler Specs
 ab_capacity: 1500000.0  # Btu/hr
 ab_eff: 0.80
-ab_turn_down: 100.0    # TODO: Change back to 10.0
 
 # TES Storage Specs
-tes_discharge_rate: 500000.0  # Btu/hr TODO: Implement into model
 tes_init: 0   # Btu, initial storage TODO: Change to be in terms of SOC (percent rather than BTU)
 
 # Energy Costs
