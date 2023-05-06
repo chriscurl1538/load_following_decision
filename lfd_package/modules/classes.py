@@ -133,16 +133,14 @@ class TES:
         Parameters
         ----------
         start: Quantity (float)
-            The starting energy level of the TES system when the simulation begins in units of Btu
-        discharge: Quantity (float)
-            The maximum discharge rate of the TES system in units of Btu/hour
+            The starting energy level of the TES system when the simulation begins in terms of SOC
         cost: Quantity (float)
             The incremental cost of the system in units of $/kWh. This value is converted to
             a dimensionless Quantity representing installed cost before being stored
             TODO: Add incremental cost for power system ($/kW) and combine with system_cost,
              then store as total cost
         """
-        self.start = start * ureg.Btu
+        self.start = start
         self.incremental_cost = cost * (1/ureg.kWh)
 
 
