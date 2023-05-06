@@ -175,12 +175,12 @@ def size_chp(load_following_type=None, demand=None, ab=None):
     """
     if any(elem is None for elem in [demand, ab, load_following_type]) is False:
         if load_following_type is "PP":
-            chp_size = calc_min_pes_chp_size(demand=demand, ab=ab)
+            chp_size = calc_min_pes_chp_size(demand=demand, ab=ab)[0]
         elif load_following_type is "ELF":
             chp_size = calc_max_rect_chp_size(array=demand.el)
         elif load_following_type is "TLF":
             thermal_size = (calc_max_rect_chp_size(array=demand.hl)).to(ureg.kW)
-            chp_size = thermal_output_to_electrical_output(thermal_output=thermal_size)     # PES would over-size
+            chp_size = thermal_output_to_electrical_output(thermal_output=thermal_size)
         else:
             raise Exception("Error in size_chp function in module sizing_calcs.py")
 
@@ -188,14 +188,10 @@ def size_chp(load_following_type=None, demand=None, ab=None):
         if chp_size.units != ureg.kW:
             chp_size.to(ureg.kW)
 
-        # TODO: Fix bug
-        # # Lower Limit on Size - added due to error in average efficiency calc showing hourly chp gen to be all zeros
-        # if chp_size < Q_(14.5, ureg.kW):
-        #     return Q_(0, ureg.kW)
-
         return chp_size
 
 
+# TODO: Turn into static CHP class method
 def calc_max_rect_chp_size(array=None):
     """
     Docstring updated 9/24/2022
@@ -226,7 +222,6 @@ def calc_max_rect_chp_size(array=None):
         return max_value
 
 
-# TODO: Check this sizing calculation - comes out as 100 kW CHP size
 def calc_min_pes_chp_size(demand=None, ab=None):
     """
     Docstring updated 9/24/2022
@@ -271,13 +266,18 @@ def calc_min_pes_chp_size(demand=None, ab=None):
             size_list.append(size)
             pes_list.append(pes)
 
+        # TODO: Have function output both min and max values for sizing
         min_pes_value = min(pes_list)
+        max_pes_value = max(pes_list)
         min_pes_index = pes_list.index(min_pes_value)
+        max_pes_index = pes_list.index(max_pes_value)
         min_pes_size = size_list[min_pes_index]
-        return min_pes_size
+        max_pes_size = size_list[max_pes_index]
+
+        return min_pes_size, max_pes_size
 
 
-def size_tes(chp_size=None, demand=None, chp=None, ab=None, load_following_type=None):
+def size_tes(chp_gen_hourly_kwh_dict=None, chp_size=None, demand=None, chp=None, ab=None, load_following_type=None):
     """
     TODO: Need to validate calculation, check that its reasonable
     Requires hourly heat demand data, hourly CHP heating demand coverage, and hourly heat generation by CHP.
@@ -305,7 +305,7 @@ def size_tes(chp_size=None, demand=None, chp=None, ab=None, load_following_type=
         # TODO: Assume chp runs all the time
         hourly_excess_and_deficit_list = [(electrical_output_to_thermal_output(chp_size)).to(ureg.Btu / ureg.hour) - dem for dem in demand.hl]
     else:
-        hourly_excess_and_deficit_list = storage.calc_excess_and_deficit_chp_heat_gen(chp=chp, demand=demand, ab=ab,
+        hourly_excess_and_deficit_list = storage.calc_excess_and_deficit_chp_heat_gen(chp_gen_hourly_kwh_dict=chp_gen_hourly_kwh_dict, chp=chp, demand=demand, ab=ab,
                                                                         load_following_type=load_following_type)
     assert isinstance(hourly_excess_and_deficit_list, list)
     assert hourly_excess_and_deficit_list[0].units == ureg.Btu / ureg.hour
