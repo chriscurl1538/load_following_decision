@@ -7,6 +7,7 @@ from lfd_package.modules.__init__ import ureg, Q_
 from lfd_package.modules import chp as cogen, aux_boiler as boiler
 
 
+
 def identify_subgrid_coefficients(demand=None):
     """
     Assumes city,state is one of 5 accepted locations
@@ -17,7 +18,7 @@ def identify_subgrid_coefficients(demand=None):
     """
     city = demand.city
     state = demand.state
-
+    # TODO: Optimize this if statement mess
     if city.lower() == 'seattle' and state.lower() == 'wa':
         subgrid_coefficient_marginal = demand.nw_emissions_co2
         subgrid_coefficient_average = demand.nwpp_emissions_co2
@@ -79,7 +80,8 @@ def calc_baseline_fuel_emissions(demand=None):
     return fuel_emissions_annual
 
 
-def calc_chp_emissions(chp=None, demand=None, load_following_type=None, ab=None, tes=None):
+def calc_chp_emissions(chp_gen_hourly_kwh_dict=None, chp_gen_hourly_btuh=None, tes_size=None, chp_size=None, chp=None,
+                       demand=None, load_following_type=None, ab=None, tes=None):
     """
     Calc CHP emissions using CHP efficiency data.
     Accounts for bought electricity as well.
@@ -91,24 +93,29 @@ def calc_chp_emissions(chp=None, demand=None, load_following_type=None, ab=None,
     if any(elem is None for elem in [chp, demand, load_following_type, ab, tes]) is False:
 
         # Emissions from electricity bought
+        # TODO: Optimize - remove functions called in CLI
         if load_following_type == "ELF":
-            electricity_bought_annual = sum(cogen.elf_calc_electricity_bought_and_generated(chp=chp, demand=demand,
-                                                                                            ab=ab)[0])
+            electricity_bought_annual = sum(cogen.elf_calc_electricity_bought_and_generated(chp_size=chp_size, chp=chp,
+                                                                                            demand=demand, ab=ab)[0])
         elif load_following_type == "TLF":
-            electricity_bought_annual = sum(cogen.tlf_calc_electricity_bought_and_generated(chp=chp, demand=demand,
-                                                                                            ab=ab, tes=tes)[0])
+            electricity_bought_annual = sum(cogen.tlf_calc_electricity_bought_and_generated(chp_gen_hourly_btuh=chp_gen_hourly_btuh,
+                                                                                            chp=chp, demand=demand,
+                                                                                            ab=ab)[0])
         elif load_following_type == "PP":
-            electricity_bought_annual = sum(cogen.pp_calc_electricity_bought_and_generated(chp=chp, demand=demand,
-                                                                                           ab=ab)[0])
+            electricity_bought_annual = sum(cogen.pp_calc_electricity_bought_and_generated(chp_size=chp_size, chp=chp,
+                                                                                           demand=demand, ab=ab)[0])
         else:
             raise Exception("Error in calc_chp_emissions function")
 
         # For Emissions from CHP
-        chp_fuel_use_annual = cogen.calc_annual_fuel_use_and_costs(chp=chp, demand=demand, tes=tes,
+        chp_fuel_use_annual = cogen.calc_annual_fuel_use_and_costs(chp_gen_hourly_btuh=chp_gen_hourly_btuh,
+                                                                   chp_size=chp_size, chp=chp, demand=demand,
                                                                    load_following_type=load_following_type, ab=ab)[0]
 
         # For Emissions from boiler use
-        ab_fuel_use_annual = boiler.calc_annual_fuel_use_and_cost(chp=chp, demand=demand, tes=tes,
+        ab_fuel_use_annual = boiler.calc_annual_fuel_use_and_cost(chp_gen_hourly_kwh_dict=chp_gen_hourly_kwh_dict,
+                                                                  chp_size=chp_size, tes_size=tes_size, chp=chp,
+                                                                  demand=demand, tes=tes,
                                                                   load_following_type=load_following_type, ab=ab)[0]
 
         subgrid_coefficient_marg, subgrid_coefficient_avg = identify_subgrid_coefficients(demand=demand)
