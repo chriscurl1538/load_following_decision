@@ -5,7 +5,7 @@ Module description:
 """
 
 import pathlib, pandas as pd, numpy as np
-from lfd_package.modules.__init__ import ureg, Q_
+from lfd_package.modules.__init__ import ureg
 
 
 class EnergyDemand:
@@ -98,9 +98,7 @@ class EnergyDemand:
 
 
 class CHP:
-    def __init__(self, fuel_input_rate=None, turn_down_ratio=None,
-                 part_load_electrical=None, part_load_thermal=None, chp_electric_eff=None, chp_thermal_eff=None,
-                 percent_availability=None, cost=None):
+    def __init__(self, turn_down_ratio=None, cost=None):
         """
         Docstring updated on 9/24/22
 
@@ -108,51 +106,25 @@ class CHP:
 
         Parameters
         ----------
-        fuel_input_rate: Quantity (float)
-            CHP fuel input rate in units of Btu/hour
         turn_down_ratio: float
             The turn down ratio of the CHP system. Defines the lower operating limit
             that CHP can operate at. Dimensionless. This value is converted to a
             decimal percentage of capacity (ie: 50% is 0.5) before being stored.
-        part_load_electrical: numpy.ndarray
-            Numpy array of electrical part-load efficiencies. Column 0 contains
-            the partial loads as percentages (ie: 50% is 50). Column 1 contains
-            the efficiencies as decimal values (ie: 50% is 0.5). Dimensionless
-        part_load_thermal: numpy.ndarray
-            Numpy array of thermal part-load efficiencies. Column 0 contains
-            the partial loads as percentages (ie: 50% is 50). Column 1 contains
-            the efficiencies as decimal values (ie: 50% is 0.5). Dimensionless
-        chp_electric_eff: float
-            Electrical efficiency of CHP at full load as a percentage (ie: 50% is 0.5).
-            Dimensionless
-        chp_thermal_eff: float
-            Thermal efficiency of CHP at full load as a percentage (ie: 50% is 0.5).
-            Dimensionless
-        percent_availability: float
-            Annual availability of CHP as a percentage (ie: 50% is 0.5). Accounts for
-            maintenance downtime. Dimensionless. This value is converted to Quantity
-            with units of hours before being stored within the class.
         cost: Quantity (float)
             Incremental installed cost of CHP with units of $/kW. This value is converted
             to a dimensionless quantity representing the installed cost of the system
             before being stored within the class. TODO: Is this material + installation labor?
         """
-        self.fuel_input_rate = fuel_input_rate * (ureg.Btu / ureg.hour)
-        self.el_pl_eff = part_load_electrical
-        self.th_pl_eff = part_load_thermal
-        self.el_nominal_eff = chp_electric_eff
-        self.th_nominal_eff = chp_thermal_eff
         self.incremental_cost = cost * 1/ureg.kW
         try:
             chp_min_pl = 1 / turn_down_ratio
         except ZeroDivisionError:
             chp_min_pl = 0
         self.min_pl = chp_min_pl
-        self.available_hours = percent_availability * Q_(8760, ureg.hour)
 
 
 class TES:
-    def __init__(self, start=None, discharge=None, cost=None):
+    def __init__(self, start=None, cost=None):
         """
         Docstring updated on 9/24/22
 
@@ -171,7 +143,6 @@ class TES:
              then store as total cost
         """
         self.start = start * ureg.Btu
-        self.discharge = discharge * ureg('Btu/hr')
         self.incremental_cost = cost * (1/ureg.kWh)
 
 
@@ -197,8 +168,3 @@ class AuxBoiler:
         """
         self.cap = capacity * (ureg.Btu / ureg.hour)
         self.eff = efficiency
-        try:
-            ab_min_pl = 1 / turn_down_ratio
-        except ZeroDivisionError:
-            ab_min_pl = 0
-        self.min_pl = ab_min_pl
