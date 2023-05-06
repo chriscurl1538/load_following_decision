@@ -110,7 +110,7 @@ def calc_tes_heat_flow_and_soc(chp_gen_hourly_kwh_dict=None, tes_size=None, chp=
                                                                   load_following_type=load_following_type)
         tes_heat_rate_list_btu_hour = []
         soc_list = []
-        current_status = tes.start
+        current_status = tes.start * tes_size
 
         for index, heat_rate in enumerate(excess_and_deficit):
             new_status = (heat_rate * 1 * ureg.hour) + current_status
