@@ -313,7 +313,7 @@ def tlf_calc_hourly_heat_generated(chp_size=None, chp=None, demand=None, ab=None
             # Verifies acceptable input value range
             assert dem.magnitude >= 0
             if i == 0:
-                current_status = tes.start
+                current_status = tes.start * tes_size
 
             if chp_heat_rate_min <= dem <= chp_heat_rate_cap and tes_size == current_status:
                 # If TES is full and chp meets demand, follow thermal load
