@@ -10,11 +10,11 @@
 chp_turn_down: 3.3
 
 # Aux Boiler Specs
-ab_capacity: 1500000.0  # Btu/hr
+ab_capacity: 15000000.0  # Btu/hr
 ab_eff: 0.80
 
 # TES Storage Specs
-tes_init: 0   # Btu, initial storage TODO: Change to be in terms of SOC (percent rather than BTU)
+tes_init: 0   # initial storage SOC
 
 # Energy Costs
 grid_efficiency: 0.4   # between 0-1, national average
