@@ -52,7 +52,11 @@ def run(args):
                                   grid_efficiency=data['grid_efficiency'],
                                   electric_cost=data['electric_utility_cost'],
                                   fuel_cost=data['fuel_cost'], city=data['city'], state=data['state'])
-    ab = classes.AuxBoiler(capacity=data['ab_capacity'], efficiency=data['ab_eff'])
+    ab = classes.AuxBoiler(file_name=data['demand_filename'],
+                           grid_efficiency=data['grid_efficiency'],
+                           electric_cost=data['electric_utility_cost'],
+                           fuel_cost=data['fuel_cost'], city=data['city'], state=data['state'],
+                           efficiency=data['ab_eff'])
     tes = classes.TES(start=data['tes_init'], cost=data['tes_installed_cost'])
 
     return [demand, chp, tes, ab]
@@ -360,9 +364,9 @@ def main():
         # ["Thermal Efficiency (Full Load)", "{} %".format(chp.th_nominal_eff * 100), "N/A", "{} %".format(ab.eff * 100)],
         # ["Electrical Efficiency (Full Load)", "{} %".format(chp.el_nominal_eff * 100), "N/A", "N/A"],
         ["Minimum Load Operation", "{} %".format(round(chp.min_pl * 100, 2)), "N/A", "N/A"],
-        ["ELF Equipment Sizes", round(chp_size_elf.to(ureg.kW), 2), round(tes_size_elf.to(ureg.Btu), 2), ab.cap],
-        ["TLF Equipment Sizes", round(chp_size_tlf.to(ureg.kW), 2), round(tes_size_tlf.to(ureg.Btu), 2), ab.cap],
-        ["PP Equipment Sizes", round(chp_size_pp.to(ureg.kW), 2), round(tes_size_pp.to(ureg.Btu), 2), ab.cap]
+        ["ELF Equipment Sizes", round(chp_size_elf.to(ureg.kW), 2), round(tes_size_elf.to(ureg.Btu), 2), ab.peak_hl],
+        ["TLF Equipment Sizes", round(chp_size_tlf.to(ureg.kW), 2), round(tes_size_tlf.to(ureg.Btu), 2), ab.peak_hl],
+        ["PP Equipment Sizes", round(chp_size_pp.to(ureg.kW), 2), round(tes_size_pp.to(ureg.Btu), 2), ab.peak_hl]
     ]
 
     table_system_properties = tabulate(system_properties, headers=head_equipment, tablefmt="fancy_grid")
