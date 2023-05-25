@@ -10,11 +10,10 @@
 chp_turn_down: 3.3
 
 # Aux Boiler Specs
-ab_capacity: 15000000.0  # Btu/hr
 ab_eff: 0.80
 
 # TES Storage Specs
-tes_init: 0   # initial storage SOC
+tes_init: 0.5   # initial storage SOC
 
 # Energy Costs
 grid_efficiency: 0.4   # between 0-1, national average
@@ -26,9 +25,9 @@ chp_installed_cost: 2900.0 # $/kW TODO: Use more reliable source for numbers
 tes_installed_cost: 0.35 # $/kWh
 
 # Energy Demand File Name
-demand_filename: 'new2004_washington_seattle.csv'
-city: 'seattle'
-state: 'wa' # Must be two-letter abbreviation
+demand_filename: 'STD2004_Buffalo_NY.csv'
+city: 'buffalo'
+state: 'ny' # Must be two-letter abbreviation
 
 
 #Sources:
