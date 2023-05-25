@@ -37,13 +37,16 @@ class EnergyDemand:
         self.demand_file_name = file_name
         df = pd.read_csv(cwd / file_name)
 
-        # Plucks electrical load data from the file using row and column locations
-        electric_demand_df = df.iloc[:, 1]
+        # Plucks electrical metering data from the file using row and column locations
+        electric_demand_df = df.iloc[:, 2]
         electric_demand_hourly = electric_demand_df.to_numpy()
 
-        # Plucks thermal load data from the file using row and column locations
-        heating_demand_df = df.iloc[:, 9]
-        heating_demand_hourly = heating_demand_df.to_numpy()
+        # Plucks thermal metering data from the file using row and column locations
+        heating_metering_df = df.iloc[:, 3]
+        heating_metering_hourly = heating_metering_df.to_numpy()
+
+        # Convert heat metering to heating demand using EnergyPlus assumed heating efficiency value
+        heating_demand_hourly = [item * 0.8 for item in heating_metering_hourly]
 
         # Energy Costs
         self.grid_efficiency = grid_efficiency
@@ -87,6 +90,8 @@ class EnergyDemand:
         self.sw_emissions_co2 = 1366 * (ureg.lbs / ureg.MWh)
         # TODO: Add for illinois
         # TODO: Add for alaska
+        # TODO: Add for hawaii
+        # TODO: Add for new york
 
         # Average Emissions (accounts for losses)
         self.nwpp_emissions_co2 = 662.5 * (ureg.lbs / ureg.MWh)
@@ -95,6 +100,8 @@ class EnergyDemand:
         self.aznm_emissions_co2 = 855.8 * (ureg.lbs / ureg.MWh)
         self.akgd_emissions_co2 = 1114.7 * (ureg.lbs / ureg.MWh)
         self.rfcw_emissions_co2 = 1093.2 * (ureg.lbs / ureg.MWh)
+        self.hioa_emissions_co2 = 1711.5 * (ureg.lbs / ureg.MWh)
+        self.nyup_emissions_co2 = 243.6 * (ureg.lbs / ureg.MWh)
 
 
 class CHP:
@@ -144,8 +151,8 @@ class TES:
         self.incremental_cost = cost * (1/ureg.kWh)
 
 
-class AuxBoiler:
-    def __init__(self, capacity=None, efficiency=None, turn_down_ratio=None):
+class AuxBoiler(EnergyDemand):
+    def __init__(self, file_name, grid_efficiency, electric_cost, fuel_cost, city, state, efficiency=None):
         """
         Docstring updated on 9/24/22
 
@@ -153,16 +160,9 @@ class AuxBoiler:
 
         Parameters
         ----------
-        capacity: Quantity (float)
-            Size of the boiler in units of Btu/hr (Btu = British thermal units)
         efficiency: float
             The efficiency of the boiler when operating at full load expressed
             as a decimal value (ie: 50% = 0.5). Dimensionless
-        turn_down_ratio: float
-            Represents the minimum capacity of the boiler, expressed as the
-            ratio of the maximum capacity to the minimum capacity. This value
-            is converted to minimum capacity as a decimal percentage (ie: 50% = 0.5)
-            of full capacity before being stored.
         """
-        self.cap = capacity * (ureg.Btu / ureg.hour)
+        super().__init__(file_name, grid_efficiency, electric_cost, fuel_cost, city, state)
         self.eff = efficiency
