@@ -112,8 +112,8 @@ def calc_aux_boiler_output_rate(chp_size=None, tes_size=None, chp_gen_hourly_kwh
 
         # Check that hourly heat demand is within aux boiler operating parameters
         for index, rate in enumerate(ab_heat_rate_hourly):
-            if ab.cap < rate:
-                short = round(abs(rate - ab.cap), 2)
+            if ab.peak_hl < rate:
+                short = round(abs(rate - ab.peak_hl), 2)
                 raise Exception('ALERT: Boiler size is insufficient to meet heating demand! Output is short by '
                                 '{} at hour number {}'.format(short, index))
         return ab_heat_rate_hourly
