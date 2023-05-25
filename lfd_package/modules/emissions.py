@@ -7,7 +7,6 @@ from lfd_package.modules.__init__ import ureg, Q_
 from lfd_package.modules import chp as cogen, aux_boiler as boiler
 
 
-
 def identify_subgrid_coefficients(demand=None):
     """
     Assumes city,state is one of 5 accepted locations
@@ -18,31 +17,28 @@ def identify_subgrid_coefficients(demand=None):
     """
     city = demand.city
     state = demand.state
-    # TODO: Optimize this if statement mess
-    if city.lower() == 'seattle' and state.lower() == 'wa':
-        subgrid_coefficient_marginal = demand.nw_emissions_co2
-        subgrid_coefficient_average = demand.nwpp_emissions_co2
-    elif city.lower() == 'helena' and state.lower() == 'mt':
-        subgrid_coefficient_marginal = demand.nw_emissions_co2
-        subgrid_coefficient_average = demand.nwpp_emissions_co2
-    elif city.lower() == 'miami' and state.lower() == 'fl':
-        subgrid_coefficient_marginal = demand.fl_emissions_co2
-        subgrid_coefficient_average = demand.frcc_emissions_co2
-    elif city.lower() == 'duluth' and state.lower() == 'mn':
-        subgrid_coefficient_marginal = demand.midwest_emissions_co2
-        subgrid_coefficient_average = demand.mrow_emissions_co2
-    elif city.lower() == 'pheonix' and state.lower() == 'az':
-        subgrid_coefficient_marginal = demand.sw_emissions_co2
-        subgrid_coefficient_average = demand.aznm_emissions_co2
-    elif city.lower() == 'fairbanks' and state.lower() == 'ak':
-        subgrid_coefficient_marginal = demand.akgd_emissions_co2    # TODO: Change to marginal
-        subgrid_coefficient_average = demand.akgd_emissions_co2
-    elif city.lower() == 'chicago' and state.lower() == 'il':
-        subgrid_coefficient_marginal = demand.rfcw_emissions_co2    # TODO: Change to marginal
-        subgrid_coefficient_average = demand.rfcw_emissions_co2
+
+    avg_emissions_dict = {
+        "seattle": ["wa", demand.nwpp_emissions_co2],
+        "helena": ["mt", demand.nwpp_emissions_co2],
+        "miami": ["fl", demand.frcc_emissions_co2],
+        "duluth": ["mn", demand.mrow_emissions_co2],
+        "pheonix": ["az", demand.aznm_emissions_co2],
+        "fairbanks": ["ak", demand.akgd_emissions_co2],
+        "chicago": ["il", demand.rfcw_emissions_co2],
+        "buffalo": ["ny", demand.nyup_emissions_co2],
+        "great falls": ["mt", demand.nwpp_emissions_co2],
+        "international falls": ["mn", demand.mrow_emissions_co2],
+        "honolulu": ["hi", demand.hioa_emissions_co2],
+        "tuscon": ["az", demand.aznm_emissions_co2]
+    }
+
+    if city.lower() in avg_emissions_dict.keys() and state.lower() == avg_emissions_dict[city][0]:
+        subgrid_coefficient_average = avg_emissions_dict[city][1]
+        subgrid_coefficient_marginal = avg_emissions_dict[city][1]  # TODO: Change to marginal
+        return subgrid_coefficient_marginal, subgrid_coefficient_average
     else:
-        raise Exception("City and State must be one of the 5 accepted locations")
-    return subgrid_coefficient_marginal, subgrid_coefficient_average
+        raise Exception("City and State must be a valid location")
 
 
 def calc_baseline_grid_emissions(demand=None):
