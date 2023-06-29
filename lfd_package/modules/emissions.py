@@ -7,7 +7,7 @@ from lfd_package.modules.__init__ import ureg, Q_
 from lfd_package.modules import chp as cogen, aux_boiler as boiler
 
 
-def identify_subgrid_coefficients(demand=None):
+def identify_subgrid_coefficients(class_dict=None):
     """
     Assumes city,state is one of 5 accepted locations
 
@@ -15,33 +15,15 @@ def identify_subgrid_coefficients(demand=None):
     -------
 
     """
-    city = demand.city
-    state = demand.state
+    emissions_class = class_dict['emissions']
 
-    avg_emissions_dict = {
-        "seattle": ["wa", demand.nwpp_emissions_co2],
-        "helena": ["mt", demand.nwpp_emissions_co2],
-        "miami": ["fl", demand.frcc_emissions_co2],
-        "duluth": ["mn", demand.mrow_emissions_co2],
-        "pheonix": ["az", demand.aznm_emissions_co2],
-        "fairbanks": ["ak", demand.akgd_emissions_co2],
-        "chicago": ["il", demand.rfcw_emissions_co2],
-        "buffalo": ["ny", demand.nyup_emissions_co2],
-        "great falls": ["mt", demand.nwpp_emissions_co2],
-        "international falls": ["mn", demand.mrow_emissions_co2],
-        "honolulu": ["hi", demand.hioa_emissions_co2],
-        "tuscon": ["az", demand.aznm_emissions_co2]
-    }
-
-    if city.lower() in avg_emissions_dict.keys() and state.lower() == avg_emissions_dict[city][0]:
-        subgrid_coefficient_average = avg_emissions_dict[city][1]
-        subgrid_coefficient_marginal = avg_emissions_dict[city][1]  # TODO: Change to marginal
-        return subgrid_coefficient_marginal, subgrid_coefficient_average
-    else:
-        raise Exception("City and State must be a valid location")
+    dict_key = "{}, {}".format(emissions_class.city, emissions_class.state)
+    subgrid_coefficient_average = emissions_class.avg_emissions[dict_key]
+    subgrid_coefficient_marginal = emissions_class.marg_emissions[dict_key]
+    return subgrid_coefficient_marginal, subgrid_coefficient_average
 
 
-def calc_baseline_grid_emissions(demand=None):
+def calc_baseline_grid_emissions(class_dict=None):
     """
     Calc grid emissions for electrical demand pre-CHP retrofit
 
@@ -49,8 +31,10 @@ def calc_baseline_grid_emissions(demand=None):
     -------
 
     """
-    subgrid_coefficient_marginal, subgrid_coefficient_average = identify_subgrid_coefficients(demand=demand)
-    electric_demand_annual = demand.annual_el
+    emissions_class = class_dict['emissions']
+
+    subgrid_coefficient_marginal, subgrid_coefficient_average = identify_subgrid_coefficients(class_dict=class_dict)
+    electric_demand_annual = emissions_class.annual_sum_el
     assert electric_demand_annual.units == ureg.kWh
 
     electric_emissions_annual_marg = (electric_demand_annual * subgrid_coefficient_marginal).to('lbs')
@@ -59,7 +43,7 @@ def calc_baseline_grid_emissions(demand=None):
     return electric_emissions_annual_marg, electric_emissions_annual_avg
 
 
-def calc_baseline_fuel_emissions(demand=None):
+def calc_baseline_fuel_emissions(class_dict=None):
     """
     Calc NG emissions for heating demand pre-CHP retrofit
 
@@ -67,17 +51,19 @@ def calc_baseline_fuel_emissions(demand=None):
     -------
 
     """
-    heating_demand_annual = demand.annual_hl
+    emissions_class = class_dict['emissions']
+
+    heating_demand_annual = emissions_class.annual_sum_hl
     assert heating_demand_annual.units == ureg.Btu
 
-    fuel_emissions_annual = (heating_demand_annual * demand.ng_co2).to('lbs')
+    fuel_emissions_annual = (heating_demand_annual * emissions_class.ng_co2).to('lbs')
     assert fuel_emissions_annual.units == ureg.lbs
 
     return fuel_emissions_annual
 
 
-def calc_chp_emissions(chp_gen_hourly_kwh_dict=None, chp_gen_hourly_btuh=None, tes_size=None, chp_size=None, chp=None,
-                       demand=None, load_following_type=None, ab=None, tes=None):
+def calc_chp_emissions(chp_gen_hourly_kwh_dict=None, chp_gen_hourly_btuh=None, tes_size=None, chp_size=None,
+                       load_following_type=None, class_dict=None):
     """
     Calc CHP emissions using CHP efficiency data.
     Accounts for bought electricity as well.
@@ -86,39 +72,31 @@ def calc_chp_emissions(chp_gen_hourly_kwh_dict=None, chp_gen_hourly_btuh=None, t
     -------
 
     """
-    if any(elem is None for elem in [chp, demand, load_following_type, ab, tes]) is False:
+    args_list = [chp_gen_hourly_kwh_dict, chp_gen_hourly_btuh, tes_size, chp_size, load_following_type, class_dict]
+    if any(elem is None for elem in args_list) is False:
 
         # Emissions from electricity bought
         # TODO: Optimize - remove functions called in CLI
-        if load_following_type == "ELF":
-            electricity_bought_annual = sum(cogen.elf_calc_electricity_bought_and_generated(chp_size=chp_size, chp=chp,
-                                                                                            demand=demand, ab=ab)[0])
-        elif load_following_type == "TLF":
-            electricity_bought_annual = sum(cogen.tlf_calc_electricity_bought_and_generated(chp_gen_hourly_btuh=chp_gen_hourly_btuh,
-                                                                                            chp=chp, demand=demand,
-                                                                                            ab=ab)[0])
-        elif load_following_type == "PP":
-            electricity_bought_annual = sum(cogen.pp_calc_electricity_bought_and_generated(chp_size=chp_size, chp=chp,
-                                                                                           demand=demand, ab=ab)[0])
-        else:
-            raise Exception("Error in calc_chp_emissions function")
+        key = str(load_following_type)
+        chp_gen_hourly_kwh = chp_gen_hourly_kwh_dict[key]
+        electricity_bought_annual = sum(cogen.calc_electricity_bought(chp_gen_hourly_kwh=chp_gen_hourly_kwh,
+                                                                      chp_size=chp_size, class_dict=class_dict))
 
         # For Emissions from CHP
-        chp_fuel_use_annual = cogen.calc_annual_fuel_use_and_costs(chp_gen_hourly_btuh=chp_gen_hourly_btuh,
-                                                                   chp_size=chp_size, chp=chp, demand=demand,
-                                                                   load_following_type=load_following_type, ab=ab)[0]
+        chp_fuel_use_annual = cogen.calc_annual_fuel_use(chp_gen_hourly_btuh=chp_gen_hourly_btuh, chp_size=chp_size,
+                                                         class_dict=class_dict,
+                                                         load_following_type=load_following_type)
 
         # For Emissions from boiler use
-        ab_fuel_use_annual = boiler.calc_annual_fuel_use_and_cost(chp_gen_hourly_kwh_dict=chp_gen_hourly_kwh_dict,
-                                                                  chp_size=chp_size, tes_size=tes_size, chp=chp,
-                                                                  demand=demand, tes=tes,
-                                                                  load_following_type=load_following_type, ab=ab)[0]
+        ab_fuel_use_annual = boiler.calc_annual_fuel_use(chp_gen_hourly_kwh_dict=chp_gen_hourly_kwh_dict,
+                                                         chp_size=chp_size, tes_size=tes_size, class_dict=class_dict,
+                                                         load_following_type=load_following_type)
 
-        subgrid_coefficient_marg, subgrid_coefficient_avg = identify_subgrid_coefficients(demand=demand)
+        subgrid_coefficient_marg, subgrid_coefficient_avg = identify_subgrid_coefficients(class_dict=class_dict)
 
         grid_emissions_marg = (subgrid_coefficient_marg * electricity_bought_annual).to('lbs')   # TODO: Incorrect calc
-        chp_fuel_emissions = (demand.ng_co2 * chp_fuel_use_annual).to('lbs')
-        boiler_emissions = (demand.ng_co2 * ab_fuel_use_annual).to('lbs')
+        chp_fuel_emissions = (class_dict['emissions'].ng_co2 * chp_fuel_use_annual).to('lbs')
+        boiler_emissions = (class_dict['emissions'].ng_co2 * ab_fuel_use_annual).to('lbs')
         total_emissions_marg = grid_emissions_marg + chp_fuel_emissions + boiler_emissions
 
         grid_emissions_avg = (subgrid_coefficient_avg * electricity_bought_annual).to('lbs')
