@@ -147,7 +147,7 @@ def thermal_output_to_electrical_output(thermal_output=None):
                 return electrical_output_kw
 
 
-def size_chp(load_following_type=None, demand=None, ab=None):
+def size_chp(load_following_type=None, class_dict=None):
     """
     Docstring updated 9/24/2022
 
@@ -173,13 +173,14 @@ def size_chp(load_following_type=None, demand=None, ab=None):
     chp_size: Quantity (float)
         Recommended size of CHP system in units of kW
     """
-    if any(elem is None for elem in [demand, ab, load_following_type]) is False:
+    args_list = [load_following_type, class_dict]
+    if any(elem is None for elem in args_list) is False:
         if load_following_type is "PP":
-            chp_size = calc_min_pes_chp_size(demand=demand, ab=ab)[0]
+            chp_size = calc_min_pes_chp_size(class_dict=class_dict)[0]
         elif load_following_type is "ELF":
-            chp_size = calc_max_rect_chp_size(array=demand.el)
+            chp_size = calc_max_rect_chp_size(array=class_dict['demand'].el)
         elif load_following_type is "TLF":
-            thermal_size = (calc_max_rect_chp_size(array=demand.hl)).to(ureg.kW)
+            thermal_size = (calc_max_rect_chp_size(array=class_dict['demand'].hl)).to(ureg.kW)
             chp_size = thermal_output_to_electrical_output(thermal_output=thermal_size)
         else:
             raise Exception("Error in size_chp function in module sizing_calcs.py")
@@ -222,7 +223,7 @@ def calc_max_rect_chp_size(array=None):
         return max_value
 
 
-def calc_min_pes_chp_size(demand=None, ab=None):
+def calc_min_pes_chp_size(class_dict=None):
     """
     Docstring updated 9/24/2022
 
@@ -246,10 +247,11 @@ def calc_min_pes_chp_size(demand=None, ab=None):
     max_pes_size: Quantity (float)
         Recommended size of CHP system in units of kW electrical
     """
-    if any(elem is None for elem in [demand, ab]) is False:
+    args_list=[class_dict]
+    if any(elem is None for elem in args_list) is False:
         chp_size_list = list(range(10, 105, 5)) * ureg.kW
 
-        grid_eff = demand.grid_efficiency
+        grid_eff = class_dict['demand'].grid_efficiency
         size_list = []
         pes_list = []
 
@@ -260,7 +262,7 @@ def calc_min_pes_chp_size(demand=None, ab=None):
             thermal_eff = max_thermal_output/max_fuel_consumption
 
             nominal_electrical_eff = electrical_eff / grid_eff
-            nominal_thermal_eff = thermal_eff / ab.eff
+            nominal_thermal_eff = thermal_eff / class_dict['ab'].eff
             pes = 1 - (1/(nominal_thermal_eff + nominal_electrical_eff))
 
             size_list.append(size)
@@ -277,7 +279,7 @@ def calc_min_pes_chp_size(demand=None, ab=None):
         return min_pes_size, max_pes_size
 
 
-def size_tes(chp_gen_hourly_kwh_dict=None, chp_size=None, demand=None, chp=None, ab=None, load_following_type=None):
+def size_tes(chp_gen_hourly_kwh_dict=None, chp_size=None, load_following_type=None, class_dict=None):
     """
     TODO: Need to validate calculation, check that its reasonable
     Requires hourly heat demand data, hourly CHP heating demand coverage, and hourly heat generation by CHP.
@@ -303,10 +305,12 @@ def size_tes(chp_gen_hourly_kwh_dict=None, chp_size=None, demand=None, chp=None,
     # Pull needed data
     if load_following_type == "TLF":
         # TODO: Assume chp runs all the time
-        hourly_excess_and_deficit_list = [(electrical_output_to_thermal_output(chp_size)).to(ureg.Btu / ureg.hour) - dem for dem in demand.hl]
+        hourly_excess_and_deficit_list = \
+            [(electrical_output_to_thermal_output(chp_size)).to(ureg.Btu / ureg.hour) - dem for dem in class_dict['demand'].hl]
     else:
-        hourly_excess_and_deficit_list = storage.calc_excess_and_deficit_chp_heat_gen(chp_gen_hourly_kwh_dict=chp_gen_hourly_kwh_dict, chp=chp, demand=demand, ab=ab,
-                                                                        load_following_type=load_following_type)
+        hourly_excess_and_deficit_list = \
+            storage.calc_excess_and_deficit_chp_heat_gen(chp_gen_hourly_kwh_dict=chp_gen_hourly_kwh_dict,
+                                                         load_following_type=load_following_type, class_dict=class_dict)
     assert isinstance(hourly_excess_and_deficit_list, list)
     assert hourly_excess_and_deficit_list[0].units == ureg.Btu / ureg.hour
 
