@@ -1,0 +1,102 @@
+# Description:
+#   Inputs for equipment specifications, location, and energy prices.
+#   Each location has a different .yaml file with preset values.
+
+
+### Location-specific inputs for Fairbanks, AK
+
+demand_filename: 'STD2019_Fairbanks_AK.csv'
+city: 'fairbanks'
+state: 'ak' # Must be two-letter abbreviation
+
+# Energy Costs - Electric, Master Meter
+meter_type_el: 'string'
+meter_type_fuel: 'string'
+schedule_type_el: ['string']        # List of applicable key names
+schedule_type_fuel: 'string'        # Options: Block, Seasonal, Demand, Basic
+
+summer_start_inclusive: 00
+winter_start_inclusive: 00
+
+master_metered_el:  # Schedule XXX via XXX utility
+  schedule_basic:
+    monthly_base_charge: 0      # $/month
+    monthly_energy_charge: 0    # $/kWh
+    energy_units: 'kWh'
+  schedule_seasonal_energy:
+    monthly_base_charge: 0      # $/month
+    energy_charge_summer: 0     # $/kWh
+    energy_charge_winter: 0     # $/kWh
+    energy_units: 'kWh'
+  schedule_seasonal_energy_block:
+    monthly_base_charge: 0               # $/month
+    energy_charge_summer_block1: 0       # $/kWh
+    energy_charge_summer_block2: 0       # $/kWh
+    energy_charge_winter_block1: 0       # $/kWh
+    energy_charge_winter_block2: 0       # $/kWh
+    energy_block1_cap: 0                 # kWh
+    energy_units: 'kWh'
+  schedule_seasonal_demand_block:
+    monthly_base_charge: 0            # $/month
+    dem_charge_summer_block1: 0       # $/kW
+    dem_charge_summer_block2: 0       # $/kW
+    dem_charge_winter_block1: 0       # $/kW
+    dem_charge_winter_block2: 0       # $/kW
+    dem_block1_cap: 0           # kW
+    dem_units: 'kW'
+
+single_metered_el:  # Schedule XXX via XXX utility
+  schedule_basic:
+    monthly_base_charge: 0      # $/month
+    monthly_energy_charge: 0    # $/kWh
+    energy_units: 'kWh'
+  schedule_energy_block:
+    monthly_base_charge: 0            # $/month
+    energy_charge_block1: 0           # $/kWh
+    energy_charge_block2: 0           # $/kWh
+    energy_block1_cap: 0              # kWh
+    energy_units: 'kWh'
+
+master_metered_fuel:    # Schedule XXX via XXX utility
+  schedule_basic:
+    monthly_base_charge: 0            # $/month
+    monthly_energy_charge: 0          # $/therm
+    energy_units: 'therm'
+
+single_metered_fuel:    # Schedule XXX via XXX utility
+  schedule_basic:
+    monthly_base_charge: 0            # $/month
+    monthly_energy_charge: 0          # $/therm
+    energy_units: 'therm'
+
+### Equipment Specifications, Efficiencies
+
+# CHP Specs
+chp_turn_down: 3.3
+
+# Efficiencies
+ab_eff: 0.80
+energy_plus_eff: 0.80   # TODO: Implement
+grid_efficiency: 0.4    # between 0-1, national average
+
+# TES Storage Initialization
+tes_init: 0.5   # initial SOC
+
+# Incremental Equipment Costs (material and installation)
+chp_installed_cost: 2900.0 # $/kW TODO: Use more reliable source for numbers
+tes_installed_cost: 0.35 # $/kWh
+
+
+### Sources:
+#
+#  CHP specs:
+#  https://chp.ecatalog.ornl.gov/package/39-PR12-ZC97330
+#
+#  CHP installed cost:
+#  https://understandingchp.com/chp-applications-guide/6-8-rules-of-thumb-for-chp-engineering-and-installation-costs/
+#
+#  TES installed cost:
+#  https://betterbuildingssolutioncenter.energy.gov/sites/default/files/slides/Thermal%20Energy%20Storage%2C%20The%20Lowest%20Cost%20Storage.pdf
+#
+# Grid Efficiency:
+# https://www.eia.gov/todayinenergy/detail.php?id=44436

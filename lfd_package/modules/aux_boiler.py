@@ -11,8 +11,8 @@ from lfd_package.modules import thermal_storage as storage
 from lfd_package.modules.__init__ import ureg, Q_
 
 
-def calc_aux_boiler_output_rate(chp_size=None, tes_size=None, chp_gen_hourly_kwh_dict=None, chp=None, demand=None,
-                                tes=None, ab=None, load_following_type=None):
+def calc_aux_boiler_output_rate(chp_size=None, tes_size=None, chp_gen_hourly_kwh_dict=None, load_following_type=None,
+                                class_dict=None):
     """
     Updated 10/16/2022
 
@@ -40,26 +40,26 @@ def calc_aux_boiler_output_rate(chp_size=None, tes_size=None, chp_gen_hourly_kwh
     ab_heat_rate_hourly: list (Quantity)
         Hourly heat output of the auxiliary boiler in units of Btu/hr
     """
-    if chp is not None and demand is not None and tes is not None and ab is not None:
+    args_list = [chp_size, tes_size, chp_gen_hourly_kwh_dict, load_following_type, class_dict]
+    if any(elem is None for elem in args_list) is False:
         # Pull chp heat and tes heat data
 
         # TODO: Optimize - remove functions called in CLI
         if load_following_type is "ELF":
             chp_heat_hourly = cogen.elf_calc_hourly_heat_generated(chp_gen_hourly_kwh=chp_gen_hourly_kwh_dict['ELF'],
-                                                                   chp=chp, demand=demand, ab=ab)
+                                                                   class_dict=class_dict)
             tes_heat_rate_list = storage.calc_tes_heat_flow_and_soc(chp_gen_hourly_kwh_dict=chp_gen_hourly_kwh_dict,
-                                                                    tes_size=tes_size, chp=chp, demand=demand, tes=tes,
-                                                                    ab=ab, load_following_type=load_following_type)[0]
+                                                                    tes_size=tes_size, class_dict=class_dict,
+                                                                    load_following_type=load_following_type)[0]
         elif load_following_type is "TLF":
-            chp_heat_hourly, tes_heat_rate_list = cogen.tlf_calc_hourly_heat_generated(chp_size=chp_size, chp=chp,
-                                                                                       demand=demand, ab=ab,
-                                                                                       tes=tes)[0:2]
+            chp_heat_hourly, tes_heat_rate_list = cogen.tlf_calc_hourly_heat_chp_tes_soc(chp_size=chp_size,
+                                                                                         class_dict=class_dict)[0:2]
         elif load_following_type is "PP":
-            chp_heat_hourly = cogen.pp_calc_hourly_heat_generated(chp_gen_hourly_kwh=chp_gen_hourly_kwh_dict['PP'], chp=chp,
-                                                                  demand=demand, ab=ab)
+            chp_heat_hourly = cogen.pp_calc_hourly_heat_generated(chp_gen_hourly_kwh=chp_gen_hourly_kwh_dict['PP'],
+                                                                  class_dict=class_dict)
             tes_heat_rate_list = storage.calc_tes_heat_flow_and_soc(chp_gen_hourly_kwh_dict=chp_gen_hourly_kwh_dict,
-                                                                    tes_size=tes_size, chp=chp, demand=demand, tes=tes,
-                                                                    ab=ab, load_following_type=load_following_type)[0]
+                                                                    tes_size=tes_size, class_dict=class_dict,
+                                                                    load_following_type=load_following_type)[0]
         else:
             raise Exception("Error in chp.py function, calc_annual_electric_cost")
 
@@ -69,7 +69,7 @@ def calc_aux_boiler_output_rate(chp_size=None, tes_size=None, chp_gen_hourly_kwh
 
         # Remove waste heat production from CHP heat output data since TES captures excess
         for index, chp_heat_rate in enumerate(chp_heat_hourly):
-            dem_item = demand.hl[index]
+            dem_item = class_dict['demand'].hl[index]
             if dem_item < chp_heat_rate:
                 desired = dem_item
                 chp_heat_rate_minus_excess.append(desired)
@@ -86,7 +86,7 @@ def calc_aux_boiler_output_rate(chp_size=None, tes_size=None, chp_gen_hourly_kwh
                 tes_discharge.append(zero)
 
         # Compare CHP and TES output with demand to determine AB output
-        for index, dem in enumerate(demand.hl):
+        for index, dem in enumerate(class_dict['demand'].hl):
             dem_item = dem
             chp_heat_rate_item = chp_heat_rate_minus_excess[index]
             tes_heat_discharge_item = tes_discharge[index]  # Negative if heat is discharged, zero otherwise
@@ -111,15 +111,17 @@ def calc_aux_boiler_output_rate(chp_size=None, tes_size=None, chp_gen_hourly_kwh
                 raise Exception('Error in aux_boiler.py function calc_aux_boiler_output_rate()')
 
         # Check that hourly heat demand is within aux boiler operating parameters
+        boiler_size = class_dict['demand'].annual_peak_hl
         for index, rate in enumerate(ab_heat_rate_hourly):
-            if ab.peak_hl < rate:
-                short = round(abs(rate - ab.peak_hl), 2)
+            if boiler_size < rate:
+                short = round(abs(rate - boiler_size), 2)
                 raise Exception('ALERT: Boiler size is insufficient to meet heating demand! Output is short by '
                                 '{} at hour number {}'.format(short, index))
         return ab_heat_rate_hourly
 
 
-def calc_annual_fuel_use_and_cost(chp_gen_hourly_kwh_dict=None, chp_size=None, tes_size=None, chp=None, demand=None, tes=None, ab=None, load_following_type=None):
+def calc_annual_fuel_use(chp_gen_hourly_kwh_dict=None, chp_size=None, tes_size=None, class_dict=None,
+                                  load_following_type=None):
     """
     Updated 10/16/2022
 
@@ -127,13 +129,7 @@ def calc_annual_fuel_use_and_cost(chp_gen_hourly_kwh_dict=None, chp_size=None, t
 
     Parameters
     ----------
-    chp: CHP Class
-        contains initialized class data using CLI inputs (see command_line.py)
-    demand: EnergyDemand Class
-        contains initialized class data using CLI inputs (see command_line.py)
-    tes: TES Class
-        contains initialized class data using CLI inputs (see command_line.py)
-    ab: AuxBoiler Class
+    class_dict: dict
         contains initialized class data using CLI inputs (see command_line.py)
     load_following_type: string
         specifies whether calculation is for electrical load following (ELF) state
@@ -143,18 +139,12 @@ def calc_annual_fuel_use_and_cost(chp_gen_hourly_kwh_dict=None, chp_size=None, t
     -------
     annual_fuel_use_btu: Quantity
         annual fuel use of the auxiliary boiler in units of Btu
-    annual_fuel_cost: Quantity (dimensionless)
-        annual fuel cost, calculated from the annual fuel use of the boiler
     """
     # Fuel use calculation
     ab_output_rate_list = calc_aux_boiler_output_rate(chp_gen_hourly_kwh_dict=chp_gen_hourly_kwh_dict, chp_size=chp_size,
-                                                      tes_size=tes_size, chp=chp, demand=demand, tes=tes, ab=ab,
+                                                      tes_size=tes_size, class_dict=class_dict,
                                                       load_following_type=load_following_type)
     annual_heat_output = sum(ab_output_rate_list) * (1 * ureg.hour)
-    annual_fuel_use_btu = annual_heat_output / ab.eff
+    annual_fuel_use_btu = annual_heat_output / class_dict['ab'].eff
 
-    # Fuel cost calculation
-    annual_fuel_use_mmbtu = annual_fuel_use_btu.to(ureg.megaBtu)
-    annual_fuel_cost = demand.fuel_cost * annual_fuel_use_mmbtu
-
-    return annual_fuel_use_btu, annual_fuel_cost
+    return annual_fuel_use_btu
