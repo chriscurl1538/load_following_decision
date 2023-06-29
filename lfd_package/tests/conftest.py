@@ -11,37 +11,58 @@ def class_info():
     except ImportError:
         from yaml import Loader
 
-    yaml_filename = 'default_file.yaml'  # these match the "dest": dest="input"
+    yaml_filename = 'seattle_wa.yaml'  # these match the "dest": dest="input"
     cwd = pathlib.Path(__file__).parent.parent.resolve() / 'input_files'
 
     with open(cwd / yaml_filename) as f:
         data = yaml.load(f, Loader=Loader)
     f.close()
 
-    part_load_electrical_list = []
-    part_load_thermal_list = []
-    for i in range(50, 125, 25):
-        part_load_electrical_list.append([i, data['Electrical'][i]])
-        part_load_thermal_list.append([i, data['Thermal'][i]])
-    part_load_electrical_array = np.array(part_load_electrical_list)
-    part_load_thermal_array = np.array(part_load_thermal_list)
-
     # Class initialization using CLI arguments
-    chp = classes.CHP(fuel_input_rate=data['fuel_input_rate'],
-                      turn_down_ratio=data['chp_turn_down'], part_load_electrical=part_load_electrical_array,
-                      part_load_thermal=part_load_thermal_array, chp_electric_eff=data['Electrical'][100],
-                      chp_thermal_eff=data['Thermal'][100], percent_availability=data['percent_availability'],
-                      cost=data['chp_installed_cost'])
-    ab = classes.AuxBoiler(capacity=data['ab_capacity'], efficiency=data['ab_eff'],
-                           turn_down_ratio=data['ab_turn_down'])
-    demand = classes.EnergyDemand(file_name=data['demand_filename'], net_metering_status=data['net_metering_status'],
+    demand = classes.EnergyDemand(file_name=data['demand_filename'], city=data['city'], state=data['state'],
                                   grid_efficiency=data['grid_efficiency'],
-                                  electric_cost=data['electric_utility_cost'],
-                                  fuel_cost=data['fuel_cost'])
-    tes = classes.TES(start=data['tes_init'], discharge=data['tes_discharge_rate'],
+                                  winter_start_inclusive=data['winter_start_inclusive'],
+                                  summer_start_inclusive=data['summer_start_inclusive'])
+    emissions_class = classes.Emissions(file_name=data['demand_filename'], city=data['city'], state=data['state'],
+                                        grid_efficiency=data['grid_efficiency'],
+                                        summer_start_inclusive=data['summer_start_inclusive'],
+                                        winter_start_inclusive=data['winter_start_inclusive'])
+    costs_class = classes.EnergyCosts(file_name=data['demand_filename'], city=data['city'], state=data['state'],
+                                      grid_efficiency=data['grid_efficiency'],
+                                      winter_start_inclusive=data['winter_start_inclusive'],
+                                      summer_start_inclusive=data['summer_start_inclusive'],
+                                      meter_type_el=data['meter_type_el'], meter_type_fuel=data['meter_type_fuel'],
+                                      schedule_type_el=data['schedule_type_el'],
+                                      schedule_type_fuel=data['schedule_type_fuel'],
+                                      master_metered_el=data['master_metered_el'],
+                                      single_metered_el=data['single_metered_el'],
+                                      master_metered_fuel=data['master_metered_fuel'],
+                                      single_metered_fuel=data['single_metered_fuel'])  # TODO: Implement
+    chp = classes.CHP(file_name=data['demand_filename'], city=data['city'], state=data['state'],
+                      grid_efficiency=data['grid_efficiency'],
+                      summer_start_inclusive=data['summer_start_inclusive'],
+                      winter_start_inclusive=data['winter_start_inclusive'], turn_down_ratio=data['chp_turn_down'],
+                      cost=data['chp_installed_cost'])
+    ab = classes.AuxBoiler(file_name=data['demand_filename'], city=data['city'], state=data['state'],
+                           grid_efficiency=data['grid_efficiency'],
+                           summer_start_inclusive=data['summer_start_inclusive'],
+                           winter_start_inclusive=data['winter_start_inclusive'], efficiency=data['ab_eff'])
+    tes = classes.TES(file_name=data['demand_filename'], city=data['city'], state=data['state'],
+                      grid_efficiency=data['grid_efficiency'],
+                      summer_start_inclusive=data['summer_start_inclusive'],
+                      winter_start_inclusive=data['winter_start_inclusive'], start=data['tes_init'],
                       cost=data['tes_installed_cost'])
 
-    return [demand, chp, tes, ab]
+    class_dict = {
+        "demand": demand,
+        "emissions": emissions_class,
+        "costs": costs_class,
+        "chp": chp,
+        "ab": ab,
+        "tes": tes
+    }
+
+    return class_dict
 
 
 # @pytest.fixture

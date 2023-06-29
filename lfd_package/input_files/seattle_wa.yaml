@@ -1,0 +1,85 @@
+# Description:
+#   Inputs for equipment specifications, location, and energy prices.
+#   Each location has a different .yaml file with preset values.
+
+
+### Location-specific inputs for Seattle, WA
+
+demand_filename: 'STD2019_Seattle_WA.csv'
+city: 'seattle'
+state: 'wa' # Must be two-letter abbreviation
+
+# Energy Costs - Electric, Master Meter
+meter_type_el: "master_metered_el"
+meter_type_fuel: "master_metered_fuel"
+schedule_type_el: ["schedule_seasonal_energy_block", "schedule_seasonal_demand_block"]  # List of applicable key names
+schedule_type_fuel: ""  # Options: Block, Seasonal, Demand, Basic
+
+summer_start_inclusive: 04
+winter_start_inclusive: 10
+
+master_metered_el:
+  schedule_basic:
+    monthly_base_charge: 53.95
+    monthly_energy_charge: 0    # $/kWh
+    energy_units: 'kWh'
+  schedule_seasonal_energy:
+    monthly_base_charge: 0
+    energy_charge_summer: 0     # $/kWh
+    energy_charge_winter: 0     # $/kWh
+    energy_units: 'kWh'
+  schedule_seasonal_energy_block:
+    monthly_base_charge: 0
+    energy_charge_summer_block1: 0.081649    # $/kWh
+    energy_charge_summer_block2: 0.064578    # $/kWh
+    energy_charge_winter_block1: 0.090595    # $/kWh
+    energy_charge_winter_block2: 0.064578    # $/kWh
+    energy_block1_cap: 20000    # kWh
+    energy_block2_cap: None    # kWh
+    energy_units: 'kWh'
+  schedule_seasonal_demand_block:
+    monthly_base_charge: 0
+    dem_charge_summer_block1: 0
+    dem_charge_summer_block2: 6.75
+    dem_charge_winter_block1: 0
+    dem_charge_winter_block2: 10.12
+    dem_block1_cap: 50
+    dem_units: 'kW'
+
+single_metered_el:  # TODO: Implement
+
+master_metered_fuel:    # TODO: Implement
+
+single_metered_fuel:    # TODO: Implement
+
+
+### Equipment Specifications, Efficiencies
+
+# CHP Specs
+chp_turn_down: 3.3
+
+# Efficiencies
+ab_eff: 0.80
+grid_efficiency: 0.4   # between 0-1, national average
+
+# TES Storage Initialization
+tes_init: 0.5   # initial SOC
+
+# Incremental Equipment Costs (material and installation)
+chp_installed_cost: 2900.0 # $/kW TODO: Use more reliable source for numbers
+tes_installed_cost: 0.35 # $/kWh
+
+
+### Sources:
+#
+#  CHP specs:
+#  https://chp.ecatalog.ornl.gov/package/39-PR12-ZC97330
+#
+#  CHP installed cost:
+#  https://understandingchp.com/chp-applications-guide/6-8-rules-of-thumb-for-chp-engineering-and-installation-costs/
+#
+#  TES installed cost:
+#  https://betterbuildingssolutioncenter.energy.gov/sites/default/files/slides/Thermal%20Energy%20Storage%2C%20The%20Lowest%20Cost%20Storage.pdf
+#
+# Grid Efficiency:
+# https://www.eia.gov/todayinenergy/detail.php?id=44436
