@@ -18,40 +18,56 @@ schedule_type_fuel: ""  # Options: Block, Seasonal, Demand, Basic
 summer_start_inclusive: 04
 winter_start_inclusive: 10
 
-master_metered_el:
+master_metered_el:  # Schedule 7A via Puget Sound Energy utility
   schedule_basic:
-    monthly_base_charge: 53.95
+    monthly_base_charge: 0      # $/month
     monthly_energy_charge: 0    # $/kWh
     energy_units: 'kWh'
   schedule_seasonal_energy:
-    monthly_base_charge: 0
+    monthly_base_charge: 0      # $/month
     energy_charge_summer: 0     # $/kWh
     energy_charge_winter: 0     # $/kWh
-    energy_units: 'kWh'
+    units: 'kWh'
   schedule_seasonal_energy_block:
-    monthly_base_charge: 0
+    monthly_base_charge: 53.95               # $/month
     energy_charge_summer_block1: 0.081649    # $/kWh
     energy_charge_summer_block2: 0.064578    # $/kWh
     energy_charge_winter_block1: 0.090595    # $/kWh
     energy_charge_winter_block2: 0.064578    # $/kWh
     energy_block1_cap: 20000    # kWh
-    energy_block2_cap: None    # kWh
-    energy_units: 'kWh'
+    units: 'kWh'
   schedule_seasonal_demand_block:
-    monthly_base_charge: 0
-    dem_charge_summer_block1: 0
-    dem_charge_summer_block2: 6.75
-    dem_charge_winter_block1: 0
-    dem_charge_winter_block2: 10.12
-    dem_block1_cap: 50
-    dem_units: 'kW'
+    monthly_base_charge: 0            # $/month
+    dem_charge_summer_block1: 0       # $/kW
+    dem_charge_summer_block2: 6.75    # $/kW
+    dem_charge_winter_block1: 0       # $/kW
+    dem_charge_winter_block2: 10.12   # $/kW
+    dem_block1_cap: 50          # kW
+    units: 'kW'
 
-single_metered_el:  # TODO: Implement
+single_metered_el:  # Schedule 7 via Puget Sound Energy utility TODO: Implement
+  schedule_basic:
+    monthly_base_charge: 0      # $/month
+    monthly_energy_charge: 0    # $/kWh
+    units: 'kWh'
+  schedule_energy_block:
+    monthly_base_charge: 7.49         # $/month
+    energy_charge_block1: 0.110228    # $/kWh
+    energy_charge_block2: 0.129645    # $/kWh
+    energy_block1_cap: 600    # kWh
+    units: 'kWh'
 
-master_metered_fuel:    # TODO: Implement
+master_metered_fuel:    # Schedule 31 via Puget Sound Energy utility TODO: Implement
+  schedule_basic:
+    monthly_base_charge: 38.89        # $/month
+    monthly_energy_charge: 1.13068    # $/therm
+    units: 'therm'
 
-single_metered_fuel:    # TODO: Implement
-
+single_metered_fuel:    # Schedule 23 via Puget Sound Energy utility TODO: Implement
+  schedule_basic:
+    monthly_base_charge: 12.5         # $/month
+    monthly_energy_charge: 1.29492    # $/therm
+    units: 'therm'
 
 ### Equipment Specifications, Efficiencies
 
@@ -60,6 +76,7 @@ chp_turn_down: 3.3
 
 # Efficiencies
 ab_eff: 0.80
+energy_plus_eff: 0.80   # TODO: Implement
 grid_efficiency: 0.4   # between 0-1, national average
 
 # TES Storage Initialization
