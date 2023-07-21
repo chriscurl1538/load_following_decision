@@ -11,23 +11,34 @@ from lfd_package.modules.__init__ import ureg, Q_
 
 class EnergyDemand:
     def __init__(self, file_name='default_file.csv', city=None, state=None, grid_efficiency=None,
-                 summer_start_inclusive=None, winter_start_inclusive=None):
+                 summer_start_inclusive=None, winter_start_inclusive=None, sim_ab_efficiency=None):
         """
         Docstring updated on 9/24/22
 
-        This class stores information from eQuest building demand profile simulations,
+        This class stores information from EnergyPlus building demand profile simulations,
         which are fed in via a .csv file. By default, this class imports data from the
         'default_file.csv' file in the /input_files folder.
 
         Parameters
         ----------
-        file_name: string
-            This is the file name of the .csv file from which the building demand profile
-            data is pulled. The user inputs this name by including it in the .yaml file located
-            in the /input_files folder.
+        file_name: str
+            This is the file name of the .csv file containing hourly electrical and heating demand data.
+            The user can change this value in the .yaml file located in the /input_files folder.
+        city: str
+            This is the name of one of 7 accepted city locations.
+        state: str
+            This is the name of one of 7 accepted state locations.
         grid_efficiency: float
             This is the efficiency of the local electrical subgrid region as a decimal value
-            (ie: 50% is 0.5). Dimensionless
+            (ie: 50% is 0.5).
+        summer_start_inclusive: int
+            Integer value between 1-12 (Jan-Dec) indicating the month summer starts for utility
+            billing purposes.
+        winter_start_inclusive: int
+            See above.
+        sim_ab_efficiency: float
+            User must enter the assumed EnergyPlus boiler efficiency in the .yaml file so it
+            may be modified as needed.
         """
         # Reads load profile data from .csv file
         cwd = pathlib.Path(__file__).parent.parent.resolve() / 'input_files'
@@ -52,10 +63,11 @@ class EnergyDemand:
             date = self.standardize_date_str(date_str=item)
             meter_months_hourly.append(date.month)
 
-        self.meter_months_hourly = meter_months_hourly
+        self.meter_months_hourly = np.array(meter_months_hourly, dtype=int)
+        self.sim_ab_efficiency = float(sim_ab_efficiency)
 
         # Convert heat metering to heating demand using EnergyPlus assumed heating efficiency value
-        heating_demand_hourly = [item * 0.8 for item in heating_metering_hourly]    # TODO: Add to yaml
+        heating_demand_hourly = [item * self.sim_ab_efficiency for item in heating_metering_hourly]
 
         ##############################
         # General Info
@@ -66,19 +78,19 @@ class EnergyDemand:
         self.state = state.lower()
 
         # National Average Grid Efficiency
-        self.grid_efficiency = grid_efficiency
+        self.grid_efficiency = float(grid_efficiency)
 
         # Energy Costs - Seasonal
-        self.summer_start_month = summer_start_inclusive
-        self.winter_start_month = winter_start_inclusive
+        self.summer_start_month = int(summer_start_inclusive)
+        self.winter_start_month = int(winter_start_inclusive)
 
         ################################
         # Energy Demand Info
         ################################
 
         # Annual and monthly peaks and sums
-        heat_load_joules = self.convert_numpy_to_float(heating_demand_hourly) * (ureg.joules / ureg.hour)
-        electric_load_joules = self.convert_numpy_to_float(electric_demand_hourly) * (ureg.joules / ureg.hour)
+        heat_load_joules = self.convert_to_float_numpy(heating_demand_hourly) * (ureg.joules / ureg.hour)
+        electric_load_joules = self.convert_to_float_numpy(electric_demand_hourly) * (ureg.joules / ureg.hour)
 
         self.hl = heat_load_joules.to(ureg.Btu / ureg.hours)
         self.el = electric_load_joules.to(ureg.kW)
@@ -103,6 +115,7 @@ class EnergyDemand:
     #####################################
 
     def standardize_date_str(self, date_str):
+        assert isinstance(date_str, str)
         date_list = date_str.split()
         year = datetime.now().year
         new_date = "{}/{} {}".format(date_list[0], year, date_list[1])
@@ -114,24 +127,26 @@ class EnergyDemand:
             new_datetime = rollback_datetime + timedelta(hours=1)
         return new_datetime
 
-    def convert_electricity_units(self, values_list=None, units_from=None, units_to=None):  # TODO: Modify for heat too
-        assert values_list[0].units == units_from
+    def convert_units(self, values_list=None, units_to_str=None):
+        assert 1 < len(values_list)
         converted_list = []
-        if units_from == ureg.kW and units_to == ureg.kWh:
+        if values_list[0].check('[power]'):
             for item in values_list:
                 new_item = item * Q_(1, ureg.hours)
-                new_item.ito_reduced_units()
+                new_item.to(units_to_str)
+                assert new_item.check('[energy]')
                 converted_list.append(new_item)
-        elif units_from == ureg.kWh and units_to == ureg.kW:
+        elif values_list[0].check('[energy]'):
             for item in values_list:
                 new_item = item / Q_(1, ureg.hours)
-                new_item.ito_reduced_units()
+                new_item.to(units_to_str)
+                assert new_item.check('[power]')
                 converted_list.append(new_item)
         else:
             raise Exception('only converts between kWh and kW units')
         return converted_list
 
-    def convert_numpy_to_float(self, array=None):
+    def convert_to_float_numpy(self, array=None):
         float_list = []
         for item in array:
             f = float(item)
@@ -243,28 +258,13 @@ class EnergyDemand:
 
 
 class Emissions(EnergyDemand):
-    def __init__(self, file_name, city, state, grid_efficiency, summer_start_inclusive, winter_start_inclusive):
-        super().__init__(file_name, city, state, grid_efficiency, summer_start_inclusive, winter_start_inclusive)
+    def __init__(self, file_name, city, state, grid_efficiency, summer_start_inclusive, winter_start_inclusive,
+                 sim_ab_efficiency):
+        super().__init__(file_name, city, state, grid_efficiency, summer_start_inclusive, winter_start_inclusive,
+                         sim_ab_efficiency)
 
         # NG Emissions
         self.ng_co2 = 14.43 * (ureg.kg / ureg.megaBtu)  # source: https://www.epa.gov/energy/greenhouse-gases-equivalencies-calculator-calculations-and-references)
-
-        # Marginal Emissions
-        self.marg_emissions = {
-            "seattle, wa": Q_(1575, ureg.lbs / ureg.MWh),
-            "helena, mt": Q_(1575, ureg.lbs / ureg.MWh),
-            "great falls, mt": Q_(1575, ureg.lbs / ureg.MWh),
-            "miami, fl": Q_(1098, ureg.lbs / ureg.MWh),
-            "duluth, mn": Q_(1837, ureg.lbs / ureg.MWh),
-            "international falls, mn": Q_(1837, ureg.lbs / ureg.MWh),
-            "phoenix, az": Q_(1366, ureg.lbs / ureg.MWh),
-            "tuscon, az": Q_(1366, ureg.lbs / ureg.MWh),
-            # TODO: Update below to marginal values
-            "fairbanks, ak": Q_(1114.7, ureg.lbs / ureg.MWh),
-            "chicago, il": Q_(1093.2, ureg.lbs / ureg.MWh),
-            "buffalo, ny": Q_(243.6, ureg.lbs / ureg.MWh),
-            "honolulu, hi": Q_(1711.5, ureg.lbs / ureg.MWh)
-        }
 
         # Average Emissions (accounts for losses)
         self.avg_emissions = {
@@ -285,9 +285,10 @@ class Emissions(EnergyDemand):
 
 class EnergyCosts(EnergyDemand):
     def __init__(self, file_name, city, state, grid_efficiency, summer_start_inclusive, winter_start_inclusive,
-                 meter_type_el=None, meter_type_fuel=None, schedule_type_el=None, schedule_type_fuel=None,
+                 sim_ab_efficiency, meter_type_el=None, meter_type_fuel=None, schedule_type_el=None, schedule_type_fuel=None,
                  master_metered_el=None, single_metered_el=None, master_metered_fuel=None, single_metered_fuel=None):
-        super().__init__(file_name, city, state, grid_efficiency, summer_start_inclusive, winter_start_inclusive)
+        super().__init__(file_name, city, state, grid_efficiency, summer_start_inclusive, winter_start_inclusive,
+                         sim_ab_efficiency)
 
         #####################################
         # Electricity Charges
@@ -308,7 +309,7 @@ class EnergyCosts(EnergyDemand):
 
 class CHP(EnergyDemand):
     def __init__(self, file_name, city, state, grid_efficiency, summer_start_inclusive, winter_start_inclusive,
-                 turn_down_ratio=None, cost=None):
+                 sim_ab_efficiency, turn_down_ratio=None, installed_cost=None):
         """
         Docstring updated on 9/24/22
 
@@ -326,7 +327,8 @@ class CHP(EnergyDemand):
             before being stored within the class. TODO: Is this material + installation labor?
         """
 
-        super().__init__(file_name, city, state, grid_efficiency, summer_start_inclusive, winter_start_inclusive)
+        super().__init__(file_name, city, state, grid_efficiency, summer_start_inclusive, winter_start_inclusive,
+                         sim_ab_efficiency)
 
         # CHP Specifications
         try:
@@ -335,13 +337,13 @@ class CHP(EnergyDemand):
             chp_min_pl = 0
         self.min_pl = chp_min_pl
 
-        # Materials Costs
-        self.incremental_cost = cost * 1/ureg.kW
+        # Labor, material, and installation costs (installed cost)
+        self.installed_cost = installed_cost * 1/ureg.kW
 
 
 class TES(EnergyDemand):
     def __init__(self, file_name, city, state, grid_efficiency, summer_start_inclusive, winter_start_inclusive,
-                 start=None, cost=None):
+                 sim_ab_efficiency, start=None, vol_rate=None, energy_density=None, size_cost=None, rate_cost=None):
         """
         Docstring updated on 9/24/22
 
@@ -357,18 +359,23 @@ class TES(EnergyDemand):
             TODO: Add incremental cost for power system ($/kW) and combine with system_cost,
              then store as total cost
         """
-        super().__init__(file_name, city, state, grid_efficiency, summer_start_inclusive, winter_start_inclusive)
+        super().__init__(file_name, city, state, grid_efficiency, summer_start_inclusive, winter_start_inclusive,
+                         sim_ab_efficiency)
 
         # TES Specifications
-        self.start = start
+        self.start = float(start)
+        self.vol_rate = float(vol_rate) * (ureg.liters / ureg.hours)
+        self.energy_density = float(energy_density) * (ureg.kWh / ureg.meters**3)
+        self.discharge_kw = (self.vol_rate * self.energy_density).to(ureg.kW)   # TODO: Implement
 
         # TES Materials Costs
-        self.incremental_cost = cost * (1/ureg.kWh)
+        self.size_cost = float(size_cost) * (1/ureg.kWh)     # TODO: raname variable?
+        self.rate_cost = float(rate_cost) * (1/ureg.kW)     # TODO: raname variable?
 
 
 class AuxBoiler(EnergyDemand):
     def __init__(self, file_name, city, state, grid_efficiency, summer_start_inclusive, winter_start_inclusive,
-                 efficiency=None):
+                 sim_ab_efficiency, efficiency=None):
         """
         Docstring updated on 9/24/22
 
@@ -380,7 +387,8 @@ class AuxBoiler(EnergyDemand):
             The efficiency of the boiler when operating at full load expressed
             as a decimal value (ie: 50% = 0.5). Dimensionless
         """
-        super().__init__(file_name, city, state, grid_efficiency, summer_start_inclusive, winter_start_inclusive)
+        super().__init__(file_name, city, state, grid_efficiency, summer_start_inclusive, winter_start_inclusive,
+                         sim_ab_efficiency)
 
         # Aux Boiler Specifications
         self.eff = efficiency
