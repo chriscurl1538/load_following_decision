@@ -176,7 +176,7 @@ def size_chp(load_following_type=None, class_dict=None):
     args_list = [load_following_type, class_dict]
     if any(elem is None for elem in args_list) is False:
         if load_following_type is "PP":
-            chp_size = calc_min_pes_chp_size(class_dict=class_dict)[0]
+            chp_size = calc_max_pes_chp_size(class_dict=class_dict)
         elif load_following_type is "ELF":
             chp_size = calc_max_rect_chp_size(array=class_dict['demand'].el)
         elif load_following_type is "TLF":
@@ -223,7 +223,7 @@ def calc_max_rect_chp_size(array=None):
         return max_value
 
 
-def calc_min_pes_chp_size(class_dict=None):
+def calc_max_pes_chp_size(class_dict=None):     # TODO: This function always outputs 10 kWe
     """
     Docstring updated 9/24/2022
 
@@ -247,7 +247,7 @@ def calc_min_pes_chp_size(class_dict=None):
     max_pes_size: Quantity (float)
         Recommended size of CHP system in units of kW electrical
     """
-    args_list=[class_dict]
+    args_list = [class_dict]
     if any(elem is None for elem in args_list) is False:
         chp_size_list = list(range(10, 105, 5)) * ureg.kW
 
@@ -268,15 +268,11 @@ def calc_min_pes_chp_size(class_dict=None):
             size_list.append(size)
             pes_list.append(pes)
 
-        # TODO: Have function output both min and max values for sizing
-        min_pes_value = min(pes_list)
         max_pes_value = max(pes_list)
-        min_pes_index = pes_list.index(min_pes_value)
         max_pes_index = pes_list.index(max_pes_value)
-        min_pes_size = size_list[min_pes_index]
         max_pes_size = size_list[max_pes_index]
 
-        return min_pes_size, max_pes_size
+        return max_pes_size
 
 
 def size_tes(chp_gen_hourly_kwh_dict=None, chp_size=None, load_following_type=None, class_dict=None):
