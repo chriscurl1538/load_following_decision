@@ -10,7 +10,7 @@ from lfd_package.modules import sizing_calcs as sizing
 from lfd_package.modules.__init__ import ureg, Q_
 
 
-def calc_annual_fuel_use(chp_gen_hourly_btuh=None, chp_size=None, load_following_type=None, class_dict=None):
+def calc_hourly_fuel_use(chp_gen_hourly_btuh=None, chp_size=None, load_following_type=None, class_dict=None):
     """
     Docstring updated 9/24/2022
 
@@ -40,8 +40,8 @@ def calc_annual_fuel_use(chp_gen_hourly_btuh=None, chp_size=None, load_following
     if any(elem is None for elem in args_list) is False:
         # Get hourly CHP gen in kWh
         # TODO: Optimize - remove functions called in CLI
-        if load_following_type == "PP":
-            chp_electric_gen_hourly_kwh = pp_calc_electricity_generated(chp_size=chp_size, class_dict=class_dict)
+        if load_following_type == "PP" or "Peak":
+            chp_electric_gen_hourly_kwh = pp_calc_electricity_gen_sold(chp_size=chp_size, class_dict=class_dict)[0]
         elif load_following_type == "ELF":
             chp_electric_gen_hourly_kwh = elf_calc_electricity_generated(chp_size=chp_size, class_dict=class_dict)
         elif load_following_type == "TLF":
@@ -59,9 +59,7 @@ def calc_annual_fuel_use(chp_gen_hourly_btuh=None, chp_size=None, load_following
             fuel_use_hourly_btu = (fuel_use_hourly_kw * Q_(1, ureg.hours)).to(ureg.Btu)
             fuel_use_btu_list.append(fuel_use_hourly_btu)
 
-        annual_fuel_use_btu = sum(fuel_use_btu_list)
-
-        return annual_fuel_use_btu
+        return fuel_use_btu_list
 
 
 def calc_electricity_bought(chp_gen_hourly_kwh=None, chp_size=None, class_dict=None):
