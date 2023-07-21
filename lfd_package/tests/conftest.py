@@ -3,7 +3,7 @@ import pytest
 
 @pytest.fixture
 def class_info():
-    import pathlib, yaml, numpy as np
+    import pathlib, yaml
     from lfd_package.modules import classes
 
     try:
@@ -54,7 +54,7 @@ def class_info():
                            efficiency=data['ab_eff'])
     tes = classes.TES(file_name=data['demand_filename'], city=data['city'], state=data['state'],
                       grid_efficiency=data['grid_efficiency'], sim_ab_efficiency=data["energy_plus_eff"],
-                      summer_start_inclusive=data['summer_start_inclusive'],
+                      summer_start_inclusive=data['summer_start_inclusive'], vol_rate=data['tes_vol_rate'],
                       winter_start_inclusive=data['winter_start_inclusive'], start=data['tes_init'],
                       size_cost=data['tes_size_cost'], rate_cost=data['tes_rate_cost'],
                       energy_density=data['tes_energy_density'])
