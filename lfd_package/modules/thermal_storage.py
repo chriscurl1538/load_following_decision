@@ -37,8 +37,8 @@ def calc_excess_and_deficit_chp_heat_gen(chp_gen_hourly_kwh_dict=None, load_foll
     args_list = [chp_gen_hourly_kwh_dict, load_following_type, class_dict]
     if any(elem is None for elem in args_list) is False:
         heat_demand = class_dict['demand'].hl
-        if load_following_type is "PP":
-            chp_heat_gen_hourly = cogen.pp_calc_hourly_heat_generated(chp_gen_hourly_kwh=chp_gen_hourly_kwh_dict["PP"],
+        if load_following_type is "PP" or "Peak":
+            chp_heat_gen_hourly = cogen.pp_calc_hourly_heat_generated(chp_gen_hourly_kwh=chp_gen_hourly_kwh_dict[str(load_following_type)],
                                                                       class_dict=class_dict)
         elif load_following_type is "ELF":
             chp_heat_gen_hourly = cogen.elf_calc_hourly_heat_generated(chp_gen_hourly_kwh=chp_gen_hourly_kwh_dict["ELF"],
