@@ -13,7 +13,7 @@ state: 'wa' # Must be two-letter abbreviation
 meter_type_el: "master_metered_el"
 meter_type_fuel: "master_metered_fuel"
 schedule_type_el: ["schedule_seasonal_energy_block", "schedule_seasonal_demand_block"]  # List of applicable key names
-schedule_type_fuel: ""  # Options: Block, Seasonal, Demand, Basic
+schedule_type_fuel: ["schedule_basic"]  # Options: Block, Seasonal, Demand, Basic
 
 summer_start_inclusive: 04
 winter_start_inclusive: 10
@@ -45,7 +45,7 @@ master_metered_el:  # Schedule 7A via Puget Sound Energy utility
     dem_block1_cap: 50          # kW
     units: 'kW'
 
-single_metered_el:  # Schedule 7 via Puget Sound Energy utility TODO: Implement
+single_metered_el:  # Schedule 7 via Puget Sound Energy utility
   schedule_basic:
     monthly_base_charge: 0      # $/month
     monthly_energy_charge: 0    # $/kWh
@@ -57,13 +57,13 @@ single_metered_el:  # Schedule 7 via Puget Sound Energy utility TODO: Implement
     energy_block1_cap: 600    # kWh
     units: 'kWh'
 
-master_metered_fuel:    # Schedule 31 via Puget Sound Energy utility TODO: Implement
+master_metered_fuel:    # Schedule 31 via Puget Sound Energy utility
   schedule_basic:
     monthly_base_charge: 38.89        # $/month
     monthly_energy_charge: 1.13068    # $/therm
     units: 'therm'
 
-single_metered_fuel:    # Schedule 23 via Puget Sound Energy utility TODO: Implement
+single_metered_fuel:    # Schedule 23 via Puget Sound Energy utility
   schedule_basic:
     monthly_base_charge: 12.5         # $/month
     monthly_energy_charge: 1.29492    # $/therm
@@ -76,15 +76,18 @@ chp_turn_down: 3.3
 
 # Efficiencies
 ab_eff: 0.80
-energy_plus_eff: 0.80   # TODO: Implement
+energy_plus_eff: 0.80   # TODO: Update value
 grid_efficiency: 0.4   # between 0-1, national average
 
 # TES Storage Initialization
 tes_init: 0.5   # initial SOC
+tes_vol_rate: 500  # liters/hr
+tes_energy_density: 80  # kWh/m^3     # TODO: Calculate volume from size in kWh
 
-# Incremental Equipment Costs (material and installation)
-chp_installed_cost: 2900.0 # $/kW TODO: Use more reliable source for numbers
-tes_installed_cost: 0.35 # $/kWh
+# Incremental Equipment Costs (installed cost = labor, material, and installation)
+chp_installed_cost: 3063.61   # $/kW
+tes_rate_cost: 14.00          # $/kW
+tes_size_cost: 9.00           # $/kWh
 
 
 ### Sources:
