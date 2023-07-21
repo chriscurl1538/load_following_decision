@@ -11,10 +11,7 @@ from lfd_package.modules.__init__ import ureg, Q_
 
 def calc_electric_charges(class_dict=None, electricity_bought_hourly=None):
     if sum(electricity_bought_hourly) == 0:
-        charges = []
-        for index in range(0, len(class_dict['demand'].el)):
-            charges.append(Q_(0, ''))
-        return charges
+        return Q_(0, '')
     else:
         summer_weight, winter_weight = class_dict['demand'].seasonal_weights_hourly_data(dem_profile=electricity_bought_hourly)
 
@@ -33,7 +30,7 @@ def calc_electric_charges(class_dict=None, electricity_bought_hourly=None):
 
         # Loop through possible electric rate schedule types for the chosen meter type
         for item in class_dict['costs'].schedule_type_el:
-            annual_base_cost.append(12 * el_cost_dict[item]["monthly_base_charge"])
+            annual_base_cost.append(Q_(12 * el_cost_dict[item]["monthly_base_charge"], ''))
             units = el_cost_dict[item]["units"]
 
             if item == "schedule_basic":
@@ -53,7 +50,7 @@ def calc_electric_charges(class_dict=None, electricity_bought_hourly=None):
                     monthly_energy_bought_b2 = [item - block1_cap for item in monthly_energy_bought_list]
                     annual_b2_rate_cost = rate_b2 * sum(monthly_energy_bought_b2)
                     annual_rate_cost.append(annual_b2_rate_cost)
-                    return sum(annual_base_cost), sum(annual_rate_cost)
+                    return sum(annual_base_cost) + sum(annual_rate_cost)
 
             elif item == "schedule_seasonal_energy":
                 rate_summer = Q_(el_cost_dict[item]["energy_charge_summer"], '1/{}'.format(units))
@@ -87,7 +84,7 @@ def seasonal_block_rates(sch=None, units=None, el_cost_dict=None, costs_class=No
 
     if electricity_bought_hourly[0].units == ureg.kWh:
         electricity_bought_hourly = \
-            costs_class.convert_electricity_units(values_list=electricity_bought_hourly, units_from=ureg.kWh, units_to=ureg.kW)
+            costs_class.convert_units(values_list=electricity_bought_hourly, units_to_str="kW")
 
     if sch == "schedule_seasonal_energy_block":
         block1_cap = Q_(el_cost_dict[sch]["energy_block1_cap"], '{}'.format(units))
@@ -139,9 +136,66 @@ def seasonal_block_rates(sch=None, units=None, el_cost_dict=None, costs_class=No
         return sum(annual_base_cost), sum(annual_rate_cost)
 
 
-def calc_baseline_fuel_charges():   # TODO: Implement
-    return None
+def calc_fuel_charges(class_dict=None, fuel_bought_hourly=None):
+    # monthly_energy_bought_list = class_dict['demand'].monthly_energy_sums(dem_profile=fuel_bought_hourly)
+    # min_energy_use_annual = min(monthly_energy_bought_list)
+    annual_base_cost = []
+    # annual_rate_cost = []
+
+    # Check metering type
+    if class_dict['costs'].meter_type_fuel == "master_metered_fuel":
+        fuel_cost_dict = class_dict['costs'].master_meter_fuel_dict
+    elif class_dict['costs'].meter_type_fuel == "single_metered_fuel":
+        fuel_cost_dict = class_dict['costs'].single_meter_fuel_dict
+    else:
+        raise Exception("Issue parsing fuel metering type (master meter vs individually metered apartments)")
+
+    # Ensure units are consistent. We want units of power for hourly fuel bought.
+    if fuel_bought_hourly[0].check('[energy]'):
+        fuel_bought_hourly = class_dict['demand'].convert_units(values_list=fuel_bought_hourly,
+                                                                units_to_str="kW")
+
+    # Loop through possible ng rate schedule types for the chosen meter type
+    for item in class_dict['costs'].schedule_type_fuel:
+        annual_base_cost.append(12 * fuel_cost_dict[item]["monthly_base_charge"])
+        units = fuel_cost_dict[item]["units"]
+
+        # Convert units if needed
+        if fuel_bought_hourly[0].check('[power]'):
+            fuel_bought_hourly = class_dict['demand'].convert_units(units_to_str=str(units),
+                                                                    values_list=fuel_bought_hourly)
+        elif str(fuel_bought_hourly[0].units) != str(units):
+            for fuel in fuel_bought_hourly:
+                fuel.to(str(units))
+
+        if item == "schedule_basic":
+            monthly_rate = Q_(fuel_cost_dict[item]["monthly_energy_charge"], '1/{}'.format(units))
+            annual_rate_cost = monthly_rate * sum(fuel_bought_hourly)
+            return annual_rate_cost + sum(annual_base_cost)
+
+        # TODO: Add other rate schedules here. Use commented out lines if needed
 
 
 def calc_pp_revenue(class_dict=None, electricity_sold_hourly=None):      # Assumes same rate as charged TODO: Update
-    return calc_electric_charges(class_dict=class_dict, electricity_bought_hourly=electricity_sold_hourly)
+    rev = calc_electric_charges(class_dict=class_dict, electricity_bought_hourly=electricity_sold_hourly)
+    return rev
+
+
+def calc_installed_cost(class_dict=None, dispatch_hourly=None, size=None, class_str=None):
+    class_info = class_dict[str(class_str)]
+    cost_list = []
+
+    if class_str == "tes":
+        for heat_rate in dispatch_hourly:
+            cost_hourly = (heat_rate * class_info.rate_cost).to('')
+            cost_list.append(cost_hourly)
+
+        rate_cost = sum(cost_list)
+        size_cost = (size * class_info.size_cost).to('')
+        installed_cost = rate_cost + size_cost
+        return installed_cost
+
+    elif class_str == "chp":
+        installed_cost = (size * class_info.installed_cost).to('')
+        return installed_cost
+
