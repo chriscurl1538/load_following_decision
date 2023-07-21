@@ -54,9 +54,9 @@ def calc_aux_boiler_output_rate(chp_size=None, tes_size=None, chp_gen_hourly_kwh
         elif load_following_type is "TLF":
             chp_heat_hourly, tes_heat_rate_list = cogen.tlf_calc_hourly_heat_chp_tes_soc(chp_size=chp_size,
                                                                                          class_dict=class_dict)[0:2]
-        elif load_following_type is "PP":
-            chp_heat_hourly = cogen.pp_calc_hourly_heat_generated(chp_gen_hourly_kwh=chp_gen_hourly_kwh_dict['PP'],
-                                                                  class_dict=class_dict)
+        elif load_following_type is "PP" or "Peak":
+            chp_heat_hourly = cogen.pp_calc_hourly_heat_generated(class_dict=class_dict,
+                                                                  chp_gen_hourly_kwh=chp_gen_hourly_kwh_dict[str(load_following_type)])
             tes_heat_rate_list = storage.calc_tes_heat_flow_and_soc(chp_gen_hourly_kwh_dict=chp_gen_hourly_kwh_dict,
                                                                     tes_size=tes_size, class_dict=class_dict,
                                                                     load_following_type=load_following_type)[0]
@@ -120,8 +120,7 @@ def calc_aux_boiler_output_rate(chp_size=None, tes_size=None, chp_gen_hourly_kwh
         return ab_heat_rate_hourly
 
 
-def calc_annual_fuel_use(chp_gen_hourly_kwh_dict=None, chp_size=None, tes_size=None, class_dict=None,
-                                  load_following_type=None):
+def calc_hourly_fuel_use(ab_output_rate_list=None, class_dict=None):
     """
     Updated 10/16/2022
 
@@ -141,10 +140,9 @@ def calc_annual_fuel_use(chp_gen_hourly_kwh_dict=None, chp_size=None, tes_size=N
         annual fuel use of the auxiliary boiler in units of Btu
     """
     # Fuel use calculation
-    ab_output_rate_list = calc_aux_boiler_output_rate(chp_gen_hourly_kwh_dict=chp_gen_hourly_kwh_dict, chp_size=chp_size,
-                                                      tes_size=tes_size, class_dict=class_dict,
-                                                      load_following_type=load_following_type)
-    annual_heat_output = sum(ab_output_rate_list) * (1 * ureg.hour)
-    annual_fuel_use_btu = annual_heat_output / class_dict['ab'].eff
+    hourly_fuel_use_btu = []
+    for item in ab_output_rate_list:
+        fuel_use = (item * Q_(1, ureg.hour)) / class_dict['ab'].eff
+        hourly_fuel_use_btu.append(fuel_use.to(ureg.Btu))
 
-    return annual_fuel_use_btu
+    return hourly_fuel_use_btu
