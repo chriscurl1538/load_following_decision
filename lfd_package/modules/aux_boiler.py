@@ -45,16 +45,16 @@ def calc_aux_boiler_output_rate(chp_size=None, tes_size=None, chp_gen_hourly_kwh
         # Pull chp heat and tes heat data
 
         # TODO: Optimize - remove functions called in CLI
-        if load_following_type is "ELF":
+        if load_following_type == "ELF":
             chp_heat_hourly = cogen.elf_calc_hourly_heat_generated(chp_gen_hourly_kwh=chp_gen_hourly_kwh_dict['ELF'],
                                                                    class_dict=class_dict)
             tes_heat_rate_list = storage.calc_tes_heat_flow_and_soc(chp_gen_hourly_kwh_dict=chp_gen_hourly_kwh_dict,
                                                                     tes_size=tes_size, class_dict=class_dict,
                                                                     load_following_type=load_following_type)[0]
-        elif load_following_type is "TLF":
+        elif load_following_type == "TLF":
             chp_heat_hourly, tes_heat_rate_list = cogen.tlf_calc_hourly_heat_chp_tes_soc(chp_size=chp_size,
                                                                                          class_dict=class_dict)[0:2]
-        elif load_following_type is "PP" or "Peak":
+        elif load_following_type == "PP" or load_following_type == "Peak":
             chp_heat_hourly = cogen.pp_calc_hourly_heat_generated(class_dict=class_dict,
                                                                   chp_gen_hourly_kwh=chp_gen_hourly_kwh_dict[str(load_following_type)])
             tes_heat_rate_list = storage.calc_tes_heat_flow_and_soc(chp_gen_hourly_kwh_dict=chp_gen_hourly_kwh_dict,
