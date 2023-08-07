@@ -37,13 +37,13 @@ def calc_excess_and_deficit_chp_heat_gen(chp_gen_hourly_kwh_dict=None, load_foll
     args_list = [chp_gen_hourly_kwh_dict, load_following_type, class_dict]
     if any(elem is None for elem in args_list) is False:
         heat_demand = class_dict['demand'].hl
-        if load_following_type is "PP" or "Peak":
+        if load_following_type == "PP" or load_following_type == "Peak":
             chp_heat_gen_hourly = cogen.pp_calc_hourly_heat_generated(chp_gen_hourly_kwh=chp_gen_hourly_kwh_dict[str(load_following_type)],
                                                                       class_dict=class_dict)
-        elif load_following_type is "ELF":
+        elif load_following_type == "ELF":
             chp_heat_gen_hourly = cogen.elf_calc_hourly_heat_generated(chp_gen_hourly_kwh=chp_gen_hourly_kwh_dict["ELF"],
                                                                        class_dict=class_dict)
-        elif load_following_type is "TLF":
+        elif load_following_type == "TLF":
             raise Exception("Use tlf_calc_hourly_heat_generated function from chp.py")  # TODO: Fix this
         else:
             raise Exception("Error passing load_following_type to thermal_storage.py function, "
