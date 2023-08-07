@@ -8,8 +8,10 @@ TODO: Update all docstrings and documentation
 from lfd_package.modules import aux_boiler as boiler, classes, chp as cogen
 from lfd_package.modules import sizing_calcs as sizing, plots, emissions
 from lfd_package.modules import thermal_storage as storage, costs, sa
-from sensitivity import SensitivityAnalyzer
-import pathlib, argparse, yaml
+from SALib.sample import saltelli
+from SALib.analyze import sobol
+# from SALib.test_functions import Ishigami
+import pathlib, argparse, yaml, numpy as np
 from tabulate import tabulate
 from lfd_package.modules.__init__ import ureg, Q_
 
@@ -533,12 +535,17 @@ def main():
     # Sensitivity Analysis
     ###########################
 
-    def calc_payback(thermal_cost_baseline=thermal_cost_baseline, thermal_cost_new=None,
-                     electrical_cost_baseline=electric_cost_baseline, electrical_cost_new=None,
+    def calc_payback(thermal_cost_new=None, electrical_cost_new=None, tes_size=None, incentives=Q_(10000, ''),
+                     thermal_cost_baseline=thermal_cost_baseline, electrical_cost_baseline=electric_cost_baseline,
                      load_following_type="ELF", chp_size=chp_size_elf, class_dict=class_dict,
-                     chp_gen_hourly_kwh=chp_gen_hourly_kwh_dict["ELF"], tes_size=None,
-                     tes_heat_flow_list=elf_tes_heat_flow_list,
-                     electricity_sold_hourly=None, incentives=Q_(10000, '')):
+                     chp_gen_hourly_kwh=chp_gen_hourly_kwh_dict["ELF"], tes_heat_flow_list=elf_tes_heat_flow_list,
+                     electricity_sold_hourly=None, sa=True):
+
+        if sa is True:
+            thermal_cost_new = Q_(thermal_cost_new, thermal_cost_baseline.units)
+            electrical_cost_new = Q_(electrical_cost_new, electrical_cost_baseline.units)
+            tes_size = Q_(tes_size, class_dict['tes'].tes_size_units)
+            incentives = Q_(incentives, '')
 
         # Calculate Cost Savings
         thermal_cost_savings = thermal_cost_baseline - thermal_cost_new
@@ -558,35 +565,52 @@ def main():
 
         # Simple Payback Period (implementation cost / annual cost savings)
         simple_payback = implementation_cost / total_cost_savings
-        return simple_payback
+        if sa is True:
+            return simple_payback.magnitude
+        else:
+            return simple_payback
+
+    def wrapped_func(X, func=calc_payback):
+        """g(X) = Y, where X := [a b x] and g(X) := f(X)"""
+        # We transpose to obtain each column (the model factors) as separate variables
+        thermal_cost_new, electrical_cost_new, tes_size, incentives = X.T
+
+        # Then call the original model
+        return func(thermal_cost_new=thermal_cost_new, electrical_cost_new=electrical_cost_new, tes_size=tes_size,
+                    incentives=incentives)
 
     def sensitivity_analysis(thermal_cost_new=None, electrical_cost_new=None, tes_size=None, incentives=Q_(10000, '')):
         # TODO: Replace incentives with average value from given city
 
-        sa_electric_cost_list_elf = sa.make_param_list(base=electrical_cost_new, variation=1)
-        sa_thermal_cost_list_elf = sa.make_param_list(base=thermal_cost_new, variation=1)
-        sa_incentives_list_elf = sa.make_param_list(base=incentives, variation=1)
-        sa_tes_size_list_elf = sa.make_param_list(base=tes_size, variation=1)
+        sa_electric_cost_list_elf, unit_ec = sa.make_param_list(base=electrical_cost_new, dev=1000, allow_neg=False)
+        sa_thermal_cost_list_elf, unit_tc = sa.make_param_list(base=thermal_cost_new, dev=1000, allow_neg=False)
+        sa_incentives_list_elf, unit_i = sa.make_param_list(base=incentives, dev=100, allow_neg=False)
+        sa_tes_size_list_elf, unit_tes = sa.make_param_list(base=tes_size, dev=50, allow_neg=False)
 
-        sa_dict = {
-            # SA Value Lists
-            "electrical_cost_new": sa_electric_cost_list_elf,
-            "thermal_cost_new": sa_thermal_cost_list_elf,
-            "incentives": sa_incentives_list_elf,
-            "tes_size": sa_tes_size_list_elf,
+        problem = {
+            'num_vars': 4,
+            'names': ['thermal_cost_new', 'electrical_cost_new', 'tes_size', 'incentives'],
+            'bounds': [sa_thermal_cost_list_elf,
+                       sa_electric_cost_list_elf,
+                       sa_tes_size_list_elf,
+                       sa_incentives_list_elf]
         }
 
-        sa_elf = SensitivityAnalyzer(sa_dict, calc_payback,
-                                     result_name='Simple Payback Period (yrs)',
-                                     reverse_colors=True)
-        styled = sa_elf.styled_dfs()
-        return styled
+        param_values = saltelli.sample(problem, 100)    # TODO: Consider best sample size value (~1050)
 
-    sa_styled = sensitivity_analysis(thermal_cost_new=elf_thermal_cost_total, electrical_cost_new=elf_electric_cost_new,
-                                     tes_size=tes_size_elf, incentives=Q_(1000, ''))
+        Y = np.zeros([param_values.shape[0]])
 
-    # print(sa_plot)
-    print(sa_styled)
+        for i, X in enumerate(param_values):
+            Y[i] = wrapped_func(X)
+
+        Si = sobol.analyze(problem, Y, print_to_console=False)
+        return Si, problem
+
+    test, prob = sensitivity_analysis(thermal_cost_new=elf_thermal_cost_total, electrical_cost_new=elf_electric_cost_new,
+                                      tes_size=tes_size_elf)
+    print(prob)
+    print("-----")
+    print(test['S1'])
 
     ##########################################################################################################
 
