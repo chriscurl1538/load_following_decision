@@ -286,7 +286,8 @@ class Emissions(EnergyDemand):
 class EnergyCosts(EnergyDemand):
     def __init__(self, file_name, city, state, grid_efficiency, summer_start_inclusive, winter_start_inclusive,
                  sim_ab_efficiency, meter_type_el=None, meter_type_fuel=None, schedule_type_el=None, schedule_type_fuel=None,
-                 master_metered_el=None, single_metered_el=None, master_metered_fuel=None, single_metered_fuel=None):
+                 master_metered_el=None, single_metered_el=None, master_metered_fuel=None, single_metered_fuel=None,
+                 no_apts=None):
         super().__init__(file_name, city, state, grid_efficiency, summer_start_inclusive, winter_start_inclusive,
                          sim_ab_efficiency)
 
@@ -299,6 +300,7 @@ class EnergyCosts(EnergyDemand):
         self.meter_type_fuel = meter_type_fuel
         self.schedule_type_el = schedule_type_el
         self.schedule_type_fuel = schedule_type_fuel
+        self.no_apts = no_apts
 
         # Dictionaries of Rates
         self.master_meter_el_dict = master_metered_el
