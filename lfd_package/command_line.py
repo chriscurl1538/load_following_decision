@@ -5,8 +5,10 @@ Module Description:
 TODO: Update all docstrings and documentation
 """
 
-from lfd_package.modules import aux_boiler as boiler, classes, chp as cogen, \
-    sizing_calcs as sizing, plots, emissions, thermal_storage as storage, costs
+from lfd_package.modules import aux_boiler as boiler, classes, chp as cogen
+from lfd_package.modules import sizing_calcs as sizing, plots, emissions
+from lfd_package.modules import thermal_storage as storage, costs, sa
+from sensitivity import SensitivityAnalyzer
 import pathlib, argparse, yaml
 from tabulate import tabulate
 from lfd_package.modules.__init__ import ureg, Q_
@@ -56,7 +58,7 @@ def run(args):
                                         summer_start_inclusive=data['summer_start_inclusive'],
                                         winter_start_inclusive=data['winter_start_inclusive'], sim_ab_efficiency=data["energy_plus_eff"])
     costs_class = classes.EnergyCosts(file_name=data['demand_filename'], city=data['city'], state=data['state'],
-                                      grid_efficiency=data['grid_efficiency'],
+                                      grid_efficiency=data['grid_efficiency'], no_apts=data['no_apts'],
                                       winter_start_inclusive=data['winter_start_inclusive'],
                                       summer_start_inclusive=data['summer_start_inclusive'], sim_ab_efficiency=data["energy_plus_eff"],
                                       meter_type_el=data['meter_type_el'], meter_type_fuel=data['meter_type_fuel'],
@@ -188,6 +190,7 @@ def main():
     elf_thermal_consumption_total = sum(elf_thermal_consumption_hourly_chp) + sum(elf_thermal_consumption_hourly_ab)
     elf_thermal_energy_savings = thermal_consumption_baseline - elf_thermal_consumption_total
 
+    # TODO: Replace some of the following lines with payback period calc function (see sa.py)
     ###########################
     # Thermal Cost Savings (current energy costs - proposed energy costs)
     ###########################
@@ -526,146 +529,207 @@ def main():
 
     ##########################################################################################################
 
+    ###########################
+    # Sensitivity Analysis
+    ###########################
+
+    def calc_payback(thermal_cost_baseline=thermal_cost_baseline, thermal_cost_new=None,
+                     electrical_cost_baseline=electric_cost_baseline, electrical_cost_new=None,
+                     load_following_type="ELF", chp_size=chp_size_elf, class_dict=class_dict,
+                     chp_gen_hourly_kwh=chp_gen_hourly_kwh_dict["ELF"], tes_size=None,
+                     tes_heat_flow_list=elf_tes_heat_flow_list,
+                     electricity_sold_hourly=None, incentives=Q_(10000, '')):
+
+        # Calculate Cost Savings
+        thermal_cost_savings = thermal_cost_baseline - thermal_cost_new
+        if load_following_type == "PP" or load_following_type == "Peak":
+            revenue = costs.calc_pp_revenue(class_dict=class_dict, electricity_sold_hourly=electricity_sold_hourly)
+            electrical_cost_savings = electrical_cost_baseline - electrical_cost_new + revenue
+        else:
+            electrical_cost_savings = electrical_cost_baseline - electrical_cost_new
+        total_cost_savings = electrical_cost_savings + thermal_cost_savings
+
+        # Implementation Cost (material cost + installation cost)
+        installed_cost_chp = costs.calc_installed_cost(class_dict=class_dict, size=chp_size, class_str="chp",
+                                                       dispatch_hourly=chp_gen_hourly_kwh)
+        installed_cost_tes = costs.calc_installed_cost(class_dict=class_dict, size=tes_size, class_str="tes",
+                                                       dispatch_hourly=tes_heat_flow_list)
+        implementation_cost = installed_cost_chp + installed_cost_tes - incentives
+
+        # Simple Payback Period (implementation cost / annual cost savings)
+        simple_payback = implementation_cost / total_cost_savings
+        return simple_payback
+
+    def sensitivity_analysis(thermal_cost_new=None, electrical_cost_new=None, tes_size=None, incentives=Q_(10000, '')):
+        # TODO: Replace incentives with average value from given city
+
+        sa_electric_cost_list_elf = sa.make_param_list(base=electrical_cost_new, variation=1)
+        sa_thermal_cost_list_elf = sa.make_param_list(base=thermal_cost_new, variation=1)
+        sa_incentives_list_elf = sa.make_param_list(base=incentives, variation=1)
+        sa_tes_size_list_elf = sa.make_param_list(base=tes_size, variation=1)
+
+        sa_dict = {
+            # SA Value Lists
+            "electrical_cost_new": sa_electric_cost_list_elf,
+            "thermal_cost_new": sa_thermal_cost_list_elf,
+            "incentives": sa_incentives_list_elf,
+            "tes_size": sa_tes_size_list_elf,
+        }
+
+        sa_elf = SensitivityAnalyzer(sa_dict, calc_payback,
+                                     result_name='Simple Payback Period (yrs)',
+                                     reverse_colors=True)
+        styled = sa_elf.styled_dfs()
+        return styled
+
+    sa_styled = sensitivity_analysis(thermal_cost_new=elf_thermal_cost_total, electrical_cost_new=elf_electric_cost_new,
+                                     tes_size=tes_size_elf, incentives=Q_(1000, ''))
+
+    # print(sa_plot)
+    print(sa_styled)
+
+    ##########################################################################################################
+
     """
     Tables and Plots
     """
 
-    ###########################
-    # Table: Display system property inputs
-    ###########################
-
-    head_equipment = ["", "mCHP", "TES", "Aux Boiler"]
-
-    system_properties = [
-        ["Minimum Load Operation", "{} %".format(round(class_dict['chp'].min_pl * 100, 2)), "N/A", "N/A"],
-        ["ELF Equipment Sizes", round(chp_size_elf.to(ureg.kW), 2), round(tes_size_elf.to(ureg.megaBtu), 3),
-         round(class_dict['ab'].annual_peak_hl, 2)],
-        ["TLF Equipment Sizes", round(chp_size_tlf.to(ureg.kW), 2), round(tes_size_tlf.to(ureg.megaBtu), 3),
-         round(class_dict['ab'].annual_peak_hl, 2)],
-        ["PP Equipment Sizes", round(chp_size_pp.to(ureg.kW), 2), round(tes_size_pp.to(ureg.megaBtu), 3),
-         round(class_dict['ab'].annual_peak_hl, 2)],
-        ["PP Peak Equipment Sizes", round(chp_size_peak.to(ureg.kW), 2), round(tes_size_peak.to(ureg.megaBtu), 3),
-         round(class_dict['ab'].annual_peak_hl), 2]
-    ]
-
-    table_system_properties = tabulate(system_properties, headers=head_equipment, tablefmt="fancy_grid")
-    print(table_system_properties)
-
-    ###########################
-    # Table: Display key input data
-    ###########################
-
-    head_units = ["", "Value"]
-
-    input_data = [
-        ["Location", "{}, {}".format(class_dict["demand"].city, class_dict["demand"].state)],
-        ["Electric Meter Type", "{}".format(class_dict["costs"].meter_type_el)],
-        ["Electric Rate Schedule Type", "{}".format(class_dict["costs"].schedule_type_el)],
-        ["Fuel Meter Type", "{}".format(class_dict["costs"].meter_type_fuel)],
-        ["Electric Rate Schedule Type", "{}".format(class_dict["costs"].schedule_type_fuel)]
-    ]
-
-    table_input_data = tabulate(input_data, headers=head_units, tablefmt="fancy_grid")
-    print(table_input_data)
-
-    ###########################
-    # Table: Display Energy Generation by Equipment Type
-    ###########################
-
-    head_energy = ["", "ELF", "TLF", "PP", "PP Peak"]
-
-    energy = [
-        ["Annual Electrical Demand [kWh]", round(class_dict['demand'].annual_sum_el.to(ureg.megaWh), 2), "N/A", "N/A", "N/A"],
-        ["Peak Electrical Demand [kW]", round(class_dict['demand'].annual_peak_el, 2), "N/A", "N/A", "N/A"],
-        ["CHP Electrical Generation", round(elf_electric_energy_savings.to(ureg.kWh), 2),
-         round(tlf_electric_energy_savings.to(ureg.kWh), 2), round(pp_electric_energy_savings.to(ureg.kWh), 2),
-         round(peak_electric_energy_savings.to(ureg.kWh), 2)],
-        ["Electrical Energy Bought", round(sum(elf_electricity_bought_hourly), 2), round(sum(tlf_electricity_bought_hourly), 2),
-         round(sum(pp_electricity_bought_hourly), 2), round(sum(peak_electricity_bought_hourly), 2)],
-        ["Electrical Energy Sold", 0, 0, round(sum(pp_electric_sold_list), 2), round(sum(peak_electric_sold_list), 2)],
-        ["Annual Thermal Demand [MMBtu]", round(class_dict['demand'].annual_sum_hl.to(ureg.megaBtu), 3), "N/A", "N/A", "N/A"],
-        ["Peak Thermal Demand [MMBtu/hr]", round(class_dict['demand'].annual_peak_hl.to(ureg.megaBtu / ureg.hours), 3), "N/A", "N/A", "N/A"],
-        ["CHP Thermal Generation", round(elf_chp_thermal_gen.to(ureg.megaBtu), 2),
-         round(tlf_chp_thermal_gen.to(ureg.megaBtu), 2), round(pp_chp_thermal_gen.to(ureg.megaBtu), 2),
-         round(peak_chp_thermal_gen.to(ureg.megaBtu), 2)],
-        ["TES Thermal Dispatched", round(elf_tes_thermal_dispatch.to(ureg.megaBtu), 2),
-         round(tlf_tes_thermal_dispatch.to(ureg.megaBtu), 2), round(pp_tes_thermal_dispatch.to(ureg.megaBtu), 2),
-         round(peak_tes_thermal_dispatch.to(ureg.megaBtu), 2)],
-        ["Boiler Thermal Generation", round(elf_boiler_dispatch.to(ureg.megaBtu), 2),
-         round(tlf_boiler_dispatch.to(ureg.megaBtu), 2), round(pp_boiler_dispatch.to(ureg.megaBtu), 2),
-         round(peak_boiler_dispatch.to(ureg.megaBtu), 2)]
-    ]
-
-    table_energy = tabulate(energy, headers=head_energy, tablefmt="fancy_grid")
-    print(table_energy)
-
-    ###########################
-    # Table: Display economic calculations
-    ###########################
-
-    head_costs = ["", "ELF", "TLF", "PP", "PP Peak"]
-
-    costs_table = [
-        ["Thermal Energy Savings [MMBtu]", round(elf_thermal_energy_savings.to(ureg.megaBtu), 2),
-         round(tlf_thermal_energy_savings.to(ureg.megaBtu), 2), round(pp_thermal_energy_savings.to(ureg.megaBtu), 2),
-         round(peak_thermal_energy_savings.to(ureg.megaBtu), 2)],
-        ["Thermal Cost Savings [$]", round(elf_thermal_cost_savings, 2), round(tlf_thermal_cost_savings, 2),
-         round(pp_thermal_cost_savings, 2), round(peak_thermal_cost_savings, 2)],
-        ["Electrical Energy Savings [kWh]", round(elf_electric_energy_savings.to('kWh'), 2),
-         round(tlf_electric_energy_savings.to('kWh'), 2), round(pp_electric_energy_savings.to('kWh'), 2),
-         round(peak_electric_energy_savings.to('kWh'), 2)],
-        ["Electrical Cost Savings [$]", round(elf_electric_cost_savings, 2), round(tlf_electric_cost_savings, 2),
-         round(pp_electric_cost_savings, 2), round(peak_electric_cost_savings)],
-        ["Total Cost Savings [$]", round(elf_total_cost_savings, 2), round(tlf_total_cost_savings, 2),
-         round(pp_total_cost_savings, 2), round(peak_total_cost_savings, 2)],
-        ["Simple Payback [Yrs]", round(elf_simple_payback, 2), round(tlf_simple_payback, 2), round(pp_simple_payback, 2),
-         round(peak_simple_payback, 2)]
-    ]
-
-    table_costs = tabulate(costs_table, headers=head_costs, tablefmt="fancy_grid")
-    print(table_costs)
-
-    ###########################
-    # Table: Display Emissions Analysis
-    ###########################
-
-    head_emissions_co2 = ["City, State", "Baseline Electrical Load", "Baseline Heating Load", "Baseline Emissions",
-                          "CHP (ELF): Total Annual CO2 (tons)", "CHP (TLF): Total Annual CO2 (tons)",
-                          "CHP (PP): Total Annual CO2 (tons)", "CHP (PP Peak): Total Annual CO2 (tons)"]
-
-    baseline_total_co2 = emissions.calc_baseline_fuel_emissions(class_dict=class_dict) + \
-        emissions.calc_baseline_grid_emissions(class_dict=class_dict)
-
-    tlf_total_co2 = emissions.calc_chp_emissions(chp_gen_hourly_btuh=chp_gen_hourly_btuh_dict["TLF"],
-                                                 ab_output_rate_list=tlf_boiler_dispatch_hourly,
-                                                 chp_gen_hourly_kwh_dict=chp_gen_hourly_kwh_dict, chp_size=chp_size_tlf,
-                                                 tes_size=tes_size_tlf, load_following_type="TLF", class_dict=class_dict)
-    elf_total_co2 = emissions.calc_chp_emissions(chp_gen_hourly_btuh=chp_gen_hourly_btuh_dict["ELF"],
-                                                 ab_output_rate_list=elf_boiler_dispatch_hourly,
-                                                 chp_gen_hourly_kwh_dict=chp_gen_hourly_kwh_dict, chp_size=chp_size_elf,
-                                                 tes_size=tes_size_elf, load_following_type="ELF", class_dict=class_dict)
-    pp_total_co2 = emissions.calc_chp_emissions(chp_gen_hourly_btuh=chp_gen_hourly_btuh_dict["PP"],
-                                                ab_output_rate_list=pp_boiler_dispatch_hourly,
-                                                chp_gen_hourly_kwh_dict=chp_gen_hourly_kwh_dict, chp_size=chp_size_pp,
-                                                tes_size=tes_size_pp, load_following_type="PP", class_dict=class_dict)
-    peak_total_co2 = emissions.calc_chp_emissions(chp_gen_hourly_btuh=chp_gen_hourly_btuh_dict["Peak"],
-                                                  ab_output_rate_list=peak_boiler_dispatch_hourly,
-                                                  chp_gen_hourly_kwh_dict=chp_gen_hourly_kwh_dict, chp_size=chp_size_peak,
-                                                  tes_size=tes_size_peak, load_following_type="Peak", class_dict=class_dict)
-
-    emissions_data_co2 = [
-        ["{}, {}".format(class_dict['demand'].city, class_dict['demand'].state), round(class_dict['demand'].annual_sum_el.to(ureg.megaWh)),
-         round(class_dict['demand'].annual_sum_hl.to(ureg.megaBtu), 2), round(baseline_total_co2.to(ureg.tons)),
-         round(elf_total_co2.to('tons')), round(tlf_total_co2.to('tons')), round(pp_total_co2.to('tons')),
-         round(peak_total_co2.to('tons'))],
-        ["In SI Units...", round(class_dict['demand'].annual_sum_el.to(ureg.megaWh)), round(class_dict['demand'].annual_sum_hl.to(ureg.megaWh)),
-         round(baseline_total_co2.to(ureg.metric_ton)), round(elf_total_co2.to(ureg.metric_ton)),
-         round(tlf_total_co2.to(ureg.metric_ton)), round(pp_total_co2.to(ureg.metric_ton)),
-         round(peak_total_co2.to(ureg.metric_ton))]
-    ]
-
-    table_emissions_co2 = tabulate(emissions_data_co2, headers=head_emissions_co2, tablefmt="fancy_grid")
-    print(table_emissions_co2)
+    # ###########################
+    # # Table: Display system property inputs
+    # ###########################
+    #
+    # head_equipment = ["", "mCHP", "TES", "Aux Boiler"]
+    #
+    # system_properties = [
+    #     ["Minimum Load Operation", "{} %".format(round(class_dict['chp'].min_pl * 100, 2)), "N/A", "N/A"],
+    #     ["ELF Equipment Sizes", round(chp_size_elf.to(ureg.kW), 2), round(tes_size_elf.to(ureg.megaBtu), 3),
+    #      round(class_dict['ab'].annual_peak_hl, 2)],
+    #     ["TLF Equipment Sizes", round(chp_size_tlf.to(ureg.kW), 2), round(tes_size_tlf.to(ureg.megaBtu), 3),
+    #      round(class_dict['ab'].annual_peak_hl, 2)],
+    #     ["PP Equipment Sizes", round(chp_size_pp.to(ureg.kW), 2), round(tes_size_pp.to(ureg.megaBtu), 3),
+    #      round(class_dict['ab'].annual_peak_hl, 2)],
+    #     ["PP Peak Equipment Sizes", round(chp_size_peak.to(ureg.kW), 2), round(tes_size_peak.to(ureg.megaBtu), 3),
+    #      round(class_dict['ab'].annual_peak_hl), 2]
+    # ]
+    #
+    # table_system_properties = tabulate(system_properties, headers=head_equipment, tablefmt="fancy_grid")
+    # print(table_system_properties)
+    #
+    # ###########################
+    # # Table: Display key input data
+    # ###########################
+    #
+    # head_units = ["", "Value"]
+    #
+    # input_data = [
+    #     ["Location", "{}, {}".format(class_dict["demand"].city, class_dict["demand"].state)],
+    #     ["Electric Meter Type", "{}".format(class_dict["costs"].meter_type_el)],
+    #     ["Electric Rate Schedule Type", "{}".format(class_dict["costs"].schedule_type_el)],
+    #     ["Fuel Meter Type", "{}".format(class_dict["costs"].meter_type_fuel)],
+    #     ["Electric Rate Schedule Type", "{}".format(class_dict["costs"].schedule_type_fuel)]
+    # ]
+    #
+    # table_input_data = tabulate(input_data, headers=head_units, tablefmt="fancy_grid")
+    # print(table_input_data)
+    #
+    # ###########################
+    # # Table: Display Energy Generation by Equipment Type
+    # ###########################
+    #
+    # head_energy = ["", "ELF", "TLF", "PP", "PP Peak"]
+    #
+    # energy = [
+    #     ["Annual Electrical Demand [kWh]", round(class_dict['demand'].annual_sum_el.to(ureg.megaWh), 2), "N/A", "N/A", "N/A"],
+    #     ["Peak Electrical Demand [kW]", round(class_dict['demand'].annual_peak_el, 2), "N/A", "N/A", "N/A"],
+    #     ["CHP Electrical Generation", round(elf_electric_energy_savings.to(ureg.kWh), 2),
+    #      round(tlf_electric_energy_savings.to(ureg.kWh), 2), round(pp_electric_energy_savings.to(ureg.kWh), 2),
+    #      round(peak_electric_energy_savings.to(ureg.kWh), 2)],
+    #     ["Electrical Energy Bought", round(sum(elf_electricity_bought_hourly), 2), round(sum(tlf_electricity_bought_hourly), 2),
+    #      round(sum(pp_electricity_bought_hourly), 2), round(sum(peak_electricity_bought_hourly), 2)],
+    #     ["Electrical Energy Sold", 0, 0, round(sum(pp_electric_sold_list), 2), round(sum(peak_electric_sold_list), 2)],
+    #     ["Annual Thermal Demand [MMBtu]", round(class_dict['demand'].annual_sum_hl.to(ureg.megaBtu), 3), "N/A", "N/A", "N/A"],
+    #     ["Peak Thermal Demand [MMBtu/hr]", round(class_dict['demand'].annual_peak_hl.to(ureg.megaBtu / ureg.hours), 3), "N/A", "N/A", "N/A"],
+    #     ["CHP Thermal Generation", round(elf_chp_thermal_gen.to(ureg.megaBtu), 2),
+    #      round(tlf_chp_thermal_gen.to(ureg.megaBtu), 2), round(pp_chp_thermal_gen.to(ureg.megaBtu), 2),
+    #      round(peak_chp_thermal_gen.to(ureg.megaBtu), 2)],
+    #     ["TES Thermal Dispatched", round(elf_tes_thermal_dispatch.to(ureg.megaBtu), 2),
+    #      round(tlf_tes_thermal_dispatch.to(ureg.megaBtu), 2), round(pp_tes_thermal_dispatch.to(ureg.megaBtu), 2),
+    #      round(peak_tes_thermal_dispatch.to(ureg.megaBtu), 2)],
+    #     ["Boiler Thermal Generation", round(elf_boiler_dispatch.to(ureg.megaBtu), 2),
+    #      round(tlf_boiler_dispatch.to(ureg.megaBtu), 2), round(pp_boiler_dispatch.to(ureg.megaBtu), 2),
+    #      round(peak_boiler_dispatch.to(ureg.megaBtu), 2)]
+    # ]
+    #
+    # table_energy = tabulate(energy, headers=head_energy, tablefmt="fancy_grid")
+    # print(table_energy)
+    #
+    # ###########################
+    # # Table: Display economic calculations
+    # ###########################
+    #
+    # head_costs = ["", "ELF", "TLF", "PP", "PP Peak"]
+    #
+    # costs_table = [
+    #     ["Thermal Energy Savings [MMBtu]", round(elf_thermal_energy_savings.to(ureg.megaBtu), 2),
+    #      round(tlf_thermal_energy_savings.to(ureg.megaBtu), 2), round(pp_thermal_energy_savings.to(ureg.megaBtu), 2),
+    #      round(peak_thermal_energy_savings.to(ureg.megaBtu), 2)],
+    #     ["Thermal Cost Savings [$]", round(elf_thermal_cost_savings, 2), round(tlf_thermal_cost_savings, 2),
+    #      round(pp_thermal_cost_savings, 2), round(peak_thermal_cost_savings, 2)],
+    #     ["Electrical Energy Savings [kWh]", round(elf_electric_energy_savings.to('kWh'), 2),
+    #      round(tlf_electric_energy_savings.to('kWh'), 2), round(pp_electric_energy_savings.to('kWh'), 2),
+    #      round(peak_electric_energy_savings.to('kWh'), 2)],
+    #     ["Electrical Cost Savings [$]", round(elf_electric_cost_savings, 2), round(tlf_electric_cost_savings, 2),
+    #      round(pp_electric_cost_savings, 2), round(peak_electric_cost_savings)],
+    #     ["Total Cost Savings [$]", round(elf_total_cost_savings, 2), round(tlf_total_cost_savings, 2),
+    #      round(pp_total_cost_savings, 2), round(peak_total_cost_savings, 2)],
+    #     ["Simple Payback [Yrs]", round(elf_simple_payback, 2), round(tlf_simple_payback, 2), round(pp_simple_payback, 2),
+    #      round(peak_simple_payback, 2)]
+    # ]
+    #
+    # table_costs = tabulate(costs_table, headers=head_costs, tablefmt="fancy_grid")
+    # print(table_costs)
+    #
+    # ###########################
+    # # Table: Display Emissions Analysis
+    # ###########################
+    #
+    # head_emissions_co2 = ["City, State", "Baseline Electrical Load", "Baseline Heating Load", "Baseline Emissions",
+    #                       "CHP (ELF): Total Annual CO2 (tons)", "CHP (TLF): Total Annual CO2 (tons)",
+    #                       "CHP (PP): Total Annual CO2 (tons)", "CHP (PP Peak): Total Annual CO2 (tons)"]
+    #
+    # baseline_total_co2 = emissions.calc_baseline_fuel_emissions(class_dict=class_dict) + \
+    #     emissions.calc_baseline_grid_emissions(class_dict=class_dict)
+    #
+    # tlf_total_co2 = emissions.calc_chp_emissions(chp_gen_hourly_btuh=chp_gen_hourly_btuh_dict["TLF"],
+    #                                              ab_output_rate_list=tlf_boiler_dispatch_hourly,
+    #                                              chp_gen_hourly_kwh_dict=chp_gen_hourly_kwh_dict, chp_size=chp_size_tlf,
+    #                                              tes_size=tes_size_tlf, load_following_type="TLF", class_dict=class_dict)
+    # elf_total_co2 = emissions.calc_chp_emissions(chp_gen_hourly_btuh=chp_gen_hourly_btuh_dict["ELF"],
+    #                                              ab_output_rate_list=elf_boiler_dispatch_hourly,
+    #                                              chp_gen_hourly_kwh_dict=chp_gen_hourly_kwh_dict, chp_size=chp_size_elf,
+    #                                              tes_size=tes_size_elf, load_following_type="ELF", class_dict=class_dict)
+    # pp_total_co2 = emissions.calc_chp_emissions(chp_gen_hourly_btuh=chp_gen_hourly_btuh_dict["PP"],
+    #                                             ab_output_rate_list=pp_boiler_dispatch_hourly,
+    #                                             chp_gen_hourly_kwh_dict=chp_gen_hourly_kwh_dict, chp_size=chp_size_pp,
+    #                                             tes_size=tes_size_pp, load_following_type="PP", class_dict=class_dict)
+    # peak_total_co2 = emissions.calc_chp_emissions(chp_gen_hourly_btuh=chp_gen_hourly_btuh_dict["Peak"],
+    #                                               ab_output_rate_list=peak_boiler_dispatch_hourly,
+    #                                               chp_gen_hourly_kwh_dict=chp_gen_hourly_kwh_dict, chp_size=chp_size_peak,
+    #                                               tes_size=tes_size_peak, load_following_type="Peak", class_dict=class_dict)
+    #
+    # emissions_data_co2 = [
+    #     ["{}, {}".format(class_dict['demand'].city, class_dict['demand'].state), round(class_dict['demand'].annual_sum_el.to(ureg.megaWh)),
+    #      round(class_dict['demand'].annual_sum_hl.to(ureg.megaBtu), 2), round(baseline_total_co2.to(ureg.tons)),
+    #      round(elf_total_co2.to('tons')), round(tlf_total_co2.to('tons')), round(pp_total_co2.to('tons')),
+    #      round(peak_total_co2.to('tons'))],
+    #     ["In SI Units...", round(class_dict['demand'].annual_sum_el.to(ureg.megaWh)), round(class_dict['demand'].annual_sum_hl.to(ureg.megaWh)),
+    #      round(baseline_total_co2.to(ureg.metric_ton)), round(elf_total_co2.to(ureg.metric_ton)),
+    #      round(tlf_total_co2.to(ureg.metric_ton)), round(pp_total_co2.to(ureg.metric_ton)),
+    #      round(peak_total_co2.to(ureg.metric_ton))]
+    # ]
+    #
+    # table_emissions_co2 = tabulate(emissions_data_co2, headers=head_emissions_co2, tablefmt="fancy_grid")
+    # print(table_emissions_co2)
 
     ###########################
     # Plots
