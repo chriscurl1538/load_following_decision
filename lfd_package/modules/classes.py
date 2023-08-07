@@ -332,6 +332,9 @@ class CHP(EnergyDemand):
         super().__init__(file_name, city, state, grid_efficiency, summer_start_inclusive, winter_start_inclusive,
                          sim_ab_efficiency)
 
+        # CHP Units
+        self.chp_size_units = ureg.kW
+
         # CHP Specifications
         try:
             chp_min_pl = 1 / turn_down_ratio
@@ -363,6 +366,9 @@ class TES(EnergyDemand):
         """
         super().__init__(file_name, city, state, grid_efficiency, summer_start_inclusive, winter_start_inclusive,
                          sim_ab_efficiency)
+
+        # Units
+        self.tes_size_units = ureg.Btu
 
         # TES Specifications
         self.start = float(start)
