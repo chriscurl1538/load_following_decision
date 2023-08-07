@@ -40,7 +40,7 @@ def calc_hourly_fuel_use(chp_gen_hourly_btuh=None, chp_size=None, load_following
     if any(elem is None for elem in args_list) is False:
         # Get hourly CHP gen in kWh
         # TODO: Optimize - remove functions called in CLI
-        if load_following_type == "PP" or "Peak":
+        if load_following_type == "PP" or load_following_type == "Peak":
             chp_electric_gen_hourly_kwh = pp_calc_electricity_gen_sold(chp_size=chp_size, class_dict=class_dict)[0]
         elif load_following_type == "ELF":
             chp_electric_gen_hourly_kwh = elf_calc_electricity_generated(chp_size=chp_size, class_dict=class_dict)
