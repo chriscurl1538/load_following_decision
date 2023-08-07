@@ -8,6 +8,7 @@
 demand_filename: 'STD2019_Seattle_WA.csv'
 city: 'seattle'
 state: 'wa' # Must be two-letter abbreviation
+no_apts: 31
 
 # Energy Costs - Electric, Master Meter
 meter_type_el: "master_metered_el"
