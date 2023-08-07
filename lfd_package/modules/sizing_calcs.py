@@ -175,11 +175,11 @@ def size_chp(load_following_type=None, class_dict=None):
     """
     args_list = [load_following_type, class_dict]
     if any(elem is None for elem in args_list) is False:
-        if load_following_type is "PP":
+        if load_following_type == "PP" or load_following_type == "Peak":
             chp_size = calc_max_pes_chp_size(class_dict=class_dict)
-        elif load_following_type is "ELF":
+        elif load_following_type == "ELF":
             chp_size = calc_max_rect_chp_size(array=class_dict['demand'].el)
-        elif load_following_type is "TLF":
+        elif load_following_type == "TLF":
             thermal_size = (calc_max_rect_chp_size(array=class_dict['demand'].hl)).to(ureg.kW)
             chp_size = thermal_output_to_electrical_output(thermal_output=thermal_size)
         else:
