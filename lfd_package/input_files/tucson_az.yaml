@@ -5,20 +5,21 @@
 
 ### Location-specific inputs for Tucson, AZ
 
-demand_filename: 'STD2019_Tuscon_AZ.csv'   # TODO: Change if needed
-city: 'tuscon'
+demand_filename: 'STD2019_Tucson_AZ.csv'   # TODO: Change if needed
+city: 'tucson'
 state: 'az' # Must be two-letter abbreviation
 no_apts: 31
 
-# Energy Costs - Electric, Master Meter
-meter_type_el: "master_metered_el"    # TODO: Change if needed
-meter_type_fuel: "master_metered_fuel"    # TODO: Change if needed
-schedule_type_el: ["schedule_seasonal_energy", "schedule_seasonal_demand"]  # List of applicable key names
-schedule_type_fuel: ["schedule_basic"]  # Options: Block, Seasonal, Demand, Basic
+# Energy Costs - Schedule and Metering Types
+meter_type_el: "single_metered_el"
+meter_type_fuel: "single_metered_fuel"
+schedule_type_el: ["schedule_basic"]  # List of applicable key names
+schedule_type_fuel: ["schedule_basic"]  # List of applicable key names
 
 summer_start_inclusive: 05
 winter_start_inclusive: 10
 
+# Electricity Rates
 master_metered_el:
   schedule_basic:
     monthly_base_charge: 0      # $/month
@@ -29,7 +30,7 @@ master_metered_el:
     energy_charge_summer: 0.081174     # $/kWh
     energy_charge_winter: 0.068065     # $/kWh
     units: 'kWh'
-  schedule_seasonal_demand:     # TODO: Implement me
+  schedule_seasonal_demand:
     monthly_base_charge: 0      # $/month
     dem_charge_summer: 7.94     # $/kW
     dem_charge_winter: 6.29     # $/kW
@@ -63,7 +64,8 @@ single_metered_el:
     energy_block1_cap: 0    # kWh
     units: 'kWh'
 
-master_metered_fuel:  # TODO: Add block rate section
+# Natural Gas Rates
+master_metered_fuel:
   schedule_basic:
     monthly_base_charge: 43.5        # $/month
     monthly_energy_charge: 1.34423   # $/therm
