@@ -7,9 +7,6 @@ Module Description:
     - TES Size
 """
 
-from lfd_package.modules.__init__ import ureg, Q_
-from sensitivity import SensitivityAnalyzer
-
 
 def make_param_list(base=None, dev=None, allow_neg=False):
     lower = round(base.magnitude) - dev
@@ -20,4 +17,3 @@ def make_param_list(base=None, dev=None, allow_neg=False):
         lower = lower + diff
         upper = upper + diff
     return [lower, upper], unit
-
