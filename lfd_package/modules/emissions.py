@@ -3,7 +3,7 @@ Module description:
     Calculate CO2e emissions for grid and CHP system. Compare the two.
 """
 
-from lfd_package.modules.__init__ import ureg, Q_
+from lfd_package.modules.__init__ import ureg
 from lfd_package.modules import chp as cogen, aux_boiler as boiler
 
 
