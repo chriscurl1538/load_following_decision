@@ -4,10 +4,10 @@ Module Description:
     as well as relevant data calculated by the program
 """
 
-import matplotlib.pyplot as plt, numpy as np
-from lfd_package.modules import thermal_storage as storage
-from lfd_package.modules import aux_boiler as boiler, chp as cogen, sizing_calcs as sizing
-from lfd_package.modules.__init__ import ureg, Q_
+import matplotlib.pyplot as plt
+import numpy as np
+from lfd_package.modules import sizing_calcs as sizing
+from lfd_package.modules.__init__ import ureg
 
 
 def plot_max_rectangle_example(demand=None, chp_size=None):
@@ -70,7 +70,6 @@ def elf_plot_electric(elf_electric_gen_list=None, elf_electricity_bought_list=No
     data0 = demand.el.to(ureg.kW)
     data1 = elf_electric_gen_list
     data2 = elf_electricity_bought_list
-
 
     # Convert to base units before creating numpy array for plotting
     y0 = np.array(data0.magnitude)
@@ -298,7 +297,8 @@ PP Plots
 """
 
 
-def pp_plot_electric(pp_electric_gen_list=None, pp_electricity_bought_list=None, pp_electricity_sold_list=None, demand=None):
+def pp_plot_electric(pp_electric_gen_list=None, pp_electricity_bought_list=None, pp_electricity_sold_list=None,
+                     demand=None):
     data0 = demand.el.to(ureg.kW)
     data1 = pp_electric_gen_list
     data2 = pp_electricity_bought_list
