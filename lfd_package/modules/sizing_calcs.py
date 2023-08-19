@@ -5,13 +5,11 @@ Module description:
 
 import numpy as np
 from lfd_package.modules.__init__ import ureg, Q_
-from lfd_package.modules import thermal_storage as storage
+from lfd_package.modules import thermal_storage as storage, chp as cogen
 
 
 def create_demand_curve_array(array=None):
     """
-    Docstring updated 9/24/2022
-
     Creates two 1D numpy arrays containing percent total days (days / days in 1 year)
     and associated energy demand data (thermal or electrical), respectively.
 
@@ -45,14 +43,12 @@ def create_demand_curve_array(array=None):
 
 def electrical_output_to_fuel_consumption(electrical_output=None):
     """
-    Docstring updated 9/24/2022
-
     Calculates approximate CHP fuel consumption for a given electrical output.
     The constants are from a linear fit of CHP data (<100kW) created in Excel.
-    The data used for the fit are derived from the CHP TAP's eCatalog. The
-    R^2 value of the fit is 0.99. Link to eCatalog: https://chp.ecatalog.ornl.gov
+    The data used for the fit are derived from the CHP TAP's eCatalog.
+    Link to eCatalog: https://chp.ecatalog.ornl.gov
 
-    Used in the calc_min_pes_chp_size function
+    Used in the calc_pes_chp_size() function
 
     Parameters
     ----------
@@ -78,15 +74,13 @@ def electrical_output_to_fuel_consumption(electrical_output=None):
 
 def electrical_output_to_thermal_output(electrical_output=None):
     """
-    Docstring updated 9/24/2022
-
     Calculates approximate CHP thermal output for a given electrical output.
     The constants are from a linear fit of CHP data (<100kW)
     created in Excel. The data for the fit are derived from the CHP TAP's
-    eCatalog. The R^2 value of the fit is 0.97. Link to eCatalog:
-    https://chp.ecatalog.ornl.gov
+    eCatalog.
+    Link to eCatalog: https://chp.ecatalog.ornl.gov
 
-    Used in the calc_min_pes_chp_size function.
+    Used in the calc_pes_chp_size function.
     Used in the calc_avg_efficiency, elf_calc_hourly_heat_generated, and
     tlf_calc_hourly_heat_generated functions in the chp.py module
 
@@ -113,12 +107,10 @@ def electrical_output_to_thermal_output(electrical_output=None):
 
 def thermal_output_to_electrical_output(thermal_output=None):
     """
-    Docstring updated 9/24/2022
-
     Calculates the approximate CHP electrical output for a given thermal output.
     The constants are from a linear fit of CHP data (<100kW)
-    in excel. The data is derived from the CHP TAP eCatalog. The R^2 value of
-    the fit is 0.97. eCatalog link: https://chp.ecatalog.ornl.gov
+    in Excel. The data is derived from the CHP TAP eCatalog.
+    eCatalog link: https://chp.ecatalog.ornl.gov
 
     Used in the tlf_calc_electricity_bought_and_generated function in the
     chp.py module
@@ -149,24 +141,20 @@ def thermal_output_to_electrical_output(thermal_output=None):
 
 def size_chp(load_following_type=None, class_dict=None):
     """
-    Docstring updated 9/24/2022
-
-    Sizes the CHP system using either the max_rect_chp_size function or the
-    calc_min_pes_chp_size function as needed depending on operating strategy (load
-    following type) and/or presence of net metering.
+    Sizes the CHP system using either the calc_max_rect_chp_size() function or the
+    calc_pes_chp_size() function as needed depending on operating strategy (load
+    following type).
 
     Used in chp.py module
 
     Parameters
     ----------
+    class_dict: dict
+        contains initialized class data using CLI inputs (see command_line.py)
     load_following_type: string
         Reads as either "ELF" or "TLF" depending on whether the operating
         strategy is electrical load following or thermal load following,
         respectively.
-    demand: EnergyDemand class
-        Initialized class data (see command_line.py module)
-    ab: AuxBoiler class
-        Initialized class data (see command_line.py module)
 
     Returns
     -------
@@ -176,7 +164,7 @@ def size_chp(load_following_type=None, class_dict=None):
     args_list = [load_following_type, class_dict]
     if any(elem is None for elem in args_list) is False:
         if load_following_type == "PP" or load_following_type == "Peak":
-            chp_size = calc_max_pes_chp_size(class_dict=class_dict)
+            chp_size = calc_pes_chp_size(class_dict=class_dict)
         elif load_following_type == "ELF":
             chp_size = calc_max_rect_chp_size(array=class_dict['demand'].el)
         elif load_following_type == "TLF":
@@ -192,11 +180,8 @@ def size_chp(load_following_type=None, class_dict=None):
         return chp_size
 
 
-# TODO: Turn into static CHP class method
 def calc_max_rect_chp_size(array=None):
     """
-    Docstring updated 9/24/2022
-
     Calculates the recommended CHP size in kW based on the Maximum Rectangle (MR)
     sizing method. The input array is either electrical or thermal demand.
 
@@ -223,24 +208,21 @@ def calc_max_rect_chp_size(array=None):
         return max_value
 
 
-def calc_max_pes_chp_size(class_dict=None):     # TODO: This function always outputs 10 kWe
+def calc_pes_chp_size(class_dict=None):
     """
-    Docstring updated 9/24/2022
-
     Recommends a CHP system size using the minimum Primary Energy Savings
     (PES) method. A high PES value indicates that the associated CHP size
     saves the maximum energy compared to the baseline case. A low PES value
     indicates that the associated CHP size is the most profitable (but saves
-    the least energy compared to the baseline case)
+    the least energy compared to the baseline case). This function returns the
+    maximum PES value.
 
     Used in the size_chp function
 
     Parameters
     ----------
-    demand: EnergyDemand class
-        Initialized class data (see command_line.py module)
-    ab: AuxBoiler class
-        Initialized class data (see command_line.py module)
+    class_dict: dict
+        contains initialized class data using CLI inputs (see command_line.py)
 
     Returns
     -------
@@ -256,12 +238,19 @@ def calc_max_pes_chp_size(class_dict=None):     # TODO: This function always out
         pes_list = []
 
         for size in chp_size_list:
-            max_fuel_consumption = electrical_output_to_fuel_consumption(electrical_output=size)
-            max_thermal_output = electrical_output_to_thermal_output(electrical_output=size)
-            electrical_eff = size/max_fuel_consumption
-            thermal_eff = max_thermal_output/max_fuel_consumption
+            chp_gen_kwh_list = cogen.pp_calc_electricity_gen_sold(chp_size=size, class_dict=class_dict)[0]
+            chp_gen_btuh_list = cogen.pp_calc_hourly_heat_generated(chp_gen_hourly_kwh=chp_gen_kwh_list,
+                                                                    class_dict=class_dict)
+            fuel_consumption_list = cogen.calc_hourly_fuel_use(chp_gen_hourly_btuh=chp_gen_btuh_list, chp_size=size,
+                                                               load_following_type='PP', class_dict=class_dict)
 
-            nominal_electrical_eff = electrical_eff / grid_eff
+            fuel_consumption = sum(fuel_consumption_list)
+            thermal_output = sum(chp_gen_btuh_list) * Q_(1, ureg.hours)
+            electrical_output = sum(chp_gen_kwh_list)
+            electrical_eff = electrical_output/fuel_consumption
+            thermal_eff = thermal_output/fuel_consumption
+
+            nominal_electrical_eff = (electrical_eff / grid_eff).to('')
             nominal_thermal_eff = thermal_eff / class_dict['ab'].eff
             pes = 1 - (1/(nominal_thermal_eff + nominal_electrical_eff))
 
@@ -277,16 +266,28 @@ def calc_max_pes_chp_size(class_dict=None):     # TODO: This function always out
 
 def size_tes(chp_gen_hourly_kwh_dict=None, chp_size=None, load_following_type=None, class_dict=None):
     """
-    TODO: Need to validate calculation, check that its reasonable
-    Requires hourly heat demand data, hourly CHP heating demand coverage, and hourly heat generation by CHP.
-
     Sizes TES by maximizing the system efficiency. Uses uncovered heat demand values and excess chp heat
-    generation values. Chooses the smallest of these two values for each day and creates a list of those
+    generation values (calculated from electricity generation using electrical_output_to_thermal_output()).
+    Chooses the smallest of these two values for each day and creates a list of those
     minimums. Then chooses the max value in that list as the recommended size.
+
+    Parameters
+    ----------
+    chp_gen_hourly_kwh_dict: dict
+        contains lists of hourly chp electricity generated in kWh. Keys indicate
+        operating mode (ELF, TLF, PP, Peak).
+    chp_size: Quantity
+        contains size of CHP unit in kW.
+    load_following_type: str
+        specifies whether calculation is for electrical load following (ELF) state
+        or thermal load following (TLF) state.
+    class_dict: dict
+        contains initialized class data using CLI inputs (see command_line.py)
 
     Returns
     -------
-
+    tes_size_btu: Quantity
+        Recommended thermal storage size in units of Btu.
     """
     # Create empty lists
     uncovered_heat_demand_hourly = []
@@ -302,7 +303,8 @@ def size_tes(chp_gen_hourly_kwh_dict=None, chp_size=None, load_following_type=No
     if load_following_type == "TLF":
         # TODO: Assume chp runs all the time
         hourly_excess_and_deficit_list = \
-            [(electrical_output_to_thermal_output(chp_size)).to(ureg.Btu / ureg.hour) - dem for dem in class_dict['demand'].hl]
+            [(electrical_output_to_thermal_output(chp_size)).to(ureg.Btu / ureg.hour) - dem for dem in
+             class_dict['demand'].hl]
     else:
         hourly_excess_and_deficit_list = \
             storage.calc_excess_and_deficit_chp_heat_gen(chp_gen_hourly_kwh_dict=chp_gen_hourly_kwh_dict,
