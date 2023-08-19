@@ -4,7 +4,7 @@ Module Description:
     energy dispatched by the thermal energy storage (TES) system
 """
 
-from lfd_package.modules import chp as cogen, sizing_calcs as sizing
+from lfd_package.modules import chp as cogen
 from lfd_package.modules.__init__ import ureg, Q_
 
 
@@ -18,12 +18,11 @@ def calc_excess_and_deficit_chp_heat_gen(chp_gen_hourly_kwh_dict=None, load_foll
 
     Parameters
     ---------
-    ab: AuxBoiler Class
-        contains initialized class data using CLI inputs (see command_line.py)
-    chp: CHP Class
-        contains initialized class data using CLI inputs (see command_line.py)
-    demand: EnergyDemand Class
-        contains initialized class data using CLI inputs (see command_line.py)
+    class_dict: dict
+        contains initialized class data using CLI inputs (see command_line.py).
+    chp_gen_hourly_kwh_dict: dict
+        contains lists of hourly chp electricity generated in kWh. Keys indicate
+        operating mode (ELF, TLF, PP, Peak).
     load_following_type: string
         specifies whether calculation is for electrical load following (ELF) state
         or thermal load following (TLF) state.
@@ -41,8 +40,9 @@ def calc_excess_and_deficit_chp_heat_gen(chp_gen_hourly_kwh_dict=None, load_foll
             chp_heat_gen_hourly = cogen.pp_calc_hourly_heat_generated(chp_gen_hourly_kwh=chp_gen_hourly_kwh_dict[str(load_following_type)],
                                                                       class_dict=class_dict)
         elif load_following_type == "ELF":
-            chp_heat_gen_hourly = cogen.elf_calc_hourly_heat_generated(chp_gen_hourly_kwh=chp_gen_hourly_kwh_dict["ELF"],
-                                                                       class_dict=class_dict)
+            chp_heat_gen_hourly = \
+                cogen.elf_calc_hourly_heat_generated(chp_gen_hourly_kwh=chp_gen_hourly_kwh_dict["ELF"],
+                                                     class_dict=class_dict)
         elif load_following_type == "TLF":
             raise Exception("Use tlf_calc_hourly_heat_generated function from chp.py")  # TODO: Fix this
         else:
@@ -74,6 +74,11 @@ def calc_tes_heat_flow_and_soc(chp_gen_hourly_kwh_dict=None, tes_size=None, load
 
     Parameters
     ---------
+    tes_size: Quantity
+        contains size of thermal storage in units of Btu.
+    chp_gen_hourly_kwh_dict: dict
+        contains lists of hourly chp electricity generated in kWh. Keys indicate
+        operating mode (ELF, TLF, PP, Peak).
     class_dict: dict
         contains initialized class data using CLI inputs (see command_line.py)
     load_following_type: string
