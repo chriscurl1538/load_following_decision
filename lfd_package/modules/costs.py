@@ -4,10 +4,6 @@ Description: Where energy costs are calculated
 
 from lfd_package.modules.__init__ import ureg, Q_
 
-#####################################
-# Baseline Cost Calculations
-#####################################
-
 
 def calc_electric_charges(class_dict=None, electricity_bought_hourly=None):
     """
@@ -361,3 +357,67 @@ def calc_installed_om_cost(class_dict=None, dispatch_hourly=None, size=None, cla
         om_cost = sum(om_cost_list)
         installed_cost = (size * class_info.installed_cost).to('')
         return installed_cost, om_cost
+
+
+def calc_payback(thermal_cost_new=None, electrical_cost_new=None, tes_size=None, pct_incentive=0, class_dict=None,
+                 thermal_cost_baseline=None, electrical_cost_baseline=None, load_following_type="ELF", chp_size=None,
+                 chp_gen_hourly_kwh=None, tes_heat_flow_list=None, electricity_sold_hourly=None):
+    """
+    Calculates the payback period of CHP and TES installation.
+
+    Parameters
+    ----------
+    thermal_cost_new: Quantity
+        Dimensionless quantity representing annual sum of natural gas cost for CHP + TES
+    electrical_cost_new: Quantity
+        Dimensionless quantity representing annual sum of electricity costs for CHP + TES
+    tes_size: Quantity
+        The size of the TES unit in units of Btu.
+    pct_incentive: float
+        The percent of the total installed cost of CHP + TES covered by incentives.
+    thermal_cost_baseline: Quantity
+        Dimensionless quantity representing the natural gas costs associated with the Baseline case (non-CHP).
+    electrical_cost_baseline: Quantity
+        Dimensionless quantity representing the electricity costs associated with the Baseline case (non-CHP).
+    load_following_type: str
+        String representing the operating mode of the CHP unit (ELF, TLF, PP, Peak).
+    chp_size: Quantity
+        The size of the CHP unit in units of kW.
+    class_dict: dict
+        contains initialized class data using CLI inputs (see command_line.py)
+    chp_gen_hourly_kwh: list
+        contains electricity generated hourly by CHP in units of kWh.
+    tes_heat_flow_list: list
+        Storage heat rate for each hour. Values are positive for heat added and
+        negative for heat discharged.Units are Btu/hr
+    electricity_sold_hourly: list
+        contains excess electricity generated hourly by CHP and sold to grid.
+        Units are in kWh.
+
+    Returns
+    -------
+    simple_payback: Quantity
+        The payback period of the CHP + TES installation in units of years.
+    """
+    # Calculate Cost Savings
+    thermal_cost_savings = thermal_cost_baseline - thermal_cost_new
+    if load_following_type == "PP" or load_following_type == "Peak":
+        revenue = calc_pp_revenue(class_dict=class_dict, electricity_sold_hourly=electricity_sold_hourly)
+        electrical_cost_savings = electrical_cost_baseline - electrical_cost_new + revenue
+    else:
+        electrical_cost_savings = electrical_cost_baseline - electrical_cost_new
+    total_cost_savings = electrical_cost_savings + thermal_cost_savings
+
+    # Implementation Cost (material cost + installation cost)
+    installed_cost_chp, incremental_cost = calc_installed_om_cost(class_dict=class_dict, size=chp_size,
+                                                                  class_str="chp",
+                                                                  dispatch_hourly=chp_gen_hourly_kwh)
+    installed_cost_tes = calc_installed_om_cost(class_dict=class_dict, size=tes_size, class_str="tes",
+                                                dispatch_hourly=tes_heat_flow_list)
+    total_installed_cost = installed_cost_chp + installed_cost_tes
+    implementation_cost = installed_cost_chp + installed_cost_tes - (pct_incentive * total_installed_cost)
+
+    # Simple Payback Period (implementation cost / annual cost savings)
+    simple_payback = implementation_cost / (total_cost_savings - incremental_cost) * ureg.year
+
+    return simple_payback
