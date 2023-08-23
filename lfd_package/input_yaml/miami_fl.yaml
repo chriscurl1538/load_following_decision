@@ -5,7 +5,7 @@
 
 ### Location-specific inputs for Miami, FL
 
-demand_filename: 'post1980_florida_miami.csv'   # TODO: Change if needed
+demand_filename: 'pre1980_florida_miami.csv'   # TODO: Change if needed
 city: 'miami'
 state: 'fl' # Must be two-letter abbreviation
 no_apts: 31
