@@ -5,6 +5,7 @@ Module Description:
     (TLF) cases. Also accounts for whether net metering is permitted by the local utility.
 """
 
+import math
 from lfd_package.modules import sizing_calcs as sizing
 from lfd_package.modules.__init__ import ureg, Q_
 
@@ -261,7 +262,7 @@ TLF Functions
 """
 
 
-def tlf_calc_hourly_heat_chp_tes_soc(chp_size=None, class_dict=None):
+def tlf_calc_hourly_heat_chp_tes_soc(chp_size=None, tes_size=None, class_dict=None):
     """
     Calculates the hourly CHP heat generated, hourly TES heat rate, and TES
     SOC status each hour.
@@ -303,12 +304,10 @@ def tlf_calc_hourly_heat_chp_tes_soc(chp_size=None, class_dict=None):
         chp_heat_rate_min = (sizing.electrical_output_to_thermal_output(chp_min_output)).to(ureg.Btu / ureg.hour)
         chp_heat_rate_cap = sizing.electrical_output_to_thermal_output(chp_size).to(ureg.Btu / ureg.hour)
 
-        # TES sizing does not require electrical demand argument if operation mode is TLF
-        tes_size = sizing.size_tes(chp_size=chp_size, load_following_type="TLF", class_dict=class_dict)
-
         tes_heat_rate_list_btu_hour = []
         soc_list = []
 
+        # TODO: Add condition for tes_size == 0
         for i, dem in enumerate(class_dict['demand'].hl):
             # Verifies acceptable input value range
             assert dem.magnitude >= 0
@@ -319,81 +318,115 @@ def tlf_calc_hourly_heat_chp_tes_soc(chp_size=None, class_dict=None):
                 # If TES is full and chp meets demand, follow thermal load
                 gen = dem.to(ureg.Btu / ureg.hour)
                 chp_hourly_heat_rate_list.append(gen)
-                stored_heat = Q_(0, ureg.Btu / ureg.hour)
-                tes_heat_rate_list_btu_hour.append(stored_heat)
-                new_status = (stored_heat * Q_(1, ureg.hour)) + current_status
-                soc_list.append(new_status / tes_size)
-                current_status = new_status
+
+                # Handle condition of TES size being zero
+                if math.isclose(tes_size.magnitude, 0):
+                    tes_heat_rate_list_btu_hour.append(Q_(0, ureg.Btu / ureg.hours))
+                    soc_list.append(Q_(0, ''))
+                else:
+                    stored_heat = Q_(0, ureg.Btu / ureg.hour)
+                    tes_heat_rate_list_btu_hour.append(stored_heat)
+                    new_status = (stored_heat * Q_(1, ureg.hour)) + current_status
+                    soc_list.append(new_status / tes_size)
+                    current_status = new_status
             elif chp_heat_rate_min <= dem <= chp_heat_rate_cap and current_status < tes_size:
                 # If TES needs heat and chp meets demand, run CHP at full power and put excess in TES
                 gen = chp_heat_rate_cap
                 chp_hourly_heat_rate_list.append(gen)
-                # Make sure SOC does not exceed 1 when heat is added
-                soc_check = ((current_status / Q_(1, ureg.hours)) + gen - dem) / (tes_size / Q_(1, ureg.hours))
-                if soc_check.magnitude < 1:
-                    stored_heat = gen - dem
-                    assert stored_heat >= 0
+
+                # Handle condition of TES size being zero
+                if math.isclose(tes_size.magnitude, 0):
+                    tes_heat_rate_list_btu_hour.append(Q_(0, ureg.Btu / ureg.hours))
+                    soc_list.append(Q_(0, ''))
                 else:
-                    stored_heat = (tes_size - current_status) / Q_(1, ureg.hours)
-                    assert stored_heat >= 0
-                tes_heat_rate_list_btu_hour.append(stored_heat)
-                new_status = (stored_heat * Q_(1, ureg.hours)) + current_status
-                soc_list.append(new_status / tes_size)
-                current_status = new_status
+                    # Make sure SOC does not exceed 1 when heat is added
+                    soc_check = ((current_status / Q_(1, ureg.hours)) + gen - dem) / (tes_size / Q_(1, ureg.hours))
+                    if soc_check.magnitude < 1:
+                        stored_heat = gen - dem
+                        assert stored_heat >= 0
+                    else:
+                        stored_heat = (tes_size - current_status) / Q_(1, ureg.hours)
+                        assert stored_heat >= 0
+                    tes_heat_rate_list_btu_hour.append(stored_heat)
+                    new_status = (stored_heat * Q_(1, ureg.hours)) + current_status
+                    soc_list.append(new_status / tes_size)
+                    current_status = new_status
             elif dem < chp_heat_rate_min and dem <= (current_status / Q_(1, ureg.hours)):
                 # If TES not empty, then let out heat to meet demand
                 gen = Q_(0, ureg.Btu / ureg.hour)
                 chp_hourly_heat_rate_list.append(gen)
-                discharged_heat = gen - dem     # Should be negative
-                assert discharged_heat <= 0
-                tes_heat_rate_list_btu_hour.append(discharged_heat)
-                new_status = (discharged_heat * Q_(1, ureg.hours)) + current_status
-                soc_list.append(new_status / tes_size)
-                current_status = new_status
+
+                # Handle condition of TES size being zero
+                if math.isclose(tes_size.magnitude, 0):
+                    tes_heat_rate_list_btu_hour.append(Q_(0, ureg.Btu / ureg.hours))
+                    soc_list.append(Q_(0, ''))
+                else:
+                    discharged_heat = gen - dem     # Should be negative
+                    assert discharged_heat <= 0
+                    tes_heat_rate_list_btu_hour.append(discharged_heat)
+                    new_status = (discharged_heat * Q_(1, ureg.hours)) + current_status
+                    soc_list.append(new_status / tes_size)
+                    current_status = new_status
             elif chp_heat_rate_min > dem > (current_status / Q_(1, ureg.hours)):
                 # If TES is empty (or does not have enough to meet demand), then run CHP at full power
                 gen = chp_heat_rate_cap
                 chp_hourly_heat_rate_list.append(gen)
 
-                soc_check = ((current_status / Q_(1, ureg.hours)) + gen - dem) / (tes_size / Q_(1, ureg.hours))
-                if soc_check >= 1:
-                    stored_heat = (tes_size - current_status) / Q_(1, ureg.hours)
-                    assert stored_heat >= 0
+                # Handle condition of TES size being zero
+                if math.isclose(tes_size.magnitude, 0):
+                    tes_heat_rate_list_btu_hour.append(Q_(0, ureg.Btu / ureg.hours))
+                    soc_list.append(Q_(0, ''))
                 else:
-                    stored_heat = gen - dem
-                    assert stored_heat >= 0
+                    soc_check = ((current_status / Q_(1, ureg.hours)) + gen - dem) / (tes_size / Q_(1, ureg.hours))
+                    if soc_check >= 1:
+                        stored_heat = (tes_size - current_status) / Q_(1, ureg.hours)
+                        assert stored_heat >= 0
+                    else:
+                        stored_heat = gen - dem
+                        assert stored_heat >= 0
 
-                new_status = (stored_heat * Q_(1, ureg.hour)) + current_status
-                tes_heat_rate_list_btu_hour.append(stored_heat)
-                soc_list.append(new_status / tes_size)
-                current_status = new_status
+                    new_status = (stored_heat * Q_(1, ureg.hour)) + current_status
+                    tes_heat_rate_list_btu_hour.append(stored_heat)
+                    soc_list.append(new_status / tes_size)
+                    current_status = new_status
             elif chp_heat_rate_cap < dem < (current_status / Q_(1, ureg.hours)):
                 # If demand exceeds CHP generation, use TES
                 gen = chp_heat_rate_cap
                 chp_hourly_heat_rate_list.append(gen)
 
-                soc_check = ((current_status / Q_(1, ureg.hours)) + gen - dem) / (tes_size / Q_(1, ureg.hours))
-                if soc_check <= 0:
-                    discharged_heat = -1 * current_status / Q_(1, ureg.hours)
-                    assert discharged_heat <= 0
+                # Handle condition of TES size being zero
+                if math.isclose(tes_size.magnitude, 0):
+                    tes_heat_rate_list_btu_hour.append(Q_(0, ureg.Btu / ureg.hours))
+                    soc_list.append(Q_(0, ''))
                 else:
-                    discharged_heat = gen - dem     # Should be negative
-                    assert discharged_heat <= 0
+                    soc_check = ((current_status / Q_(1, ureg.hours)) + gen - dem) / (tes_size / Q_(1, ureg.hours))
+                    if soc_check <= 0:
+                        discharged_heat = -1 * current_status / Q_(1, ureg.hours)
+                        assert discharged_heat <= 0
+                    else:
+                        discharged_heat = gen - dem     # Should be negative
+                        assert discharged_heat <= 0
 
-                tes_heat_rate_list_btu_hour.append(discharged_heat)
-                new_status = (discharged_heat * Q_(1, ureg.hour)) + current_status
-                soc_list.append(new_status / tes_size)
-                current_status = new_status
+                    tes_heat_rate_list_btu_hour.append(discharged_heat)
+                    new_status = (discharged_heat * Q_(1, ureg.hour)) + current_status
+                    soc_list.append(new_status / tes_size)
+                    current_status = new_status
             elif chp_heat_rate_cap < dem and (current_status / Q_(1, ureg.hours)) < dem:
                 # Discharge everything from TES
                 gen = chp_heat_rate_cap
                 chp_hourly_heat_rate_list.append(gen)
-                discharged_heat = -1 * current_status / Q_(1, ureg.hours)  # Should be negative
-                assert discharged_heat <= 0
-                tes_heat_rate_list_btu_hour.append(discharged_heat)
-                new_status = (discharged_heat * Q_(1, ureg.hours)) + current_status
-                soc_list.append(new_status / tes_size)
-                current_status = new_status
+
+                # Handle condition of TES size being zero
+                if math.isclose(tes_size.magnitude, 0):
+                    tes_heat_rate_list_btu_hour.append(Q_(0, ureg.Btu / ureg.hours))
+                    soc_list.append(Q_(0, ''))
+                else:
+                    discharged_heat = -1 * current_status / Q_(1, ureg.hours)  # Should be negative
+                    assert discharged_heat <= 0
+                    tes_heat_rate_list_btu_hour.append(discharged_heat)
+                    new_status = (discharged_heat * Q_(1, ureg.hours)) + current_status
+                    soc_list.append(new_status / tes_size)
+                    current_status = new_status
             else:
                 raise Exception("Error in TLF calc_utility_electricity_needed function")
 
