@@ -18,7 +18,7 @@ class EnergyDemand:
         """
         This class stores information from EnergyPlus building demand profile simulations,
         which are fed in via a .csv file. By default, this class imports data from the
-        'default_file.csv' file in the /input_files folder.
+        'default_file.csv' file in the /input_demand_profiles folder.
 
         This class also stores information passed from the .yaml file associated with the
         city, state location being analyzed.
@@ -27,7 +27,7 @@ class EnergyDemand:
         ----------
         file_name: str
             This is the file name of the .csv file containing hourly electrical and heating demand data.
-            The user can change this value in the .yaml file located in the /input_files folder.
+            The user can change this value in the .yaml file located in the /input_demand_profiles folder.
         city: str
             This is the name of one of 7 accepted city locations.
         state: str
@@ -45,7 +45,7 @@ class EnergyDemand:
             may be modified as needed.
         """
         # Reads load profile data from .csv file
-        cwd = pathlib.Path(__file__).parent.parent.resolve() / 'input_files'
+        cwd = pathlib.Path(__file__).parent.parent.resolve() / 'input_demand_profiles'
         self.demand_file_name = file_name
         df = pd.read_csv(cwd / file_name)
 
@@ -188,7 +188,7 @@ class EnergyDemand:
             item = (dem_profile[index] * Q_(1, ureg.hours)).to_reduced_units()
             winter_weight_list.append(item)
 
-        summer_sum = sum(summer_weight_list)
+        summer_sum = sum(summer_weight_list)    # Has power or energy units
         winter_sum = sum(winter_weight_list)
 
         if summer_sum == 0:
@@ -198,12 +198,12 @@ class EnergyDemand:
         total = (sum(dem_profile) * Q_(1, ureg.hours)).to_reduced_units()
         assert math.isclose(summer_sum.magnitude + winter_sum.magnitude, total.magnitude)
 
-        if total.magnitude != 0:
+        if math.isclose(total.magnitude, 0) is False:
             summer_weight = summer_sum / total
             winter_weight = winter_sum / total
             return summer_weight, winter_weight
         else:
-            raise Exception("The array passed to EnergyDemand class seasonal_weights_hourly_data() method is all zeros")
+            return Q_(0, ''), Q_(0, '')
 
     def seasonal_weights_monthly_data(self, monthly_data=None):
         summer_start = int(self.summer_start_month)
@@ -232,10 +232,12 @@ class EnergyDemand:
         total = sum(monthly_data)
         assert math.isclose(summer_sum.magnitude + winter_sum.magnitude, total.magnitude)
 
-        summer_weight = summer_sum / total
-        winter_weight = winter_sum / total
-
-        return summer_weight, winter_weight
+        if math.isclose(total.magnitude, 0) is False:
+            summer_weight = summer_sum / total
+            winter_weight = winter_sum / total
+            return summer_weight, winter_weight
+        else:
+            return Q_(0, ''), Q_(0, '')
 
     def monthly_demand_peaks(self, dem_profile=None):  # TODO: Test
         month_list = self.meter_months_hourly
@@ -397,7 +399,7 @@ class CHP(EnergyDemand):
 
 class TES(EnergyDemand):
     def __init__(self, file_name, city, state, grid_efficiency, summer_start_inclusive, winter_start_inclusive,
-                 sim_ab_efficiency, start=None, vol_rate=None, energy_density=None, tes_installed_cost=None):
+                 sim_ab_efficiency, start=None, energy_density=None, tes_installed_cost=None, tes_om_cost=None):
         """
         This class defines the specifications and costs of the TES (thermal energy storage) system.
 
@@ -405,13 +407,14 @@ class TES(EnergyDemand):
         ----------
         start: Quantity (float)
             The starting energy level of the TES system when the simulation begins in terms of SOC
-        vol_rate: Quantity
-            The volumetric flow rate of the TES system. Units are in liters/hr.
         energy_density: Quantity
             The energy density of the fluid being stored (water). Units are in kWh/m3.
         tes_installed_cost: Quantity
             contains the labor, material, and installation cost for the TES
             unit. Units are in $/kWh stored.
+        tes_om_cost: Quantity
+            contains the annual operation and maintenance cost for the TES units based on energy in/out.
+            Units are in $/kWh.
         """
         super().__init__(file_name, city, state, grid_efficiency, summer_start_inclusive, winter_start_inclusive,
                          sim_ab_efficiency)
@@ -421,11 +424,11 @@ class TES(EnergyDemand):
 
         # TES Specifications
         self.start = float(start)
-        self.vol_rate = float(vol_rate) * (ureg.liters / ureg.hours)
         self.energy_density = float(energy_density) * (ureg.kWh / ureg.meters**3)
 
         # TES Materials Costs
         self.installed_cost = float(tes_installed_cost) * (1/ureg.kWh)
+        self.om_cost = float(tes_om_cost) * (1/ureg.kWh)
 
 
 class AuxBoiler(EnergyDemand):
