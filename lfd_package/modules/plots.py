@@ -27,7 +27,7 @@ def plot_max_rectangle_example(demand_class=None, chp_size=None):
     plt.ylabel('Demand (kW)')
     annual_sum = sum(el_demand)
     if annual_sum.magnitude <= 1:
-        plt.yticks(np.arange(0, y1.max(), y1.max()))
+        plt.yticks(np.arange(0, 10, 1))
     else:
         plt.yticks(np.arange(0, y1.max(), y1.max()/10))
     plt.xlabel('Percent Hours')
@@ -47,7 +47,7 @@ def plot_electrical_demand_curve(demand_class=None):
     plt.ylabel('Demand (kW)')
     annual_sum = sum(el_demand)
     if annual_sum.magnitude <= 1:
-        plt.yticks(np.arange(0, y1.max(), y1.max()))
+        plt.yticks(np.arange(0, 10, 1))
     else:
         plt.yticks(np.arange(0, y1.max(), y1.max()/10))
     plt.xlabel('Percent Hours')
@@ -73,7 +73,7 @@ def plot_thermal_demand_curve(demand_class=None):
     plt.ylabel('Demand (Btu/hr)')
     annual_sum = sum(hl_demand)
     if annual_sum.magnitude <= 1:
-        plt.yticks(np.arange(0, y2.max(), y2.max()))
+        plt.yticks(np.arange(0, 10, 1))
     else:
         plt.yticks(np.arange(0, y2.max(), y2.max()/10))
     plt.xlabel('Percent Hours')
@@ -271,6 +271,7 @@ def tlf_plot_electric(tlf_electric_gen_list=None, tlf_electricity_bought_list=No
     plt.show()
 
 
+# TODO: Make so thermal demand of all zeros produces properly scaled plot
 def tlf_plot_thermal(tlf_chp_gen_btuh=None, tlf_tes_heat_flow_list=None, tlf_boiler_dispatch_hourly=None,
                      demand_class=None):
     data1 = tlf_chp_gen_btuh
