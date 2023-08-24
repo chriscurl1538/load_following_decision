@@ -4,7 +4,6 @@ Module description:
 """
 
 from lfd_package.modules.__init__ import ureg
-from lfd_package.modules import chp as cogen, aux_boiler as boiler
 
 
 def identify_subgrid_coefficients(class_dict=None):
@@ -60,8 +59,8 @@ def calc_baseline_fuel_emissions(class_dict=None):
     return fuel_emissions_annual
 
 
-def calc_chp_emissions(chp_gen_hourly_kwh_dict=None, chp_gen_hourly_btuh=None, tes_size=None, chp_size=None,
-                       ab_output_rate_list=None, load_following_type=None, class_dict=None):
+def calc_chp_emissions(electricity_bought_annual=None, chp_fuel_use_annual=None, ab_fuel_use_annual=None,
+                       class_dict=None):
     """
     Calc CHP emissions using CHP efficiency data.
     Accounts for bought electricity as well.
@@ -70,24 +69,8 @@ def calc_chp_emissions(chp_gen_hourly_kwh_dict=None, chp_gen_hourly_btuh=None, t
     -------
 
     """
-    args_list = [chp_gen_hourly_kwh_dict, chp_gen_hourly_btuh, tes_size, chp_size, load_following_type, class_dict]
+    args_list = [electricity_bought_annual, chp_fuel_use_annual, ab_fuel_use_annual, class_dict]
     if any(elem is None for elem in args_list) is False:
-
-        # Emissions from electricity bought
-        # TODO: Optimize - remove functions called in CLI
-        key = str(load_following_type)
-        chp_gen_hourly_kwh = chp_gen_hourly_kwh_dict[key]
-        electricity_bought_annual = sum(cogen.calc_electricity_bought(chp_gen_hourly_kwh=chp_gen_hourly_kwh,
-                                                                      chp_size=chp_size, class_dict=class_dict))
-
-        # For Emissions from CHP
-        chp_fuel_use_annual = sum(cogen.calc_hourly_fuel_use(chp_gen_hourly_btuh=chp_gen_hourly_btuh, chp_size=chp_size,
-                                                             class_dict=class_dict,
-                                                             load_following_type=load_following_type))
-
-        # For Emissions from boiler use
-        ab_fuel_use_annual = sum(boiler.calc_hourly_fuel_use(class_dict=class_dict,
-                                                             ab_output_rate_list=ab_output_rate_list))
 
         subgrid_coefficient_avg = identify_subgrid_coefficients(class_dict=class_dict)
 
