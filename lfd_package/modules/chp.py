@@ -307,7 +307,6 @@ def tlf_calc_hourly_heat_chp_tes_soc(chp_size=None, tes_size=None, class_dict=No
         tes_heat_rate_list_btu_hour = []
         soc_list = []
 
-        # TODO: Add condition for tes_size == 0
         for i, dem in enumerate(class_dict['demand'].hl):
             # Verifies acceptable input value range
             assert dem.magnitude >= 0
