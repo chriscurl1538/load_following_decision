@@ -264,7 +264,7 @@ def calc_pes_chp_size(class_dict=None):
         return max_pes_size
 
 
-def size_tes(chp_gen_hourly_kwh_dict=None, chp_size=None, load_following_type=None, class_dict=None):
+def size_tes(chp_size=None, class_dict=None):
     """
     Sizes TES by maximizing the system efficiency. Uses uncovered heat demand values and excess chp heat
     generation values (calculated from electricity generation using electrical_output_to_thermal_output()).
@@ -273,9 +273,8 @@ def size_tes(chp_gen_hourly_kwh_dict=None, chp_size=None, load_following_type=No
 
     Parameters
     ----------
-    chp_gen_hourly_kwh_dict: dict
-        contains lists of hourly chp electricity generated in kWh. Keys indicate
-        operating mode (ELF, TLF, PP, Peak).
+    chp_gen_hourly_btuh: list
+        contains hourly chp heat generated in Btu/hr.
     chp_size: Quantity
         contains size of CHP unit in kW.
     load_following_type: str
@@ -299,16 +298,11 @@ def size_tes(chp_gen_hourly_kwh_dict=None, chp_size=None, load_following_type=No
     # For unit management in pint
     hour_unit = Q_(1, ureg.hour)
 
-    # Pull needed data
-    if load_following_type == "TLF":
-        # TODO: Assume chp runs all the time
-        hourly_excess_and_deficit_list = \
-            [(electrical_output_to_thermal_output(chp_size)).to(ureg.Btu / ureg.hour) - dem for dem in
-             class_dict['demand'].hl]
-    else:
-        hourly_excess_and_deficit_list = \
-            storage.calc_excess_and_deficit_chp_heat_gen(chp_gen_hourly_kwh_dict=chp_gen_hourly_kwh_dict,
-                                                         load_following_type=load_following_type, class_dict=class_dict)
+    # Pull needed data (assumes CHP runs at constant max generation for sizing purposes)
+    hourly_excess_and_deficit_list = \
+        [(electrical_output_to_thermal_output(chp_size)).to(ureg.Btu / ureg.hour) - dem for dem in
+         class_dict['demand'].hl]
+
     assert isinstance(hourly_excess_and_deficit_list, list)
     assert hourly_excess_and_deficit_list[0].units == ureg.Btu / ureg.hour
 
