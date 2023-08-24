@@ -7,13 +7,12 @@ Module Description:
 import matplotlib.pyplot as plt
 import numpy as np
 import pathlib
-import math
 from lfd_package.modules import sizing_calcs as sizing
 from lfd_package.modules.__init__ import ureg
 
 
-def plot_max_rectangle_example(demand=None, chp_size=None):
-    el_demand = demand.el.to(ureg.kW)
+def plot_max_rectangle_example(demand_class=None, chp_size=None):
+    el_demand = demand_class.el.to(ureg.kW)
     y1 = sizing.create_demand_curve_array(el_demand)[1].magnitude
     x1 = sizing.create_demand_curve_array(el_demand)[0]
 
@@ -26,7 +25,7 @@ def plot_max_rectangle_example(demand=None, chp_size=None):
     plt.vlines(x=x2_value, colors='purple', ymin=0, ymax=y2_value, linestyles='--')
     plt.plot((0, x2_value), (y2_value, y2_value), color='purple', label='Max Rectangle CHP Size', linestyle='--')
     plt.ylabel('Demand (kW)')
-    annual_sum = sum(demand)
+    annual_sum = sum(el_demand)
     if annual_sum.magnitude <= 1:
         plt.yticks(np.arange(0, y1.max(), y1.max()))
     else:
@@ -37,8 +36,8 @@ def plot_max_rectangle_example(demand=None, chp_size=None):
     plt.show()
 
 
-def plot_electrical_demand_curve(demand=None):
-    el_demand = demand.el.to(ureg.kW)
+def plot_electrical_demand_curve(demand_class=None):
+    el_demand = demand_class.el.to(ureg.kW)
     y1 = sizing.create_demand_curve_array(el_demand)[1].magnitude
     x1 = sizing.create_demand_curve_array(el_demand)[0]
 
@@ -46,15 +45,16 @@ def plot_electrical_demand_curve(demand=None):
     plt.plot(x1, y1)
     plt.title('Electrical Demand Curve')
     plt.ylabel('Demand (kW)')
-    annual_sum = sum(demand)
+    annual_sum = sum(el_demand)
     if annual_sum.magnitude <= 1:
         plt.yticks(np.arange(0, y1.max(), y1.max()))
     else:
         plt.yticks(np.arange(0, y1.max(), y1.max()/10))
     plt.xlabel('Percent Hours')
 
-    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand.city, demand.state) / \
-                "{}_{}_electrical_demand.png".format(demand.city, demand.state)
+    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand_class.city,
+                                                                                      demand_class.state) / \
+                "{}_{}_electrical_demand.png".format(demand_class.city, demand_class.state)
     if file_path.is_file():
         pathlib.Path.unlink(file_path)
     plt.savefig(file_path, dpi=900)
@@ -62,8 +62,8 @@ def plot_electrical_demand_curve(demand=None):
     plt.show()
 
 
-def plot_thermal_demand_curve(demand=None):
-    hl_demand = demand.hl.to(ureg.Btu / ureg.hours)
+def plot_thermal_demand_curve(demand_class=None):
+    hl_demand = demand_class.hl.to(ureg.Btu / ureg.hours)
     y2 = sizing.create_demand_curve_array(hl_demand)[1].magnitude
     x2 = sizing.create_demand_curve_array(hl_demand)[0]
 
@@ -71,15 +71,16 @@ def plot_thermal_demand_curve(demand=None):
     plt.plot(x2, y2)
     plt.title('Thermal Demand Curve')
     plt.ylabel('Demand (Btu/hr)')
-    annual_sum = sum(demand)
+    annual_sum = sum(hl_demand)
     if annual_sum.magnitude <= 1:
         plt.yticks(np.arange(0, y2.max(), y2.max()))
     else:
         plt.yticks(np.arange(0, y2.max(), y2.max()/10))
     plt.xlabel('Percent Hours')
 
-    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand.city, demand.state) / \
-                "{}_{}_thermal_demand.png".format(demand.city, demand.state)
+    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand_class.city,
+                                                                                      demand_class.state) / \
+                "{}_{}_thermal_demand.png".format(demand_class.city, demand_class.state)
     if file_path.is_file():
         pathlib.Path.unlink(file_path)
     plt.savefig(file_path, dpi=900)
@@ -92,8 +93,8 @@ ELF Plots
 """
 
 
-def elf_plot_electric(elf_electric_gen_list=None, elf_electricity_bought_list=None, demand=None):
-    data0 = demand.el.to(ureg.kW)
+def elf_plot_electric(elf_electric_gen_list=None, elf_electricity_bought_list=None, demand_class=None):
+    data0 = demand_class.el.to(ureg.kW)
     data1 = elf_electric_gen_list
     data2 = elf_electricity_bought_list
 
@@ -127,8 +128,9 @@ def elf_plot_electric(elf_electric_gen_list=None, elf_electricity_bought_list=No
     ax3.set_ylabel('Electricity Bought')
     ax3.set_xlabel('Time (days)')
 
-    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand.city, demand.state) / \
-                "{}_{}_elf_plot_electric.png".format(demand.city, demand.state)
+    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand_class.city,
+                                                                                      demand_class.state) / \
+                "{}_{}_elf_plot_electric.png".format(demand_class.city, demand_class.state)
     if file_path.is_file():
         pathlib.Path.unlink(file_path)
     plt.savefig(file_path, dpi=900)
@@ -136,11 +138,11 @@ def elf_plot_electric(elf_electric_gen_list=None, elf_electricity_bought_list=No
     plt.show()
 
 
-def elf_plot_thermal(elf_chp_gen_btuh=None, elf_tes_heat_flow_list=None, elf_boiler_dispatch_hourly=None, demand=None):
+def elf_plot_thermal(elf_chp_gen_btuh=None, elf_tes_heat_flow_list=None, elf_boiler_dispatch_hourly=None, demand_class=None):
     data1 = elf_chp_gen_btuh
     data2 = elf_tes_heat_flow_list
     data3 = elf_boiler_dispatch_hourly
-    hl_demand = demand.hl.to(ureg.Btu / ureg.hours)
+    hl_demand = demand_class.hl.to(ureg.Btu / ureg.hours)
 
     # Convert to base units before creating numpy array for plotting
     y0 = np.array([dem.magnitude for dem in hl_demand])
@@ -178,8 +180,9 @@ def elf_plot_thermal(elf_chp_gen_btuh=None, elf_tes_heat_flow_list=None, elf_boi
     ax4.set_ylabel('Aux Boiler')
     ax4.set_xlabel('Time (days)')
 
-    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand.city, demand.state) / \
-                "{}_{}_elf_plot_thermal.png".format(demand.city, demand.state)
+    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand_class.city,
+                                                                                      demand_class.state) / \
+                "{}_{}_elf_plot_thermal.png".format(demand_class.city, demand_class.state)
     if file_path.is_file():
         pathlib.Path.unlink(file_path)
     plt.savefig(file_path, dpi=900)
@@ -187,7 +190,7 @@ def elf_plot_thermal(elf_chp_gen_btuh=None, elf_tes_heat_flow_list=None, elf_boi
     plt.show()
 
 
-def elf_plot_tes_soc(elf_tes_soc=None, demand=None):
+def elf_plot_tes_soc(elf_tes_soc=None, demand_class=None):
     data = elf_tes_soc
 
     # Convert to base units before creating numpy array for plotting
@@ -208,8 +211,9 @@ def elf_plot_tes_soc(elf_tes_soc=None, demand=None):
     plt.yticks(np.arange(0, 1, 0.1))
     plt.xlabel('Time (days)')
 
-    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand.city, demand.state) / \
-                "{}_{}_elf_plot_soc.png".format(demand.city, demand.state)
+    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand_class.city,
+                                                                                      demand_class.state) / \
+                "{}_{}_elf_plot_soc.png".format(demand_class.city, demand_class.state)
     if file_path.is_file():
         pathlib.Path.unlink(file_path)
     plt.savefig(file_path, dpi=900)
@@ -222,8 +226,8 @@ TLF Plots
 """
 
 
-def tlf_plot_electric(tlf_electric_gen_list=None, tlf_electricity_bought_list=None, demand=None):
-    data0 = demand.el.to(ureg.kW)
+def tlf_plot_electric(tlf_electric_gen_list=None, tlf_electricity_bought_list=None, demand_class=None):
+    data0 = demand_class.el.to(ureg.kW)
     data1 = tlf_electric_gen_list
     data2 = tlf_electricity_bought_list
 
@@ -257,8 +261,9 @@ def tlf_plot_electric(tlf_electric_gen_list=None, tlf_electricity_bought_list=No
     ax3.set_ylabel('Electricity Bought')
     ax3.set_xlabel('Time (days)')
 
-    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand.city, demand.state) / \
-                "{}_{}_tlf_plot_electric.png".format(demand.city, demand.state)
+    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand_class.city,
+                                                                                      demand_class.state) / \
+                "{}_{}_tlf_plot_electric.png".format(demand_class.city, demand_class.state)
     if file_path.is_file():
         pathlib.Path.unlink(file_path)
     plt.savefig(file_path, dpi=900)
@@ -266,11 +271,12 @@ def tlf_plot_electric(tlf_electric_gen_list=None, tlf_electricity_bought_list=No
     plt.show()
 
 
-def tlf_plot_thermal(tlf_chp_gen_btuh=None, tlf_tes_heat_flow_list=None, tlf_boiler_dispatch_hourly=None, demand=None):
+def tlf_plot_thermal(tlf_chp_gen_btuh=None, tlf_tes_heat_flow_list=None, tlf_boiler_dispatch_hourly=None,
+                     demand_class=None):
     data1 = tlf_chp_gen_btuh
     data2 = tlf_tes_heat_flow_list
     data3 = tlf_boiler_dispatch_hourly
-    hl_demand = demand.hl.to(ureg.Btu / ureg.hours)
+    hl_demand = demand_class.hl.to(ureg.Btu / ureg.hours)
 
     # Check units
     assert data1[100].units == ureg.Btu / ureg.hours
@@ -313,8 +319,9 @@ def tlf_plot_thermal(tlf_chp_gen_btuh=None, tlf_tes_heat_flow_list=None, tlf_boi
     ax4.set_ylabel('Aux Boiler')
     ax4.set_xlabel('Time (days)')
 
-    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand.city, demand.state) / \
-                "{}_{}_tlf_plot_thermal.png".format(demand.city, demand.state)
+    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand_class.city,
+                                                                                      demand_class.state) / \
+                "{}_{}_tlf_plot_thermal.png".format(demand_class.city, demand_class.state)
     if file_path.is_file():
         pathlib.Path.unlink(file_path)
     plt.savefig(file_path, dpi=900)
@@ -322,7 +329,7 @@ def tlf_plot_thermal(tlf_chp_gen_btuh=None, tlf_tes_heat_flow_list=None, tlf_boi
     plt.show()
 
 
-def tlf_plot_tes_soc(tlf_tes_soc_list=None, demand=None):
+def tlf_plot_tes_soc(tlf_tes_soc_list=None, demand_class=None):
     data = tlf_tes_soc_list   # TES SOC data
 
     # Convert to base units before creating numpy array for plotting
@@ -343,8 +350,9 @@ def tlf_plot_tes_soc(tlf_tes_soc_list=None, demand=None):
     plt.yticks(np.arange(0, 1, 0.1))
     plt.xlabel('Time (days)')
 
-    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand.city, demand.state) / \
-                "{}_{}_tlf_plot_soc.png".format(demand.city, demand.state)
+    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand_class.city,
+                                                                                      demand_class.state) / \
+                "{}_{}_tlf_plot_soc.png".format(demand_class.city, demand_class.state)
     if file_path.is_file():
         pathlib.Path.unlink(file_path)
     plt.savefig(file_path, dpi=900)
@@ -358,8 +366,8 @@ PP PES Plots
 
 
 def pp_plot_electric(pp_electric_gen_list=None, pp_electricity_bought_list=None, pp_electricity_sold_list=None,
-                     demand=None):
-    data0 = demand.el.to(ureg.kW)
+                     demand_class=None):
+    data0 = demand_class.el.to(ureg.kW)
     data1 = pp_electric_gen_list
     data2 = pp_electricity_bought_list
     data3 = pp_electricity_sold_list
@@ -400,8 +408,9 @@ def pp_plot_electric(pp_electric_gen_list=None, pp_electricity_bought_list=None,
     ax4.set_ylabel('Electricity Sold')
     ax4.set_xlabel('Time (days)')
 
-    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand.city, demand.state) / \
-                "{}_{}_pp_plot_electric.png".format(demand.city, demand.state)
+    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand_class.city,
+                                                                                      demand_class.state) / \
+                "{}_{}_pp_plot_electric.png".format(demand_class.city, demand_class.state)
     if file_path.is_file():
         pathlib.Path.unlink(file_path)
     plt.savefig(file_path, dpi=900)
@@ -409,11 +418,12 @@ def pp_plot_electric(pp_electric_gen_list=None, pp_electricity_bought_list=None,
     plt.show()
 
 
-def pp_plot_thermal(pp_chp_gen_btuh=None, pp_tes_heat_flow_list=None, pp_boiler_dispatch_hourly=None, demand=None):
+def pp_plot_thermal(pp_chp_gen_btuh=None, pp_tes_heat_flow_list=None, pp_boiler_dispatch_hourly=None,
+                    demand_class=None):
     data1 = pp_chp_gen_btuh
     data2 = pp_tes_heat_flow_list
     data3 = pp_boiler_dispatch_hourly
-    hl_demand = demand.hl.to(ureg.Btu / ureg.hours)
+    hl_demand = demand_class.hl.to(ureg.Btu / ureg.hours)
 
     # Convert to base units before creating numpy array for plotting
     y0 = np.array([dem.magnitude for dem in hl_demand])
@@ -451,8 +461,9 @@ def pp_plot_thermal(pp_chp_gen_btuh=None, pp_tes_heat_flow_list=None, pp_boiler_
     ax4.set_ylabel('Aux Boiler')
     ax4.set_xlabel('Time (days)')
 
-    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand.city, demand.state) / \
-                "{}_{}_pp_plot_thermal.png".format(demand.city, demand.state)
+    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand_class.city,
+                                                                                      demand_class.state) / \
+                "{}_{}_pp_plot_thermal.png".format(demand_class.city, demand_class.state)
     if file_path.is_file():
         pathlib.Path.unlink(file_path)
     plt.savefig(file_path, dpi=900)
@@ -460,7 +471,7 @@ def pp_plot_thermal(pp_chp_gen_btuh=None, pp_tes_heat_flow_list=None, pp_boiler_
     plt.show()
 
 
-def pp_plot_tes_soc(pp_tes_soc=None, demand=None):
+def pp_plot_tes_soc(pp_tes_soc=None, demand_class=None):
     data = pp_tes_soc
 
     # Convert to base units before creating numpy array for plotting
@@ -481,8 +492,9 @@ def pp_plot_tes_soc(pp_tes_soc=None, demand=None):
     plt.yticks(np.arange(0, 1, 0.1))
     plt.xlabel('Time (days)')
 
-    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand.city, demand.state) / \
-                "{}_{}_pp_plot_soc.png".format(demand.city, demand.state)
+    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand_class.city,
+                                                                                      demand_class.state) / \
+                "{}_{}_pp_plot_soc.png".format(demand_class.city, demand_class.state)
     if file_path.is_file():
         pathlib.Path.unlink(file_path)
     plt.savefig(file_path, dpi=900)
@@ -496,8 +508,8 @@ PP Peak Plots
 
 
 def peak_plot_electric(peak_electric_gen_list=None, peak_electricity_bought_list=None, peak_electricity_sold_list=None,
-                       demand=None):
-    data0 = demand.el.to(ureg.kW)
+                       demand_class=None):
+    data0 = demand_class.el.to(ureg.kW)
     data1 = peak_electric_gen_list
     data2 = peak_electricity_bought_list
     data3 = peak_electricity_sold_list
@@ -538,8 +550,9 @@ def peak_plot_electric(peak_electric_gen_list=None, peak_electricity_bought_list
     ax4.set_ylabel('Electricity Sold')
     ax4.set_xlabel('Time (days)')
 
-    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand.city, demand.state) / \
-                "{}_{}_peak_plot_electric.png".format(demand.city, demand.state)
+    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand_class.city,
+                                                                                      demand_class.state) / \
+                "{}_{}_peak_plot_electric.png".format(demand_class.city, demand_class.state)
     if file_path.is_file():
         pathlib.Path.unlink(file_path)
     plt.savefig(file_path, dpi=900)
@@ -547,11 +560,12 @@ def peak_plot_electric(peak_electric_gen_list=None, peak_electricity_bought_list
     plt.show()
 
 
-def peak_plot_thermal(peak_chp_gen_btuh=None, peak_tes_heat_flow_list=None, peak_boiler_dispatch_hourly=None, demand=None):
+def peak_plot_thermal(peak_chp_gen_btuh=None, peak_tes_heat_flow_list=None, peak_boiler_dispatch_hourly=None,
+                      demand_class=None):
     data1 = peak_chp_gen_btuh
     data2 = peak_tes_heat_flow_list
     data3 = peak_boiler_dispatch_hourly
-    hl_demand = demand.hl.to(ureg.Btu / ureg.hours)
+    hl_demand = demand_class.hl.to(ureg.Btu / ureg.hours)
 
     # Convert to base units before creating numpy array for plotting
     y0 = np.array([dem.magnitude for dem in hl_demand])
@@ -589,8 +603,9 @@ def peak_plot_thermal(peak_chp_gen_btuh=None, peak_tes_heat_flow_list=None, peak
     ax4.set_ylabel('Aux Boiler')
     ax4.set_xlabel('Time (days)')
 
-    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand.city, demand.state) / \
-                "{}_{}_peak_plot_thermal.png".format(demand.city, demand.state)
+    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand_class.city,
+                                                                                      demand_class.state) / \
+                "{}_{}_peak_plot_thermal.png".format(demand_class.city, demand_class.state)
     if file_path.is_file():
         pathlib.Path.unlink(file_path)
     plt.savefig(file_path, dpi=900)
@@ -598,7 +613,7 @@ def peak_plot_thermal(peak_chp_gen_btuh=None, peak_tes_heat_flow_list=None, peak
     plt.show()
 
 
-def peak_plot_tes_soc(peak_tes_soc=None, demand=None):
+def peak_plot_tes_soc(peak_tes_soc=None, demand_class=None):
     data = peak_tes_soc
 
     # Convert to base units before creating numpy array for plotting
@@ -619,8 +634,9 @@ def peak_plot_tes_soc(peak_tes_soc=None, demand=None):
     plt.yticks(np.arange(0, 1, 0.1))
     plt.xlabel('Time (days)')
 
-    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand.city, demand.state) / \
-                "{}_{}_peak_plot_soc.png".format(demand.city, demand.state)
+    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand_class.city,
+                                                                                      demand_class.state) / \
+                "{}_{}_peak_plot_soc.png".format(demand_class.city, demand_class.state)
     if file_path.is_file():
         pathlib.Path.unlink(file_path)
     plt.savefig(file_path, dpi=900)
