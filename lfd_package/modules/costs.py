@@ -5,7 +5,6 @@ Description: Where energy costs are calculated
 from lfd_package.modules.__init__ import ureg, Q_
 
 
-# TODO: De-couple apartment energy charges from office and corridor charges. Modify payback period calc accordingly.
 def calc_electric_charges(class_dict=None, electricity_bought_hourly=None, office_only=False, apt_only=False):
     """
     Calculates electricity charges based on the utility rate schedule for the given location.
