@@ -7,6 +7,7 @@ Module Description:
 import matplotlib.pyplot as plt
 import numpy as np
 import pathlib
+import math
 from lfd_package.modules import sizing_calcs as sizing
 from lfd_package.modules.__init__ import ureg
 
@@ -25,7 +26,11 @@ def plot_max_rectangle_example(demand=None, chp_size=None):
     plt.vlines(x=x2_value, colors='purple', ymin=0, ymax=y2_value, linestyles='--')
     plt.plot((0, x2_value), (y2_value, y2_value), color='purple', label='Max Rectangle CHP Size', linestyle='--')
     plt.ylabel('Demand (kW)')
-    plt.yticks(np.arange(0, y1.max(), y1.max()/10))
+    annual_sum = sum(demand)
+    if annual_sum.magnitude <= 1:
+        plt.yticks(np.arange(0, y1.max(), y1.max()))
+    else:
+        plt.yticks(np.arange(0, y1.max(), y1.max()/10))
     plt.xlabel('Percent Hours')
     plt.legend()
 
@@ -41,7 +46,11 @@ def plot_electrical_demand_curve(demand=None):
     plt.plot(x1, y1)
     plt.title('Electrical Demand Curve')
     plt.ylabel('Demand (kW)')
-    plt.yticks(np.arange(0, y1.max(), y1.max()/10))
+    annual_sum = sum(demand)
+    if annual_sum.magnitude <= 1:
+        plt.yticks(np.arange(0, y1.max(), y1.max()))
+    else:
+        plt.yticks(np.arange(0, y1.max(), y1.max()/10))
     plt.xlabel('Percent Hours')
 
     file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand.city, demand.state) / \
@@ -62,7 +71,11 @@ def plot_thermal_demand_curve(demand=None):
     plt.plot(x2, y2)
     plt.title('Thermal Demand Curve')
     plt.ylabel('Demand (Btu/hr)')
-    plt.yticks(np.arange(0, y2.max(), y2.max()/10))
+    annual_sum = sum(demand)
+    if annual_sum.magnitude <= 1:
+        plt.yticks(np.arange(0, y2.max(), y2.max()))
+    else:
+        plt.yticks(np.arange(0, y2.max(), y2.max()/10))
     plt.xlabel('Percent Hours')
 
     file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand.city, demand.state) / \
@@ -105,7 +118,7 @@ def elf_plot_electric(elf_electric_gen_list=None, elf_electricity_bought_list=No
 
     # Set up plot
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3, sharex='all', sharey='all')
-    fig.suptitle('ELF Annual Electrical Demand and Generation, Daily Averages [kW]')
+    fig.suptitle('ELF Electrical Demand and Generation, Daily Avg [kW]')
     ax1.plot(daily_kwh_dem_array)
     ax1.set_ylabel('Demand')
     ax2.plot(daily_kwh_chp_array)
@@ -154,7 +167,7 @@ def elf_plot_thermal(elf_chp_gen_btuh=None, elf_tes_heat_flow_list=None, elf_boi
 
     # Set up plot
     fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, sharex='all', sharey='all')
-    fig.suptitle('ELF Annual Thermal Demand and Generation, Daily Averages [Btu/hr]')
+    fig.suptitle('ELF Thermal Demand and Generation, Daily Avg [Btu/hr]')
     ax1.plot(daily_btu_dem_array)
     ax1.set_ylabel('Demand')
     ax2.plot(daily_btu_chp_array)
@@ -235,7 +248,7 @@ def tlf_plot_electric(tlf_electric_gen_list=None, tlf_electricity_bought_list=No
 
     # Set up plot
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3, sharex='all', sharey='all')
-    fig.suptitle('TLF Annual Electrical Demand and Generation, Daily Averages [kW]')
+    fig.suptitle('TLF Electrical Demand and Generation, Daily Avg [kW]')
     ax1.plot(daily_kwh_dem_array)
     ax1.set_ylabel('Demand')
     ax2.plot(daily_kwh_chp_array)
@@ -289,7 +302,7 @@ def tlf_plot_thermal(tlf_chp_gen_btuh=None, tlf_tes_heat_flow_list=None, tlf_boi
 
     # Set up plot
     fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, sharex='all', sharey='all')
-    fig.suptitle('TLF Annual Thermal Demand and Generation, Daily Averages [Btu/hr]')
+    fig.suptitle('TLF Thermal Demand and Generation, Daily Avg [Btu/hr]')
     ax1.plot(daily_btu_dem_array)
     ax1.set_ylabel('Demand')
     ax2.plot(daily_btu_chp_array)
@@ -376,7 +389,7 @@ def pp_plot_electric(pp_electric_gen_list=None, pp_electricity_bought_list=None,
 
     # Set up plot
     fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, sharex='all', sharey='all')
-    fig.suptitle('PP (PES CHP Size) Annual Electrical Demand, Generation, and Exports, Daily Averages [kW]')
+    fig.suptitle('PP (PES CHP Size) Electrical Demand, Generation, and Exports, Daily Aveg [kW]')
     ax1.plot(daily_kwh_dem_array)
     ax1.set_ylabel('Demand')
     ax2.plot(daily_kwh_chp_array)
@@ -427,7 +440,7 @@ def pp_plot_thermal(pp_chp_gen_btuh=None, pp_tes_heat_flow_list=None, pp_boiler_
 
     # Set up plot
     fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, sharex='all', sharey='all')
-    fig.suptitle('PP (PES CHP Size) Annual Thermal Demand and Generation, Daily Averages [Btu/hr]')
+    fig.suptitle('PP (PES CHP Size) Thermal Demand and Generation, Daily Avg [Btu/hr]')
     ax1.plot(daily_btu_dem_array)
     ax1.set_ylabel('Demand')
     ax2.plot(daily_btu_chp_array)
@@ -463,7 +476,7 @@ def pp_plot_tes_soc(pp_tes_soc=None, demand=None):
 
     # Set up plots
     plt.plot(daily_btu_array)
-    plt.title('PP (PES CHP Size) Thermal Storage SOC, Daily Avg')
+    plt.title('PP (PES CHP Size) TES SOC, Daily Avg')
     plt.ylabel('SOC')
     plt.yticks(np.arange(0, 1, 0.1))
     plt.xlabel('Time (days)')
@@ -514,7 +527,7 @@ def peak_plot_electric(peak_electric_gen_list=None, peak_electricity_bought_list
 
     # Set up plot
     fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, sharex='all', sharey='all')
-    fig.suptitle('PP (Peak CHP Size) Annual Electrical Demand, Generation, and Exports, Daily Averages [kW]')
+    fig.suptitle('PP (Peak CHP Size) Electrical Demand, Generation, and Exports, Daily Avg [kW]')
     ax1.plot(daily_kwh_dem_array)
     ax1.set_ylabel('Demand')
     ax2.plot(daily_kwh_chp_array)
@@ -565,7 +578,7 @@ def peak_plot_thermal(peak_chp_gen_btuh=None, peak_tes_heat_flow_list=None, peak
 
     # Set up plot
     fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, sharex='all', sharey='all')
-    fig.suptitle('PP (Peak CHP Size) Annual Thermal Demand and Generation, Daily Averages [Btu/hr]')
+    fig.suptitle('PP (Peak CHP Size) Thermal Demand and Generation, Daily Avg [Btu/hr]')
     ax1.plot(daily_btu_dem_array)
     ax1.set_ylabel('Demand')
     ax2.plot(daily_btu_chp_array)
