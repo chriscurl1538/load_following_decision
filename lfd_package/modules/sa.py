@@ -10,12 +10,12 @@ Module Description:
 
 def make_param_list(base=None, dev=None, allow_neg=False, has_units=True):
     if has_units is True:
-        lower = base.magnitude - dev
-        upper = base.magnitude + dev
+        lower = base.magnitude - abs(dev)
+        upper = base.magnitude + abs(dev)
         unit = base.units
     else:
-        lower = base - dev
-        upper = base + dev
+        lower = base - abs(dev)
+        upper = base + abs(dev)
         unit = None
     if lower < 0 and allow_neg is False:
         diff = abs(lower)

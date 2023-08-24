@@ -635,29 +635,42 @@ def main():
         -------
 
         """
-        # Set deviation from base values
-        el_cost_dev = 0.25 * electrical_cost_new
-        th_cost_dev = 0.25 * thermal_cost_new
-        tes_size_dev = 0.25 * tes_size
+        # Set SA analysis range for TES. Check for size of zero
+        if tes_size == 0:
+            sa_tes_size_list = [0, 500]
+        else:
+            tes_size_dev = 0.25 * tes_size
+            sa_tes_size_list, unit_tes = sa.make_param_list(base=tes_size, dev=tes_size_dev, has_units=False)
 
-        # Create value ranges for analysis
-        sa_electric_cost_list_elf, unit_ec = sa.make_param_list(base=electrical_cost_new, dev=el_cost_dev,
+        # Set SA analysis range for thermal costs. Check for value of zero
+        if thermal_cost_new == 0:
+            sa_thermal_cost_list = [0, 500]
+        else:
+            th_cost_dev = 0.25 * thermal_cost_new
+            sa_thermal_cost_list, unit_tc = sa.make_param_list(base=thermal_cost_new, dev=th_cost_dev, has_units=False)
+
+        # Set SA analysis range for electrical costs. Check for value of zero
+        if electrical_cost_new == 0:
+            sa_electric_cost_list = [0, 500]
+        else:
+            el_cost_dev = 0.25 * electrical_cost_new
+            sa_electric_cost_list, unit_ec = sa.make_param_list(base=electrical_cost_new, dev=el_cost_dev,
                                                                 has_units=False)
-        sa_thermal_cost_list_elf, unit_tc = sa.make_param_list(base=thermal_cost_new, dev=th_cost_dev, has_units=False)
-        sa_tes_size_list_elf, unit_tes = sa.make_param_list(base=tes_size, dev=tes_size_dev, has_units=False)
+
+        # Set SA analysis range for financial incentives as percent of installed costs
         sa_pct_incentives_list = [0, max_pct_incentive]
 
         # Define problem to analyze
         problem = {
             'num_vars': 4,
             'names': ['thermal_cost_new', 'electrical_cost_new', 'tes_size', 'pct_incentive'],
-            'bounds': [sa_thermal_cost_list_elf,
-                       sa_electric_cost_list_elf,
-                       sa_tes_size_list_elf,
+            'bounds': [sa_electric_cost_list,
+                       sa_thermal_cost_list,
+                       sa_tes_size_list,
                        sa_pct_incentives_list]
         }
 
-        param_values = saltelli.sample(problem, 10)    # TODO: Consider best sample size value (~1050)
+        param_values = saltelli.sample(problem, 1050)    # TODO: Consider best sample size value (~1050)
 
         Y = np.zeros([param_values.shape[0]])
 
