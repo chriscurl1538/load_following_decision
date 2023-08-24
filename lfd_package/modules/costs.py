@@ -6,12 +6,16 @@ from lfd_package.modules.__init__ import ureg, Q_
 
 
 # TODO: De-couple apartment energy charges from office and corridor charges. Modify payback period calc accordingly.
-def calc_electric_charges(class_dict=None, electricity_bought_hourly=None):
+def calc_electric_charges(class_dict=None, electricity_bought_hourly=None, office_only=False, apt_only=False):
     """
     Calculates electricity charges based on the utility rate schedule for the given location.
 
     Parameters
     ----------
+    apt_only: bool
+        Determines whether charges assessed are for tenant loads only
+    office_only: bool
+        Determines whether charges assessed are for non-tenant loads only
     class_dict: dict
         contains initialized class data using CLI inputs (see command_line.py)
     electricity_bought_hourly: list
@@ -22,6 +26,17 @@ def calc_electric_charges(class_dict=None, electricity_bought_hourly=None):
     total: Quantity
         contains the total electricity charges for the year. Units are dimensionless.
     """
+    if office_only is True or apt_only is True:
+        assert office_only != apt_only
+
+    # Adjust calculation depending on whether we are analyzing total building loads or non-tenant loads
+    if office_only is True:
+        pct = 1 / (class_dict["costs"].no_apts + 1)
+    elif apt_only is True:
+        pct = class_dict["costs"].no_apts / (class_dict["costs"].no_apts + 1)
+    else:
+        pct = 1
+
     if sum(electricity_bought_hourly) == 0:
         return Q_(0, '')
     else:
@@ -59,7 +74,7 @@ def calc_electric_charges(class_dict=None, electricity_bought_hourly=None):
                 total_base_cost = sum(annual_base_cost)
                 total = annual_rate_cost + total_base_cost
                 total.ito('')
-                return total
+                return total * pct
 
             elif item == "schedule_energy_block":
                 block1_cap = Q_(el_cost_dict[item]["energy_block1_cap"], str(units))
@@ -112,7 +127,7 @@ def calc_electric_charges(class_dict=None, electricity_bought_hourly=None):
 
         total = sum(annual_base_cost) + sum(annual_rate_cost)
         total.ito_reduced_units()
-        return total
+        return total * pct
 
 
 def seasonal_block_rates(sch=None, units=None, el_cost_dict=None, costs_class=None, electricity_bought_hourly=None):
@@ -202,12 +217,16 @@ def seasonal_block_rates(sch=None, units=None, el_cost_dict=None, costs_class=No
         return total_base_cost, total_rate_cost
 
 
-def calc_fuel_charges(class_dict=None, fuel_bought_hourly=None):
+def calc_fuel_charges(class_dict=None, fuel_bought_hourly=None, office_only=False, apt_only=False):
     """
     Calculates the cost of natural gas using the rate schedule associated with the gas utility for the given location.
 
     Parameters
     ----------
+    apt_only: bool
+        Determines whether charges assessed are for tenant loads only
+    office_only: bool
+        Determines whether charges assessed are for non-tenant loads only
     class_dict: dict
         contains initialized class data using CLI inputs (see command_line.py)
     fuel_bought_hourly: list
@@ -222,6 +241,17 @@ def calc_fuel_charges(class_dict=None, fuel_bought_hourly=None):
     min_energy_use_annual = min(monthly_energy_bought_list)
     annual_base_cost = []
     annual_rate_cost = []
+
+    if office_only is True or apt_only is True:
+        assert office_only != apt_only
+
+    # Adjust calculation depending on whether we are analyzing total building loads or non-tenant loads
+    if office_only is True:
+        pct = 1 / (class_dict["costs"].no_apts + 1)
+    elif apt_only is True:
+        pct = class_dict["costs"].no_apts / (class_dict["costs"].no_apts + 1)
+    else:
+        pct = 1
 
     # Check metering type
     if class_dict['costs'].meter_type_fuel == "master_metered_fuel":
@@ -289,8 +319,6 @@ def calc_fuel_charges(class_dict=None, fuel_bought_hourly=None):
                 annual_b3_rate_cost = rate_b3 * sum(monthly_energy_bought_b3)
                 annual_rate_cost.append(annual_b3_rate_cost)
 
-            # TODO: Add other rate schedules here.
-
             total = sum(annual_base_cost) + sum(annual_rate_cost)
             total.ito_reduced_units()
             return total
@@ -344,25 +372,22 @@ def calc_installed_om_cost(class_dict=None, dispatch_hourly=None, size=None, cla
     om_cost_list = []
 
     if size.magnitude == 0:
-        return Q_(0, '')
+        return Q_(0, ''), Q_(0, '')
 
-    if class_str == "tes":
-        installed_cost = (size * class_info.installed_cost).to('')
-        return installed_cost
+    for rate in dispatch_hourly:
+        if class_str == "tes":
+            rate = rate * Q_(1, ureg.hours)
+        cost_hourly = (abs(rate) * class_info.om_cost).to('')
+        om_cost_list.append(cost_hourly)
 
-    elif class_str == "chp":
-        for rate in dispatch_hourly:
-            cost_hourly = (rate * class_info.om_cost).to('')
-            om_cost_list.append(cost_hourly)
-
-        om_cost = sum(om_cost_list)
-        installed_cost = (size * class_info.installed_cost).to('')
-        return installed_cost, om_cost
+    om_cost = sum(om_cost_list)
+    installed_cost = (size * class_info.installed_cost).to('')
+    return installed_cost, om_cost
 
 
-def calc_payback(thermal_cost_new=None, electrical_cost_new=None, tes_size=None, pct_incentive=0, class_dict=None,
-                 thermal_cost_baseline=None, electrical_cost_baseline=None, load_following_type="ELF", chp_size=None,
-                 chp_gen_hourly_kwh=None, tes_heat_flow_list=None, electricity_sold_hourly=None):
+def calc_costs(thermal_cost_new=None, electrical_cost_new=None, tes_size=None, pct_incentive=0, class_dict=None,
+               thermal_cost_baseline=None, electrical_cost_baseline=None, load_following_type="ELF", chp_size=None,
+               chp_gen_hourly_kwh=None, tes_heat_flow_list=None, electricity_sold_hourly=None):
     """
     Calculates the payback period of CHP and TES installation.
 
@@ -397,28 +422,42 @@ def calc_payback(thermal_cost_new=None, electrical_cost_new=None, tes_size=None,
 
     Returns
     -------
-    simple_payback: Quantity
-        The payback period of the CHP + TES installation in units of years.
+    cost_data_dict: dict
+        This dictionary contains the equipment installed costs, O&M costs, buyback revenue, and payback period
+        (with and without incentives). All units are dimensionless.
     """
     # Calculate Cost Savings
     thermal_cost_savings = thermal_cost_baseline - thermal_cost_new
     if load_following_type == "PP" or load_following_type == "Peak":
         revenue = calc_pp_revenue(class_dict=class_dict, electricity_sold_hourly=electricity_sold_hourly)
-        electrical_cost_savings = electrical_cost_baseline - electrical_cost_new + revenue
     else:
-        electrical_cost_savings = electrical_cost_baseline - electrical_cost_new
+        revenue = Q_(0, '')
+    electrical_cost_savings = electrical_cost_baseline - electrical_cost_new + revenue
     total_cost_savings = electrical_cost_savings + thermal_cost_savings
 
     # Implementation Cost (material cost + installation cost)
-    installed_cost_chp, incremental_cost = calc_installed_om_cost(class_dict=class_dict, size=chp_size,
-                                                                  class_str="chp",
-                                                                  dispatch_hourly=chp_gen_hourly_kwh)
-    installed_cost_tes = calc_installed_om_cost(class_dict=class_dict, size=tes_size, class_str="tes",
-                                                dispatch_hourly=tes_heat_flow_list)
+    installed_cost_chp, om_cost_chp = calc_installed_om_cost(class_dict=class_dict, size=chp_size,
+                                                             class_str="chp",
+                                                             dispatch_hourly=chp_gen_hourly_kwh)
+    installed_cost_tes, om_cost_tes = calc_installed_om_cost(class_dict=class_dict, size=tes_size, class_str="tes",
+                                                             dispatch_hourly=tes_heat_flow_list)
+    incremental_cost = om_cost_chp + om_cost_tes
     total_installed_cost = installed_cost_chp + installed_cost_tes
-    implementation_cost = installed_cost_chp + installed_cost_tes - (pct_incentive * total_installed_cost)
+    implementation_cost_incent = installed_cost_chp + installed_cost_tes - (pct_incentive * total_installed_cost)
+    implementation_cost_norm = installed_cost_chp + installed_cost_tes
 
     # Simple Payback Period (implementation cost / annual cost savings)
-    simple_payback = implementation_cost / (total_cost_savings - incremental_cost) * ureg.year
+    incentive_payback = implementation_cost_incent / (total_cost_savings - incremental_cost) * ureg.year
+    simple_payback = implementation_cost_norm / (total_cost_savings - incremental_cost) * ureg.year
 
-    return simple_payback
+    cost_data_dict = {
+        "chp_installed_cost": installed_cost_chp,
+        "tes_installed_cost": installed_cost_tes,
+        "chp_om_cost": om_cost_chp,
+        "tes_om_cost": om_cost_tes,
+        "pp_rev": revenue,
+        "simple_payback": simple_payback,
+        "incentive_payback": incentive_payback
+    }
+
+    return cost_data_dict
