@@ -105,7 +105,6 @@ grid_efficiency: 0.4   # between 0-1, national average
 
 # TES Storage Initialization
 tes_init: 0.5   # initial SOC
-tes_energy_density: 80  # kWh/m^3
 
 # Incremental Equipment Costs (installed cost = labor, material, and installation)
 chp_installed_cost: 3453.34   # $/kW
