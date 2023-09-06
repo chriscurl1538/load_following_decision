@@ -102,8 +102,10 @@ class EnergyDemand:
         self.summer_weight_el, self.winter_weight_el = self.seasonal_weights_hourly_data(dem_profile=self.el)
         self.summer_weight_hl, self.winter_weight_hl = self.seasonal_weights_hourly_data(dem_profile=self.hl)
 
-        self.annual_sum_el = self.sum_annual_demand(array=self.el).to(ureg.kWh)
-        self.annual_sum_hl = self.sum_annual_demand(array=self.hl).to(ureg.Btu)
+        sum_kw = sum(self.el) * Q_(1, ureg.hours)
+        self.annual_sum_el = sum_kw.to(ureg.kWh)
+        sum_btuh = sum(self.hl) * Q_(1, ureg.hours)
+        self.annual_sum_hl = sum_btuh.to(ureg.Btu)
 
         self.annual_peak_hl = max(self.hl)
         self.annual_peak_el = max(self.el)
@@ -157,12 +159,6 @@ class EnergyDemand:
             float_list.append(f)
         float_array = np.array(float_list, dtype=float)
         return float_array
-
-    def sum_annual_demand(self, array=None):
-        annual_hours = 8760 * ureg.hour
-        avg_dem = sum(array) / len(array)
-        total_energy = avg_dem * annual_hours
-        return total_energy
 
     def seasonal_weights_hourly_data(self, dem_profile=None):
         summer_start = int(self.summer_start_month)
@@ -387,7 +383,7 @@ class CHP(EnergyDemand):
 
         # CHP Specifications
         try:
-            chp_min_pl = 1 / turn_down_ratio
+            chp_min_pl = 1 / float(turn_down_ratio)
         except ZeroDivisionError:
             chp_min_pl = 0
         self.min_pl = chp_min_pl
@@ -399,7 +395,7 @@ class CHP(EnergyDemand):
 
 class TES(EnergyDemand):
     def __init__(self, file_name, city, state, grid_efficiency, summer_start_inclusive, winter_start_inclusive,
-                 sim_ab_efficiency, start=None, energy_density=None, tes_installed_cost=None, tes_om_cost=None):
+                 sim_ab_efficiency, start=None, tes_installed_cost=None, tes_om_cost=None):
         """
         This class defines the specifications and costs of the TES (thermal energy storage) system.
 
@@ -407,8 +403,6 @@ class TES(EnergyDemand):
         ----------
         start: Quantity (float)
             The starting energy level of the TES system when the simulation begins in terms of SOC
-        energy_density: Quantity
-            The energy density of the fluid being stored (water). Units are in kWh/m3.
         tes_installed_cost: Quantity
             contains the labor, material, and installation cost for the TES
             unit. Units are in $/kWh stored.
@@ -424,7 +418,6 @@ class TES(EnergyDemand):
 
         # TES Specifications
         self.start = float(start)
-        self.energy_density = float(energy_density) * (ureg.kWh / ureg.meters**3)
 
         # TES Materials Costs
         self.installed_cost = float(tes_installed_cost) * (1/ureg.kWh)
