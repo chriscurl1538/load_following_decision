@@ -11,7 +11,7 @@ from lfd_package.modules import sizing_calcs as sizing
 from lfd_package.modules.__init__ import ureg
 
 
-def plot_max_rectangle_example(demand_class=None, chp_size=None):
+def plot_max_rectangle_electric(demand_class=None, chp_size=None):
     el_demand = demand_class.el.to(ureg.kW)
     y1 = sizing.create_demand_curve_array(el_demand)[1].magnitude
     x1 = sizing.create_demand_curve_array(el_demand)[0]
@@ -32,6 +32,45 @@ def plot_max_rectangle_example(demand_class=None, chp_size=None):
         plt.yticks(np.arange(0, y1.max(), y1.max()/10))
     plt.xlabel('Percent Hours')
     plt.legend()
+
+    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand_class.city,
+                                                                                      demand_class.state) / \
+                "{}_{}_MR_size_thermal.png".format(demand_class.city, demand_class.state)
+    if file_path.is_file():
+        pathlib.Path.unlink(file_path)
+    plt.savefig(file_path, dpi=900)
+
+    plt.show()
+
+
+def plot_max_rectangle_thermal(demand_class=None, chp_size=None):
+    th_demand = demand_class.hl.to(ureg.kW)
+    y1 = sizing.create_demand_curve_array(th_demand)[1].magnitude
+    x1 = sizing.create_demand_curve_array(th_demand)[0]
+
+    y2_value = sizing.electrical_output_to_thermal_output(chp_size).magnitude
+    y2_index = min(range(len(y1)), key=lambda i: abs(y1[i] - y2_value))
+    x2_value = x1[y2_index]
+
+    # Set up plot
+    plt.plot(x1, y1, label='Thermal Demand Curve')
+    plt.vlines(x=x2_value, colors='purple', ymin=0, ymax=y2_value, linestyles='--')
+    plt.plot((0, x2_value), (y2_value, y2_value), color='purple', label='Max Rectangle CHP Size', linestyle='--')
+    plt.ylabel('Demand (kW)')
+    annual_sum = sum(th_demand)
+    if annual_sum.magnitude <= 1:
+        plt.yticks(np.arange(0, 10, 1))
+    else:
+        plt.yticks(np.arange(0, y1.max(), y1.max() / 10))
+    plt.xlabel('Percent Hours')
+    plt.legend()
+
+    file_path = pathlib.Path(__file__).parent.parent.resolve() / "plots/{}_{}".format(demand_class.city,
+                                                                                      demand_class.state) / \
+                "{}_{}_MR_size_electrical.png".format(demand_class.city, demand_class.state)
+    if file_path.is_file():
+        pathlib.Path.unlink(file_path)
+    plt.savefig(file_path, dpi=900)
 
     plt.show()
 
