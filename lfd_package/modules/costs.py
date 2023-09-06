@@ -5,16 +5,12 @@ Description: Where energy costs are calculated
 from lfd_package.modules.__init__ import ureg, Q_
 
 
-def calc_electric_charges(class_dict=None, electricity_bought_hourly=None, office_only=False, apt_only=False):
+def calc_electric_charges(class_dict=None, electricity_bought_hourly=None, pp_rev=False):
     """
     Calculates electricity charges based on the utility rate schedule for the given location.
 
     Parameters
     ----------
-    apt_only: bool
-        Determines whether charges assessed are for tenant loads only
-    office_only: bool
-        Determines whether charges assessed are for non-tenant loads only
     class_dict: dict
         contains initialized class data using CLI inputs (see command_line.py)
     electricity_bought_hourly: list
@@ -25,16 +21,6 @@ def calc_electric_charges(class_dict=None, electricity_bought_hourly=None, offic
     total: Quantity
         contains the total electricity charges for the year. Units are dimensionless.
     """
-    if office_only is True or apt_only is True:
-        assert office_only != apt_only
-
-    # Adjust calculation depending on whether we are analyzing total building loads or non-tenant loads
-    if office_only is True:
-        pct = 1 / (class_dict["costs"].no_apts + 1)
-    elif apt_only is True:
-        pct = class_dict["costs"].no_apts / (class_dict["costs"].no_apts + 1)
-    else:
-        pct = 1
 
     if sum(electricity_bought_hourly) == 0:
         return Q_(0, '')
@@ -59,8 +45,10 @@ def calc_electric_charges(class_dict=None, electricity_bought_hourly=None, offic
 
         # Loop through possible electric rate schedule types for the chosen meter type
         for item in class_dict['costs'].schedule_type_el:
-            if class_dict['costs'].meter_type_el == "single_metered_el":
-                building_base_cost = el_cost_dict[item]["monthly_base_charge"] * class_dict['costs'].no_apts
+            if pp_rev is True:
+                annual_base_cost.append(Q_(0, ''))
+            elif class_dict['costs'].meter_type_el == "single_metered_el":
+                building_base_cost = el_cost_dict[item]["monthly_base_charge"] * (class_dict['costs'].no_apts + 1)
                 annual_base_cost.append(Q_(12 * building_base_cost, ''))
             else:
                 annual_base_cost.append(Q_(12 * el_cost_dict[item]["monthly_base_charge"], ''))
@@ -73,7 +61,7 @@ def calc_electric_charges(class_dict=None, electricity_bought_hourly=None, offic
                 total_base_cost = sum(annual_base_cost)
                 total = annual_rate_cost + total_base_cost
                 total.ito('')
-                return total * pct
+                return total
 
             elif item == "schedule_energy_block":
                 block1_cap = Q_(el_cost_dict[item]["energy_block1_cap"], str(units))
@@ -126,7 +114,7 @@ def calc_electric_charges(class_dict=None, electricity_bought_hourly=None, offic
 
         total = sum(annual_base_cost) + sum(annual_rate_cost)
         total.ito_reduced_units()
-        return total * pct
+        return total
 
 
 def seasonal_block_rates(sch=None, units=None, el_cost_dict=None, costs_class=None, electricity_bought_hourly=None):
@@ -216,16 +204,12 @@ def seasonal_block_rates(sch=None, units=None, el_cost_dict=None, costs_class=No
         return total_base_cost, total_rate_cost
 
 
-def calc_fuel_charges(class_dict=None, fuel_bought_hourly=None, office_only=False, apt_only=False):
+def calc_fuel_charges(class_dict=None, fuel_bought_hourly=None):
     """
     Calculates the cost of natural gas using the rate schedule associated with the gas utility for the given location.
 
     Parameters
     ----------
-    apt_only: bool
-        Determines whether charges assessed are for tenant loads only
-    office_only: bool
-        Determines whether charges assessed are for non-tenant loads only
     class_dict: dict
         contains initialized class data using CLI inputs (see command_line.py)
     fuel_bought_hourly: list
@@ -240,17 +224,6 @@ def calc_fuel_charges(class_dict=None, fuel_bought_hourly=None, office_only=Fals
     min_energy_use_annual = min(monthly_energy_bought_list)
     annual_base_cost = []
     annual_rate_cost = []
-
-    if office_only is True or apt_only is True:
-        assert office_only != apt_only
-
-    # Adjust calculation depending on whether we are analyzing total building loads or non-tenant loads
-    if office_only is True:
-        pct = 1 / (class_dict["costs"].no_apts + 1)
-    elif apt_only is True:
-        pct = class_dict["costs"].no_apts / (class_dict["costs"].no_apts + 1)
-    else:
-        pct = 1
 
     # Check metering type
     if class_dict['costs'].meter_type_fuel == "master_metered_fuel":
@@ -269,7 +242,7 @@ def calc_fuel_charges(class_dict=None, fuel_bought_hourly=None, office_only=Fals
     for item in class_dict['costs'].schedule_type_fuel:
         # Add annual base costs to list
         if class_dict['costs'].meter_type_fuel == "single_metered_fuel":
-            building_base_cost = fuel_cost_dict[item]["monthly_base_charge"] * class_dict['costs'].no_apts
+            building_base_cost = fuel_cost_dict[item]["monthly_base_charge"] * (class_dict['costs'].no_apts + 1)
             annual_base_cost.append(Q_(12 * building_base_cost, ''))
         else:
             annual_base_cost.append(Q_(12 * fuel_cost_dict[item]["monthly_base_charge"], ''))
@@ -340,7 +313,7 @@ def calc_pp_revenue(class_dict=None, electricity_sold_hourly=None):
     rev: Quantity
         sum of annual revenue from selling electricity. Units are dimensionless.
     """
-    rev = calc_electric_charges(class_dict=class_dict, electricity_bought_hourly=electricity_sold_hourly)
+    rev = calc_electric_charges(class_dict=class_dict, electricity_bought_hourly=electricity_sold_hourly, pp_rev=True)
     return rev
 
 
@@ -426,12 +399,13 @@ def calc_costs(thermal_cost_new=None, electrical_cost_new=None, tes_size=None, p
         (with and without incentives). All units are dimensionless.
     """
     # Calculate Cost Savings
-    thermal_cost_savings = thermal_cost_baseline - thermal_cost_new
     if load_following_type == "PP" or load_following_type == "Peak":
         revenue = calc_pp_revenue(class_dict=class_dict, electricity_sold_hourly=electricity_sold_hourly)
     else:
         revenue = Q_(0, '')
-    electrical_cost_savings = electrical_cost_baseline - electrical_cost_new + revenue
+
+    thermal_cost_savings = thermal_cost_baseline - thermal_cost_new
+    electrical_cost_savings = electrical_cost_baseline - electrical_cost_new
     total_cost_savings = electrical_cost_savings + thermal_cost_savings
 
     # Implementation Cost (material cost + installation cost)
@@ -442,12 +416,12 @@ def calc_costs(thermal_cost_new=None, electrical_cost_new=None, tes_size=None, p
                                                              dispatch_hourly=tes_heat_flow_list)
     incremental_cost = om_cost_chp + om_cost_tes
     total_installed_cost = installed_cost_chp + installed_cost_tes
-    implementation_cost_incent = installed_cost_chp + installed_cost_tes - (pct_incentive * total_installed_cost)
-    implementation_cost_norm = installed_cost_chp + installed_cost_tes
+    implementation_cost_incent = total_installed_cost - (pct_incentive * total_installed_cost)
+    implementation_cost_norm = total_installed_cost
 
     # Simple Payback Period (implementation cost / annual cost savings)
-    incentive_payback = implementation_cost_incent / (total_cost_savings - incremental_cost) * ureg.year
-    simple_payback = implementation_cost_norm / (total_cost_savings - incremental_cost) * ureg.year
+    incentive_payback = implementation_cost_incent / (revenue + total_cost_savings - incremental_cost)
+    simple_payback = implementation_cost_norm / (revenue + total_cost_savings - incremental_cost)
 
     cost_data_dict = {
         "chp_installed_cost": installed_cost_chp,
