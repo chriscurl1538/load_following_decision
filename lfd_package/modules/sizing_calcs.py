@@ -5,7 +5,6 @@ Module description:
 
 import numpy as np
 from lfd_package.modules.__init__ import ureg, Q_
-from lfd_package.modules import thermal_storage as storage, chp as cogen
 
 
 def create_demand_curve_array(array=None):
@@ -163,8 +162,8 @@ def size_chp(load_following_type=None, class_dict=None):
     """
     args_list = [load_following_type, class_dict]
     if any(elem is None for elem in args_list) is False:
-        if load_following_type == "PP" or load_following_type == "Peak":
-            chp_size = calc_pes_chp_size(class_dict=class_dict)
+        if load_following_type == "Peak":
+            chp_size = class_dict['demand'].annual_peak_el
         elif load_following_type == "ELF":
             chp_size = calc_max_rect_chp_size(array=class_dict['demand'].el)
         elif load_following_type == "TLF":
@@ -206,62 +205,6 @@ def calc_max_rect_chp_size(array=None):
         max_index = np.argmax(prod_array)
         max_value = sorted_demand_array[max_index]
         return max_value
-
-
-def calc_pes_chp_size(class_dict=None):
-    """
-    Recommends a CHP system size using the minimum Primary Energy Savings
-    (PES) method. A high PES value indicates that the associated CHP size
-    saves the maximum energy compared to the baseline case. A low PES value
-    indicates that the associated CHP size is the most profitable (but saves
-    the least energy compared to the baseline case). This function returns the
-    maximum PES value.
-
-    Used in the size_chp function
-
-    Parameters
-    ----------
-    class_dict: dict
-        contains initialized class data using CLI inputs (see command_line.py)
-
-    Returns
-    -------
-    max_pes_size: Quantity (float)
-        Recommended size of CHP system in units of kW electrical
-    """
-    args_list = [class_dict]
-    if any(elem is None for elem in args_list) is False:
-        chp_size_list = list(range(10, 105, 5)) * ureg.kW
-
-        grid_eff = class_dict['demand'].grid_efficiency
-        size_list = []
-        pes_list = []
-
-        for size in chp_size_list:
-            chp_gen_kwh_list = cogen.pp_calc_electricity_gen_sold(chp_size=size, class_dict=class_dict)[0]
-            chp_gen_btuh_list = cogen.pp_calc_hourly_heat_generated(chp_gen_hourly_kwh=chp_gen_kwh_list,
-                                                                    class_dict=class_dict)
-            fuel_consumption_list = cogen.calc_hourly_fuel_use(chp_gen_hourly_btuh=chp_gen_btuh_list, chp_size=size,
-                                                               load_following_type='PP', class_dict=class_dict)
-
-            fuel_consumption = sum(fuel_consumption_list)
-            thermal_output = sum(chp_gen_btuh_list) * Q_(1, ureg.hours)
-            electrical_output = sum(chp_gen_kwh_list)
-            electrical_eff = electrical_output/fuel_consumption
-            thermal_eff = thermal_output/fuel_consumption
-
-            nominal_electrical_eff = (electrical_eff / grid_eff).to('')
-            nominal_thermal_eff = thermal_eff / class_dict['ab'].eff
-            pes = 1 - (1/(nominal_thermal_eff + nominal_electrical_eff))
-
-            size_list.append(size)
-            pes_list.append(pes)
-
-        max_pes_value = max(pes_list)
-        max_pes_index = pes_list.index(max_pes_value)
-        max_pes_size = size_list[max_pes_index]
-
-        return max_pes_size
 
 
 def size_tes(chp_size=None, class_dict=None):
