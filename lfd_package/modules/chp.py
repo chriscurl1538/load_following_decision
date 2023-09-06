@@ -125,16 +125,22 @@ def pp_calc_electricity_gen_sold(chp_size=None, class_dict=None):
     if any(elem is None for elem in args_list) is False:
 
         chp_hourly_kwh = (chp_size * Q_(1, ureg.hours)).to(ureg.kWh)
+        chp_min_gen_kw = chp_size * class_dict['chp'].min_pl
         chp_gen_kwh_list = []
         chp_sold_kwh_list = []
 
         for dem in class_dict['demand'].el:
-            chp_gen_kwh_list.append(chp_hourly_kwh)
             dem_kwh = (dem * Q_(1, ureg.hours)).to(ureg.kWh)
-            if dem_kwh <= chp_hourly_kwh:
+
+            # Electricity gen and sold calcs
+            if chp_min_gen_kw <= dem <= chp_size:
+                chp_gen_kwh_list.append(chp_hourly_kwh)
                 chp_sold_kwh_list.append(chp_hourly_kwh - dem_kwh)
-            else:
+            elif dem < chp_min_gen_kw:
+                chp_gen_kwh_list.append(Q_(0, ureg.kWh))
                 chp_sold_kwh_list.append(Q_(0, ureg.kWh))
+            else:
+                raise Exception("CHP not sized to peak electrical demand")
 
         return chp_gen_kwh_list, chp_sold_kwh_list
 
@@ -208,13 +214,13 @@ def elf_calc_electricity_generated(chp_size=None, class_dict=None):
             dem_kw = dem.to(ureg.kW)
 
             if chp_min_output <= dem_kw <= chp_size:
-                gen = (dem_kw * ureg.hour).to(ureg.kWh)
+                gen = (dem_kw * Q_(1, ureg.hour)).to(ureg.kWh)
                 chp_gen_kwh_list.append(gen)
             elif dem_kw < chp_min_output:
-                gen = 0 * ureg.kWh
+                gen = Q_(0, ureg.kWh)
                 chp_gen_kwh_list.append(gen)
             elif chp_size < dem_kw:
-                gen = (chp_size * ureg.hour).to(ureg.kWh)
+                gen = (chp_size * Q_(1, ureg.hour)).to(ureg.kWh)
                 chp_gen_kwh_list.append(gen)
             else:
                 raise Exception("Error in ELF calc_utility_electricity_needed function")
@@ -278,6 +284,7 @@ def tlf_calc_hourly_heat_chp_tes_soc(chp_size=None, tes_size=None, class_dict=No
 
     Parameters
     ----------
+    tes_size
     chp_size: Quantity
         contains size of CHP in units of kW.
     class_dict: dict
