@@ -4,8 +4,6 @@ Module Description:
     by the auxiliary boiler
 """
 
-from lfd_package.modules import chp as cogen
-from lfd_package.modules import thermal_storage as storage
 from lfd_package.modules.__init__ import ureg, Q_
 
 
