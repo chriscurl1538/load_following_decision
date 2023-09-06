@@ -4,7 +4,6 @@ Module Description:
     energy dispatched by the thermal energy storage (TES) system
 """
 
-from lfd_package.modules import chp as cogen
 from lfd_package.modules.__init__ import ureg, Q_
 
 
@@ -113,33 +112,34 @@ def calc_tes_heat_flow_and_soc(chp_gen_hourly_btuh=None, tes_size=None, load_fol
             if excess_or_deficit_btuh == 0:
                 storage_rate = Q_(0, ureg.Btu / ureg.hour)
                 tes_heat_rate_list_btuh.append(storage_rate)
-                current_status_btu = new_status_btu
                 soc_list.append(current_status_btu/tes_size)
+                current_status_btu = new_status_btu
             # If CHP is over-generating and TES has room for heat
             elif 0 < excess_or_deficit_btuh and new_status_btu <= tes_size:
                 storage_rate = excess_or_deficit_btuh
                 tes_heat_rate_list_btuh.append(storage_rate)
-                current_status_btu = new_status_btu
                 soc_list.append(current_status_btu/tes_size)
+                current_status_btu = new_status_btu
             # If CHP is over-generating and excess heat would over-fill TES
             elif 0 < excess_or_deficit_btuh and tes_size < new_status_btu:
                 storage_rate = (tes_size - current_status_btu) / Q_(1, ureg.hour)
                 storage_rate.ito(ureg.Btu / ureg.hour)
                 tes_heat_rate_list_btuh.append(storage_rate)
-                current_status_btu = tes_size
                 soc_list.append(current_status_btu/tes_size)
+                current_status_btu = tes_size
             # If heat is needed and dispatching heat would not empty TES
             elif excess_or_deficit_btu < 0 < new_status_btu:
                 storage_rate = excess_or_deficit_btuh
                 tes_heat_rate_list_btuh.append(storage_rate)
-                current_status_btu = new_status_btu
                 soc_list.append(current_status_btu/tes_size)
+                current_status_btu = new_status_btu
             # If heat is needed and dispatching heat WOULD empty TES
             elif excess_or_deficit_btuh < 0 and new_status_btu <= 0:
                 storage_rate = -1 * current_status_btu / Q_(1, ureg.hours)
                 storage_rate.ito(ureg.Btu / ureg.hours)
                 tes_heat_rate_list_btuh.append(storage_rate)
                 soc_list.append(Q_(0, ''))
+                current_status_btu = Q_(0, ureg.Btu)
             else:
                 raise Exception("Error in tes_heat_stored function")
 
