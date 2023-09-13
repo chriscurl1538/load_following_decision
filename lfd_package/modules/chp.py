@@ -10,7 +10,7 @@ from lfd_package.modules import sizing_calcs as sizing
 from lfd_package.modules.__init__ import ureg, Q_
 
 
-def calc_hourly_fuel_use(chp_gen_hourly_btuh=None, chp_size=None, load_following_type=None, class_dict=None):
+def calc_hourly_fuel_use(chp_size=None, class_dict=None, chp_electric_gen_hourly_kwh=None):
     """
     Uses sizing.electrical_output_to_fuel_consumption() to calculate hourly fuel use.
 
@@ -22,31 +22,16 @@ def calc_hourly_fuel_use(chp_gen_hourly_btuh=None, chp_size=None, load_following
         contains initialized class data using CLI inputs (see command_line.py)
     chp_size: Quantity
         contains size of CHP in units of kW.
-    chp_gen_hourly_btuh: list
-        contains lists of hourly chp heat generated in Btu/hr.
-    load_following_type: string
-        specifies whether calculation is for electrical load following (ELF) state
-        or thermal load following (TLF) state.
+    chp_electric_gen_hourly_kwh: list
+        contains lists of hourly chp electricity generated in kWh.
 
     Returns
     -------
     fuel_use_btu_list: list
         Annual, hourly fuel use in units of Btu.
     """
-    args_list = [chp_size, load_following_type, class_dict]
+    args_list = [chp_size, chp_electric_gen_hourly_kwh, class_dict]
     if any(elem is None for elem in args_list) is False:
-        # Get hourly CHP gen in kWh
-        # TODO: Optimize - remove functions called in CLI
-        if load_following_type == "PP" or load_following_type == "Peak":
-            chp_electric_gen_hourly_kwh = pp_calc_electricity_gen_sold(chp_size=chp_size, class_dict=class_dict)[0]
-        elif load_following_type == "ELF":
-            chp_electric_gen_hourly_kwh = elf_calc_electricity_generated(chp_size=chp_size, class_dict=class_dict)
-        elif load_following_type == "TLF":
-            chp_electric_gen_hourly_kwh = tlf_calc_electricity_generated(chp_gen_hourly_btuh=chp_gen_hourly_btuh,
-                                                                         class_dict=class_dict)
-        else:
-            raise Exception("Error in calc_annual_fuel_use_and_costs function")
-
         fuel_use_btu_list = []
 
         # Calculate fuel use
@@ -284,7 +269,8 @@ def tlf_calc_hourly_heat_chp_tes_soc(chp_size=None, tes_size=None, class_dict=No
 
     Parameters
     ----------
-    tes_size
+    tes_size: Quantity
+        contains size of TES in units of Btu.
     chp_size: Quantity
         contains size of CHP in units of kW.
     class_dict: dict
@@ -303,7 +289,7 @@ def tlf_calc_hourly_heat_chp_tes_soc(chp_size=None, tes_size=None, class_dict=No
         of thermal storage for each hour.
 
     """
-    args_list = [chp_size, class_dict]
+    args_list = [chp_size, tes_size, class_dict]
     if any(elem is None for elem in args_list) is False:
         chp_min_output = (class_dict['chp'].min_pl * chp_size).to(ureg.kW)
 
@@ -476,12 +462,15 @@ def tlf_calc_electricity_sold(chp_gen_hourly_kwh=None, class_dict=None):
 
     Parameters
     ----------
-    chp_gen_hourly_kwh
-    class_dict
+    chp_gen_hourly_kwh: list
+        contains CHP electricity generated hourly in units of kWh.
+    class_dict: dict
+        contains initialized class data using CLI inputs (see command_line.py).
 
     Returns
     -------
-
+    sold_kwh_list: list
+        contains hourly electricity sold to the grid in units of kWh.
     """
     args_list = [chp_gen_hourly_kwh, class_dict]
     if any(elem is None for elem in args_list) is False:

@@ -175,7 +175,6 @@ class EnergyDemand:
 
         summer_weight_list = []
         for index in summer_index_list:
-            # TODO: Unit issue - need to be consistent in passing power or energy
             item = (dem_profile[index] * Q_(1, ureg.hours)).to_reduced_units()
             summer_weight_list.append(item)
 
@@ -235,7 +234,7 @@ class EnergyDemand:
         else:
             return Q_(0, ''), Q_(0, '')
 
-    def monthly_demand_peaks(self, dem_profile=None):  # TODO: Test
+    def monthly_demand_peaks(self, dem_profile=None):
         month_list = self.meter_months_hourly
         month_demand_list = []
         monthly_peak_list = []
@@ -248,7 +247,7 @@ class EnergyDemand:
                 month_demand_list.append(dem_profile[index])
         return monthly_peak_list
 
-    def monthly_energy_sums(self, dem_profile=None):    # TODO: Fix bug - units issue when energy list is passed
+    def monthly_energy_sums(self, dem_profile=None):
         month_list = self.meter_months_hourly
         month_demand_list = []
         monthly_sum_list = []

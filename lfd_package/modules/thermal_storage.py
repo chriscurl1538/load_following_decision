@@ -36,7 +36,7 @@ def calc_excess_and_deficit_chp_heat_gen(chp_gen_hourly_btuh=None, load_followin
         heat_demand = class_dict['demand'].hl
 
         if load_following_type == "TLF":
-            raise Exception("Use tlf_calc_hourly_heat_generated function from chp.py")  # TODO: Fix this
+            raise Exception("Use tlf_calc_hourly_heat_generated function from chp.py")
         else:
             excess_heat = []
 
