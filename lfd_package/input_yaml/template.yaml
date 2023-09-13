@@ -1,0 +1,113 @@
+# Description:
+#   Inputs for equipment specifications, location, and energy prices.
+#   Each location has a different .yaml file with preset values.
+
+
+### Location-specific inputs for <<City, State>>
+
+demand_filename: '<<demand_filename.csv>>'   # TODO: Placeholder - replace me!
+city: '<<city>>'                             # TODO: Placeholder - replace me!
+state: '<<st>>' # Must be two-letter abbreviation   # TODO: Placeholder - replace me!
+no_apts: 31
+
+# Energy Costs - Schedule and Metering Types
+meter_type_el: "single_metered_el"              # TODO: Placeholder - replace me!
+meter_type_fuel: "single_metered_fuel"          # TODO: Placeholder - replace me!
+schedule_type_el: ["schedule_basic"]  # List of applicable key names    # TODO: Placeholder - replace me!
+schedule_type_fuel: ["schedule_basic"]  # List of applicable key names   # TODO: Placeholder - replace me!
+
+summer_start_inclusive: 0
+winter_start_inclusive: 0
+
+# Electricity Schedules
+master_metered_el:
+  schedule_basic:
+    monthly_base_charge: 0      # $/month
+    monthly_energy_charge: 0    # $/kWh
+    units: 'kWh'
+  schedule_seasonal_energy:
+    monthly_base_charge: 0      # $/month
+    energy_charge_summer: 0     # $/kWh
+    energy_charge_winter: 0     # $/kWh
+    units: 'kWh'
+  schedule_seasonal_demand:
+    monthly_base_charge: 0      # $/month
+    dem_charge_summer: 0     # $/kW
+    dem_charge_winter: 0     # $/kW
+    units: 'kW'
+  schedule_seasonal_energy_block:
+    monthly_base_charge: 0               # $/month
+    energy_charge_summer_block1: 0    # $/kWh
+    energy_charge_summer_block2: 0    # $/kWh
+    energy_charge_winter_block1: 0    # $/kWh
+    energy_charge_winter_block2: 0    # $/kWh
+    energy_block1_cap: 0    # kWh
+    units: 'kWh'
+  schedule_seasonal_demand_block:
+    monthly_base_charge: 0            # $/month
+    dem_charge_summer_block1: 0       # $/kW
+    dem_charge_summer_block2: 0    # $/kW
+    dem_charge_winter_block1: 0       # $/kW
+    dem_charge_winter_block2: 0   # $/kW
+    dem_block1_cap: 0          # kW
+    units: 'kW'
+
+single_metered_el:
+  schedule_basic:
+    monthly_base_charge: 0     # $/month
+    monthly_energy_charge: 0    # $/kWh
+    units: 'kWh'
+  schedule_energy_block:
+    monthly_base_charge: 0         # $/month
+    energy_charge_block1: 0    # $/kWh
+    energy_charge_block2: 0    # $/kWh
+    energy_block1_cap: 0    # kWh
+    units: 'kWh'
+
+# Natural Gas Schedules
+master_metered_fuel:
+  schedule_basic:
+    monthly_base_charge: 0        # $/month
+    monthly_energy_charge: 0      # $/therm
+    units: 'therm'
+  schedule_energy_block:
+    monthly_base_charge: 0     # $/month
+    energy_charge_block1: 0        # $/therm
+    energy_charge_block2: 0  # $/therm
+    energy_charge_block3: 0 # $/therm
+    energy_block1_cap: 0       # therm
+    energy_block2_cap: 0      # therm
+    units: 'therm'
+
+single_metered_fuel:
+  schedule_basic:
+    monthly_base_charge: 0         # $/month
+    monthly_energy_charge: 0       # $/therm
+    units: 'therm'
+  schedule_energy_block:
+    monthly_base_charge: 0     # $/month
+    energy_charge_block1: 0        # $/therm
+    energy_charge_block2: 0  # $/therm
+    energy_charge_block3: 0 # $/therm
+    energy_block1_cap: 0       # therm
+    energy_block2_cap: 0        # therm
+    units: 'therm'
+
+### Equipment Specifications, Efficiencies
+
+# CHP Specs
+chp_turn_down: 0
+
+# Efficiencies
+ab_eff: 0
+energy_plus_eff: 0
+grid_efficiency: 0   # between 0-1, national average
+
+# TES Storage Initialization
+tes_init: 0   # initial SOC
+
+# Incremental Equipment Costs (installed cost = labor, material, and installation)
+chp_installed_cost: 0   # $/kW
+chp_om_cost: 0             # $/kWh
+tes_installed_cost: 0     # $/kWh
+tes_om_cost: 0                # $/kWh

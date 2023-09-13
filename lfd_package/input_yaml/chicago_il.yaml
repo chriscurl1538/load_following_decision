@@ -5,7 +5,7 @@
 
 ### Location-specific inputs for Chicago, IL
 
-demand_filename: 'pre1980_chicago_illinois.csv'   # TODO: Change if needed
+demand_filename: 'post1980_Chicago_IL.csv'   # TODO: Change if needed
 city: 'chicago'
 state: 'il' # Must be two-letter abbreviation
 no_apts: 31

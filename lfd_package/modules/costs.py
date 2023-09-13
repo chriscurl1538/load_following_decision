@@ -399,7 +399,7 @@ def calc_costs(thermal_cost_new=None, electrical_cost_new=None, tes_size=None, p
         (with and without incentives). All units are dimensionless.
     """
     # Calculate Cost Savings
-    if load_following_type == "PP" or load_following_type == "Peak":
+    if load_following_type == "TLF" or load_following_type == "Peak":
         revenue = calc_pp_revenue(class_dict=class_dict, electricity_sold_hourly=electricity_sold_hourly)
     else:
         revenue = Q_(0, '')

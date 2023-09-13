@@ -5,7 +5,7 @@
 
 ### Location-specific inputs for Phoenix, AZ
 
-demand_filename: 'pre1980_arizona_phoenix.csv'   # TODO: Change if needed
+demand_filename: 'post1980_Phoenix_AZ.csv'   # TODO: Change if needed
 city: 'phoenix'
 state: 'az' # Must be two-letter abbreviation
 no_apts: 31

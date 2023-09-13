@@ -469,3 +469,35 @@ def tlf_calc_electricity_generated(chp_gen_hourly_btuh=None, class_dict=None):
             hourly_electricity_gen.append(electric_gen_kwh)
 
         return hourly_electricity_gen
+
+
+def tlf_calc_electricity_sold(chp_gen_hourly_kwh=None, class_dict=None):
+    """
+
+    Parameters
+    ----------
+    chp_gen_hourly_kwh
+    class_dict
+
+    Returns
+    -------
+
+    """
+    args_list = [chp_gen_hourly_kwh, class_dict]
+    if any(elem is None for elem in args_list) is False:
+        dem_el_list = class_dict['demand'].el
+        sold_kwh_list = []
+
+        for index, dem in enumerate(dem_el_list):
+            dem_kwh = (dem * Q_(1, ureg.hours)).to(ureg.kWh)
+            chp_gen_kwh = chp_gen_hourly_kwh[index]
+
+            # Electricity gen and sold calcs
+            if dem_kwh < chp_gen_kwh:
+                sold_kwh = chp_gen_kwh - dem_kwh
+                sold_kwh_list.append(sold_kwh)
+            else:
+                sold_kwh = Q_(0, ureg.kWh)
+                sold_kwh_list.append(sold_kwh)
+
+        return sold_kwh_list

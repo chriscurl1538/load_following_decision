@@ -5,7 +5,7 @@
 
 ### Location-specific inputs for Duluth, MN
 
-demand_filename: 'pre1980_minnesota_duluth.csv'   # TODO: Change if needed
+demand_filename: 'post1980_Duluth_MN.csv'   # TODO: Change if needed
 city: 'duluth'
 state: 'mn' # Must be two-letter abbreviation
 no_apts: 31

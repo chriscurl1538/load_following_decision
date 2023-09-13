@@ -5,7 +5,7 @@
 
 ### Location-specific inputs for Helena, MT
 
-demand_filename: 'pre1980_montana_helena.csv'   # TODO: Change if needed
+demand_filename: 'post1980_Helena_MT.csv'   # TODO: Change if needed
 city: 'helena'
 state: 'mt' # Must be two-letter abbreviation
 no_apts: 31
