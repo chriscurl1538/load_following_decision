@@ -1,0 +1,403 @@
+Folder PATH listing for volume Windows
+Volume serial number is 1487-EFC7
+C:.
+|   .gitignore
+|   foldertree.doc
+|   LICENSE
+|   pyproject.toml
+|   README.md
+|   setup.cfg
+|   
++---.idea
+|   |   load_following_decision.iml
+|   |   misc.xml
+|   |   modules.xml
+|   |   other.xml
+|   |   vcs.xml
+|   |   workspace.xml
+|   |   
+|   \---inspectionProfiles
+|           profiles_settings.xml
+|           
++---.pytest_cache
+|   |   .gitignore
+|   |   CACHEDIR.TAG
+|   |   README.md
+|   |   
+|   \---v
+|       \---cache
+|               nodeids
+|               stepwise
+|               
++---docs
+|   |   example_tables
+|   |   how_to_guide.md
+|   |   project_motivation.md
+|   |   
+|   \---example-plots
+|           boiler-gen-daily.png
+|           chp-electric-gen-daily.png
+|           chp-heat-gen-daily.png
+|           electrical-demand.png
+|           heating-demand.png
+|           tes-status-daily.png
+|           
+\---lfd_package
+    |   command_line.py
+    |   __init__.py
+    |   
+    +---input_demand_profiles
+    |       post1980_alaska_fairbanks.csv
+    |       post1980_arizona_phoenix.csv
+    |       post1980_chicago_illinois.csv
+    |       post1980_florida_miami.csv
+    |       post1980_minnesota_duluth.csv
+    |       post1980_montana_helena.csv
+    |       post1980_washington_seattle.csv
+    |       pre1980_alaska_fairbanks.csv
+    |       pre1980_arizona_phoenix.csv
+    |       pre1980_chicago_illinois.csv
+    |       pre1980_florida_miami.csv
+    |       pre1980_minnesota_duluth.csv
+    |       pre1980_montana_helena.csv
+    |       pre1980_washington_seattle.csv
+    |       STD2004_Buffalo_NY.csv
+    |       STD2004_Fairbanks_AK.csv
+    |       STD2004_GreatFalls_MT.csv
+    |       STD2004_Honolulu_HI.csv
+    |       STD2004_IntFalls_MN.csv
+    |       STD2004_Seattle_WA.csv
+    |       STD2004_Tucson_AZ.csv
+    |       STD2007_Buffalo_NY.csv
+    |       STD2007_Fairbanks_AK.csv
+    |       STD2007_GreatFalls_MT.csv
+    |       STD2007_Honolulu_HI.csv
+    |       STD2007_IntFalls_MN.csv
+    |       STD2007_Seattle_WA.csv
+    |       STD2007_Tucson_AZ.csv
+    |       STD2010_Buffalo_NY.csv
+    |       STD2010_Fairbanks_AK.csv
+    |       STD2010_GreatFalls_MT.csv
+    |       STD2010_Honolulu_HI.csv
+    |       STD2010_IntFalls_MN.csv
+    |       STD2010_Seattle_WA.csv
+    |       STD2010_Tucson_AZ.csv
+    |       STD2013_Buffalo_NY.csv
+    |       STD2013_Fairbanks_AK.csv
+    |       STD2013_GreatFalls_MT.csv
+    |       STD2013_Honolulu_HI.csv
+    |       STD2013_IntFalls_MN.csv
+    |       STD2013_Seattle_WA.csv
+    |       STD2013_Tucson_AZ.csv
+    |       STD2016_Buffalo_NY.csv
+    |       STD2016_Fairbanks_AK.csv
+    |       STD2016_GreatFalls_MT.csv
+    |       STD2016_Honolulu_HI.csv
+    |       STD2016_IntFalls_MN.csv
+    |       STD2016_Seattle_WA.csv
+    |       STD2016_Tucson_AZ.csv
+    |       STD2019_Buffalo_NY.csv
+    |       STD2019_Fairbanks_AK.csv
+    |       STD2019_GreatFalls_MT.csv
+    |       STD2019_Honolulu_HI.csv
+    |       STD2019_IntFalls_MN.csv
+    |       STD2019_Seattle_WA.csv
+    |       STD2019_Tucson_AZ.csv
+    |       
+    +---input_yaml
+    |       buffalo_ny.yaml
+    |       chicago_il.yaml
+    |       duluth_mn.yaml
+    |       fairbanks_ak.yaml
+    |       great-falls_mt.yaml
+    |       helena_mt.yaml
+    |       honolulu_hi.yaml
+    |       international-falls_mn.yaml
+    |       miami_fl.yaml
+    |       phoenix_az.yaml
+    |       seattle_wa.yaml
+    |       tucson_az.yaml
+    |       
+    +---modules
+    |   |   aux_boiler.py
+    |   |   chp.py
+    |   |   classes.py
+    |   |   costs.py
+    |   |   emissions.py
+    |   |   plots.py
+    |   |   sa.py
+    |   |   sizing_calcs.py
+    |   |   thermal_storage.py
+    |   |   __init__.py
+    |   |   
+    |   \---__pycache__
+    |           aux_boiler.cpython-37.pyc
+    |           chp.cpython-37.pyc
+    |           classes.cpython-37.pyc
+    |           costs.cpython-37.pyc
+    |           emissions.cpython-37.pyc
+    |           plots.cpython-37.pyc
+    |           sa.cpython-37.pyc
+    |           sizing_calcs.cpython-37.pyc
+    |           thermal_storage.cpython-37.pyc
+    |           __init__.cpython-37.pyc
+    |           
+    +---plots
+    |   +---buffalo_ny
+    |   |       buffalo_ny_electrical_demand.png
+    |   |       buffalo_ny_elf_plot_electric.png
+    |   |       buffalo_ny_elf_plot_soc.png
+    |   |       buffalo_ny_elf_plot_thermal.png
+    |   |       buffalo_ny_peak_plot_electric.png
+    |   |       buffalo_ny_peak_plot_soc.png
+    |   |       buffalo_ny_peak_plot_thermal.png
+    |   |       buffalo_ny_pp_plot_electric.png
+    |   |       buffalo_ny_pp_plot_soc.png
+    |   |       buffalo_ny_pp_plot_thermal.png
+    |   |       buffalo_ny_thermal_demand.png
+    |   |       buffalo_ny_tlf_plot_electric.png
+    |   |       buffalo_ny_tlf_plot_soc.png
+    |   |       buffalo_ny_tlf_plot_thermal.png
+    |   |       
+    |   +---chicago_il
+    |   |       chicago_il_electrical_demand.png
+    |   |       chicago_il_elf_plot_electric.png
+    |   |       chicago_il_elf_plot_soc.png
+    |   |       chicago_il_elf_plot_thermal.png
+    |   |       chicago_il_peak_plot_electric.png
+    |   |       chicago_il_peak_plot_soc.png
+    |   |       chicago_il_peak_plot_thermal.png
+    |   |       chicago_il_pp_plot_electric.png
+    |   |       chicago_il_pp_plot_soc.png
+    |   |       chicago_il_pp_plot_thermal.png
+    |   |       chicago_il_thermal_demand.png
+    |   |       chicago_il_tlf_plot_electric.png
+    |   |       chicago_il_tlf_plot_soc.png
+    |   |       chicago_il_tlf_plot_thermal.png
+    |   |       
+    |   +---duluth_mn
+    |   |       duluth_mn_electrical_demand.png
+    |   |       duluth_mn_elf_plot_electric.png
+    |   |       duluth_mn_elf_plot_soc.png
+    |   |       duluth_mn_elf_plot_thermal.png
+    |   |       duluth_mn_peak_plot_electric.png
+    |   |       duluth_mn_peak_plot_soc.png
+    |   |       duluth_mn_peak_plot_thermal.png
+    |   |       duluth_mn_pp_plot_electric.png
+    |   |       duluth_mn_pp_plot_soc.png
+    |   |       duluth_mn_pp_plot_thermal.png
+    |   |       duluth_mn_thermal_demand.png
+    |   |       duluth_mn_tlf_plot_electric.png
+    |   |       duluth_mn_tlf_plot_soc.png
+    |   |       duluth_mn_tlf_plot_thermal.png
+    |   |       
+    |   +---fairbanks_ak
+    |   |       fairbanks_ak_electrical_demand.png
+    |   |       fairbanks_ak_elf_plot_electric.png
+    |   |       fairbanks_ak_elf_plot_soc.png
+    |   |       fairbanks_ak_elf_plot_thermal.png
+    |   |       fairbanks_ak_MR_size_electrical.png
+    |   |       fairbanks_ak_MR_size_thermal.png
+    |   |       fairbanks_ak_peak_plot_electric.png
+    |   |       fairbanks_ak_peak_plot_soc.png
+    |   |       fairbanks_ak_peak_plot_thermal.png
+    |   |       fairbanks_ak_thermal_demand.png
+    |   |       fairbanks_ak_tlf_plot_electric.png
+    |   |       fairbanks_ak_tlf_plot_soc.png
+    |   |       fairbanks_ak_tlf_plot_thermal.png
+    |   |       
+    |   +---great falls_mt
+    |   |       great falls_mt_electrical_demand.png
+    |   |       great falls_mt_elf_plot_electric.png
+    |   |       great falls_mt_elf_plot_soc.png
+    |   |       great falls_mt_elf_plot_thermal.png
+    |   |       great falls_mt_peak_plot_electric.png
+    |   |       great falls_mt_peak_plot_soc.png
+    |   |       great falls_mt_peak_plot_thermal.png
+    |   |       great falls_mt_pp_plot_electric.png
+    |   |       great falls_mt_pp_plot_soc.png
+    |   |       great falls_mt_pp_plot_thermal.png
+    |   |       great falls_mt_thermal_demand.png
+    |   |       great falls_mt_tlf_plot_electric.png
+    |   |       great falls_mt_tlf_plot_soc.png
+    |   |       great falls_mt_tlf_plot_thermal.png
+    |   |       
+    |   +---helena_mt
+    |   |       helena_mt_electrical_demand.png
+    |   |       helena_mt_elf_plot_electric.png
+    |   |       helena_mt_elf_plot_soc.png
+    |   |       helena_mt_elf_plot_thermal.png
+    |   |       helena_mt_peak_plot_electric.png
+    |   |       helena_mt_peak_plot_soc.png
+    |   |       helena_mt_peak_plot_thermal.png
+    |   |       helena_mt_pp_plot_electric.png
+    |   |       helena_mt_pp_plot_soc.png
+    |   |       helena_mt_pp_plot_thermal.png
+    |   |       helena_mt_thermal_demand.png
+    |   |       helena_mt_tlf_plot_electric.png
+    |   |       helena_mt_tlf_plot_soc.png
+    |   |       helena_mt_tlf_plot_thermal.png
+    |   |       
+    |   +---honolulu_hi
+    |   |       honolulu_hi_electrical_demand.png
+    |   |       honolulu_hi_elf_plot_electric.png
+    |   |       honolulu_hi_elf_plot_soc.png
+    |   |       honolulu_hi_elf_plot_thermal.png
+    |   |       honolulu_hi_peak_plot_electric.png
+    |   |       honolulu_hi_peak_plot_soc.png
+    |   |       honolulu_hi_peak_plot_thermal.png
+    |   |       honolulu_hi_pp_plot_electric.png
+    |   |       honolulu_hi_pp_plot_soc.png
+    |   |       honolulu_hi_pp_plot_thermal.png
+    |   |       honolulu_hi_thermal_demand.png
+    |   |       honolulu_hi_tlf_plot_electric.png
+    |   |       honolulu_hi_tlf_plot_soc.png
+    |   |       honolulu_hi_tlf_plot_thermal.png
+    |   |       
+    |   +---international falls_mn
+    |   |       international falls_mn_electrical_demand.png
+    |   |       international falls_mn_elf_plot_electric.png
+    |   |       international falls_mn_elf_plot_soc.png
+    |   |       international falls_mn_elf_plot_thermal.png
+    |   |       international falls_mn_peak_plot_electric.png
+    |   |       international falls_mn_peak_plot_soc.png
+    |   |       international falls_mn_peak_plot_thermal.png
+    |   |       international falls_mn_pp_plot_electric.png
+    |   |       international falls_mn_pp_plot_soc.png
+    |   |       international falls_mn_pp_plot_thermal.png
+    |   |       international falls_mn_thermal_demand.png
+    |   |       international falls_mn_tlf_plot_electric.png
+    |   |       international falls_mn_tlf_plot_soc.png
+    |   |       international falls_mn_tlf_plot_thermal.png
+    |   |       
+    |   +---miami_fl
+    |   |       miami_fl_electrical_demand.png
+    |   |       miami_fl_elf_plot_electric.png
+    |   |       miami_fl_elf_plot_soc.png
+    |   |       miami_fl_elf_plot_thermal.png
+    |   |       miami_fl_peak_plot_electric.png
+    |   |       miami_fl_peak_plot_soc.png
+    |   |       miami_fl_peak_plot_thermal.png
+    |   |       miami_fl_pp_plot_electric.png
+    |   |       miami_fl_pp_plot_soc.png
+    |   |       miami_fl_pp_plot_thermal.png
+    |   |       miami_fl_thermal_demand.png
+    |   |       miami_fl_tlf_plot_electric.png
+    |   |       miami_fl_tlf_plot_soc.png
+    |   |       miami_fl_tlf_plot_thermal.png
+    |   |       
+    |   +---phoenix_az
+    |   |       phoenix_az_electrical_demand.png
+    |   |       phoenix_az_elf_plot_electric.png
+    |   |       phoenix_az_elf_plot_soc.png
+    |   |       phoenix_az_elf_plot_thermal.png
+    |   |       phoenix_az_peak_plot_electric.png
+    |   |       phoenix_az_peak_plot_soc.png
+    |   |       phoenix_az_peak_plot_thermal.png
+    |   |       phoenix_az_pp_plot_electric.png
+    |   |       phoenix_az_pp_plot_soc.png
+    |   |       phoenix_az_pp_plot_thermal.png
+    |   |       phoenix_az_thermal_demand.png
+    |   |       phoenix_az_tlf_plot_electric.png
+    |   |       phoenix_az_tlf_plot_soc.png
+    |   |       phoenix_az_tlf_plot_thermal.png
+    |   |       
+    |   +---seattle_wa
+    |   |       seattle_wa_electrical_demand.png
+    |   |       seattle_wa_elf_plot_electric.png
+    |   |       seattle_wa_elf_plot_soc.png
+    |   |       seattle_wa_elf_plot_thermal.png
+    |   |       seattle_wa_peak_plot_electric.png
+    |   |       seattle_wa_peak_plot_soc.png
+    |   |       seattle_wa_peak_plot_thermal.png
+    |   |       seattle_wa_pp_plot_electric.png
+    |   |       seattle_wa_pp_plot_soc.png
+    |   |       seattle_wa_pp_plot_thermal.png
+    |   |       seattle_wa_thermal_demand.png
+    |   |       seattle_wa_tlf_plot_electric.png
+    |   |       seattle_wa_tlf_plot_soc.png
+    |   |       seattle_wa_tlf_plot_thermal.png
+    |   |       
+    |   \---tucson_az
+    |           tucson_az_electrical_demand.png
+    |           tucson_az_elf_plot_electric.png
+    |           tucson_az_elf_plot_soc.png
+    |           tucson_az_elf_plot_thermal.png
+    |           tucson_az_peak_plot_electric.png
+    |           tucson_az_peak_plot_soc.png
+    |           tucson_az_peak_plot_thermal.png
+    |           tucson_az_pp_plot_electric.png
+    |           tucson_az_pp_plot_soc.png
+    |           tucson_az_pp_plot_thermal.png
+    |           tucson_az_thermal_demand.png
+    |           tucson_az_tlf_plot_electric.png
+    |           tucson_az_tlf_plot_soc.png
+    |           tucson_az_tlf_plot_thermal.png
+    |           
+    +---results
+    |   +---buffalo_ny
+    |   |       buffalo_ny_results.xlsx
+    |   |       
+    |   +---chicago_il
+    |   |       chicago_il_results.xlsx
+    |   |       
+    |   +---duluth_mn
+    |   |       duluth_mn_results.xlsx
+    |   |       
+    |   +---fairbanks_ak
+    |   |       fairbanks_ak_results.xlsx
+    |   |       
+    |   +---great falls_mt
+    |   |       great falls_mt_results.xlsx
+    |   |       
+    |   +---helena_mt
+    |   |       helena_mt_results.xlsx
+    |   |       
+    |   +---honolulu_hi
+    |   |       honolulu_hi_results.xlsx
+    |   |       
+    |   +---international falls_mn
+    |   |       international falls_mn_results.xlsx
+    |   |       
+    |   +---miami_fl
+    |   |       miami_fl_results.xlsx
+    |   |       
+    |   +---phoenix_az
+    |   |       phoenix_az_results.xlsx
+    |   |       
+    |   +---seattle_wa
+    |   |       seattle_wa_results.xlsx
+    |   |       
+    |   \---tucson_az
+    |           tucson_az_results.xlsx
+    |           
+    +---tests
+    |   |   conftest.py
+    |   |   test_aux_boiler.py
+    |   |   test_chp.py
+    |   |   test_classes.py
+    |   |   test_emissions.py
+    |   |   test_sizing_calcs.py
+    |   |   test_thermal_storage.py
+    |   |   __init__.py
+    |   |   
+    |   +---.pytest_cache
+    |   |   |   .gitignore
+    |   |   |   CACHEDIR.TAG
+    |   |   |   README.md
+    |   |   |   
+    |   |   \---v
+    |   |       \---cache
+    |   |               lastfailed
+    |   |               nodeids
+    |   |               stepwise
+    |   |               
+    |   \---__pycache__
+    |           conftest.cpython-37-pytest-7.1.2.pyc
+    |           test_classes.cpython-37-pytest-7.1.2.pyc
+    |           test_emissions.cpython-37-pytest-7.1.2.pyc
+    |           __init__.cpython-37.pyc
+    |           
+    \---__pycache__
+            __init__.cpython-37.pyc
+            
