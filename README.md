@@ -160,12 +160,11 @@ Additional assumptions and limitations are described in /docs/LFD_user_manual.pd
 
 ### Future Work
 
-Features to be added to this package in the future include:
-
-- Economic analysis for thermal load following (TLF) operating mode
-- Calculation of mCHP capacity based on energy demand data
-- Calculation of TES capacity based on energy demand data
-- Generate results as a pdf file containing relevant tables and plots
+The package currently does not have a testing suite for unit testing. This oversight 
+will be rectified in the next software update. Until then, a data_validation.xlsx file
+has been included in the /docs folder for confirming that results output values are as 
+expected. Calculations were re-created in Excel in the first sheet, and Python calculation
+outputs for Fairbanks, AK (2019 construction) were included in the second sheet.
 
 ### Questions?
 
