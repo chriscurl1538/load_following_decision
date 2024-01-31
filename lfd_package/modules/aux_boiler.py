@@ -38,7 +38,7 @@ def calc_aux_boiler_output_rate(chp_size=None, tes_size=None, chp_gen_hourly_btu
     ab_heat_rate_hourly: list (Quantity)
         Hourly heat output of the auxiliary boiler in units of Btu/hr
     """
-    args_list = [chp_size, tes_size, chp_gen_hourly_btuh_dict, load_following_type, class_dict]
+    args_list = [chp_size, tes_size, chp_gen_hourly_btuh_dict, load_following_type, class_dict, tes_heat_flow_btuh]
     if any(elem is None for elem in args_list) is False:
         # Pull chp heat and tes heat data
         chp_heat_flow_btuh = chp_gen_hourly_btuh_dict[str(load_following_type)]
@@ -87,10 +87,12 @@ def calc_hourly_fuel_use(ab_output_rate_list=None, class_dict=None):
     hourly_fuel_use_btu: list
         hourly fuel use of the auxiliary boiler in units of Btu
     """
-    # Fuel use calculation
-    hourly_fuel_use_btu = []
-    for item in ab_output_rate_list:
-        fuel_use = (item * Q_(1, ureg.hour)) / class_dict['ab'].eff
-        hourly_fuel_use_btu.append(fuel_use.to(ureg.Btu))
+    args_list = [ab_output_rate_list, class_dict]
+    if any(elem is None for elem in args_list) is False:
+        # Fuel use calculation
+        hourly_fuel_use_btu = []
+        for item in ab_output_rate_list:
+            fuel_use = (item * Q_(1, ureg.hour)) / class_dict['ab'].eff
+            hourly_fuel_use_btu.append(fuel_use.to(ureg.Btu))
 
-    return hourly_fuel_use_btu
+        return hourly_fuel_use_btu

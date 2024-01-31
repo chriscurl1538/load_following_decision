@@ -11,6 +11,9 @@ def calc_electric_charges(class_dict=None, electricity_bought_hourly=None, pp_re
 
     Parameters
     ----------
+    pp_rev: bool
+        indicates whether electricity buyback revenue is being calculated. If true, electric charges exclude monthly
+        base charges from the total.
     class_dict: dict
         contains initialized class data using CLI inputs (see command_line.py)
     electricity_bought_hourly: list
@@ -21,100 +24,101 @@ def calc_electric_charges(class_dict=None, electricity_bought_hourly=None, pp_re
     total: Quantity
         contains the total electricity charges for the year. Units are dimensionless.
     """
-
-    if sum(electricity_bought_hourly) == 0:
-        return Q_(0, '')
-    else:
-        summer_weight, winter_weight = \
-            class_dict['demand'].seasonal_weights_hourly_data(dem_profile=electricity_bought_hourly)
-        summer_start = class_dict['demand'].summer_start_month
-        winter_start = class_dict['demand'].winter_start_month
-
-        monthly_energy_bought_list = class_dict['demand'].monthly_energy_sums(dem_profile=electricity_bought_hourly)
-        min_energy_use_annual = min(monthly_energy_bought_list)
-        annual_base_cost = []
-        annual_rate_cost = []
-
-        # Check metering type
-        if class_dict['costs'].meter_type_el == "master_metered_el":
-            el_cost_dict = class_dict['costs'].master_meter_el_dict
-        elif class_dict['costs'].meter_type_el == "single_metered_el":
-            el_cost_dict = class_dict['costs'].single_meter_el_dict
+    args_list = [electricity_bought_hourly, class_dict]
+    if any(elem is None for elem in args_list) is False:
+        if sum(electricity_bought_hourly) == 0:
+            return Q_(0, '')
         else:
-            raise Exception("Issue parsing electric metering type (master meter vs individually metered apartments)")
+            summer_weight, winter_weight = \
+                class_dict['demand'].seasonal_weights_hourly_data(dem_profile=electricity_bought_hourly)
+            summer_start = class_dict['demand'].summer_start_month
+            winter_start = class_dict['demand'].winter_start_month
 
-        # Loop through possible electric rate schedule types for the chosen meter type
-        for item in class_dict['costs'].schedule_type_el:
-            if pp_rev is True:
-                annual_base_cost.append(Q_(0, ''))
+            monthly_energy_bought_list = class_dict['demand'].monthly_energy_sums(dem_profile=electricity_bought_hourly)
+            min_energy_use_annual = min(monthly_energy_bought_list)
+            annual_base_cost = []
+            annual_rate_cost = []
+
+            # Check metering type
+            if class_dict['costs'].meter_type_el == "master_metered_el":
+                el_cost_dict = class_dict['costs'].master_meter_el_dict
             elif class_dict['costs'].meter_type_el == "single_metered_el":
-                building_base_cost = el_cost_dict[item]["monthly_base_charge"] * (class_dict['costs'].no_apts + 1)
-                annual_base_cost.append(Q_(12 * building_base_cost, ''))
+                el_cost_dict = class_dict['costs'].single_meter_el_dict
             else:
-                annual_base_cost.append(Q_(12 * el_cost_dict[item]["monthly_base_charge"], ''))
-            units = el_cost_dict[item]["units"]
+                raise Exception("Issue parsing electric metering type (master meter vs individually metered apartments)")
 
-            if item == "schedule_basic":
-                monthly_rate = Q_(el_cost_dict[item]["monthly_energy_charge"], '1/{}'.format(units))
-                annual_electricity_bought = sum(monthly_energy_bought_list)
-                annual_rate_cost = monthly_rate * annual_electricity_bought
-                total_base_cost = sum(annual_base_cost)
-                total = annual_rate_cost + total_base_cost
-                total.ito('')
-                return total
+            # Loop through possible electric rate schedule types for the chosen meter type
+            for item in class_dict['costs'].schedule_type_el:
+                if pp_rev is True:
+                    annual_base_cost.append(Q_(0, ''))
+                elif class_dict['costs'].meter_type_el == "single_metered_el":
+                    building_base_cost = el_cost_dict[item]["monthly_base_charge"] * (class_dict['costs'].no_apts + 1)
+                    annual_base_cost.append(Q_(12 * building_base_cost, ''))
+                else:
+                    annual_base_cost.append(Q_(12 * el_cost_dict[item]["monthly_base_charge"], ''))
+                units = el_cost_dict[item]["units"]
 
-            elif item == "schedule_energy_block":
-                block1_cap = Q_(el_cost_dict[item]["energy_block1_cap"], str(units))
-                rate_b1 = Q_(el_cost_dict[item]["energy_charge_block1"], '1/{}'.format(units))
-                rate_b2 = Q_(el_cost_dict[item]["energy_charge_block2"], '1/{}'.format(units))
+                if item == "schedule_basic":
+                    monthly_rate = Q_(el_cost_dict[item]["monthly_energy_charge"], '1/{}'.format(units))
+                    annual_electricity_bought = sum(monthly_energy_bought_list)
+                    annual_rate_cost = monthly_rate * annual_electricity_bought
+                    total_base_cost = sum(annual_base_cost)
+                    total = annual_rate_cost + total_base_cost
+                    total.ito('')
+                    return total
 
-                if min_energy_use_annual < block1_cap:
-                    annual_b1_rate_cost = rate_b1 * sum(monthly_energy_bought_list)
-                    annual_rate_cost.append(annual_b1_rate_cost)
+                elif item == "schedule_energy_block":
+                    block1_cap = Q_(el_cost_dict[item]["energy_block1_cap"], str(units))
+                    rate_b1 = Q_(el_cost_dict[item]["energy_charge_block1"], '1/{}'.format(units))
+                    rate_b2 = Q_(el_cost_dict[item]["energy_charge_block2"], '1/{}'.format(units))
 
-                elif block1_cap <= min_energy_use_annual:
-                    b1_cost = rate_b1 * block1_cap * 12
-                    annual_base_cost.append(b1_cost)
+                    if min_energy_use_annual < block1_cap:
+                        annual_b1_rate_cost = rate_b1 * sum(monthly_energy_bought_list)
+                        annual_rate_cost.append(annual_b1_rate_cost)
 
-                    monthly_energy_bought_b2 = [item - block1_cap for item in monthly_energy_bought_list]
-                    annual_b2_rate_cost = rate_b2 * sum(monthly_energy_bought_b2)
-                    annual_rate_cost.append(annual_b2_rate_cost)
+                    elif block1_cap <= min_energy_use_annual:
+                        b1_cost = rate_b1 * block1_cap * 12
+                        annual_base_cost.append(b1_cost)
 
-            elif item == "schedule_seasonal_energy":
-                rate_summer = Q_(el_cost_dict[item]["energy_charge_summer"], '1/{}'.format(units))
-                rate_winter = Q_(el_cost_dict[item]["energy_charge_winter"], '1/{}'.format(units))
-                effective_rate = (rate_winter * winter_weight) + (rate_summer * summer_weight)
-                cost = effective_rate * sum(monthly_energy_bought_list)
-                annual_rate_cost.append(cost.to(''))
+                        monthly_energy_bought_b2 = [item - block1_cap for item in monthly_energy_bought_list]
+                        annual_b2_rate_cost = rate_b2 * sum(monthly_energy_bought_b2)
+                        annual_rate_cost.append(annual_b2_rate_cost)
 
-            elif item == "schedule_seasonal_demand":
-                rate_summer = Q_(el_cost_dict[item]["dem_charge_summer"], '1/{}'.format(units))
-                rate_winter = Q_(el_cost_dict[item]["dem_charge_winter"], '1/{}'.format(units))
-                monthly_dem_peaks = class_dict["demand"].monthly_demand_peaks(dem_profile=electricity_bought_hourly)
-                for i, peak in enumerate(monthly_dem_peaks):
-                    if summer_start <= i+1 < winter_start:
-                        rate_cost_item = (rate_summer * peak).to_reduced_units()
-                    else:
-                        rate_cost_item = (rate_winter * peak).to_reduced_units()
-                    annual_rate_cost.append(rate_cost_item)
+                elif item == "schedule_seasonal_energy":
+                    rate_summer = Q_(el_cost_dict[item]["energy_charge_summer"], '1/{}'.format(units))
+                    rate_winter = Q_(el_cost_dict[item]["energy_charge_winter"], '1/{}'.format(units))
+                    effective_rate = (rate_winter * winter_weight) + (rate_summer * summer_weight)
+                    cost = effective_rate * sum(monthly_energy_bought_list)
+                    annual_rate_cost.append(cost.to(''))
 
-            elif item == "schedule_seasonal_energy_block":
-                base_cost, rate_cost = seasonal_block_rates(sch=item, units=units, el_cost_dict=el_cost_dict,
-                                                            costs_class=class_dict['costs'],
-                                                            electricity_bought_hourly=electricity_bought_hourly)
-                annual_base_cost.append(base_cost)
-                annual_rate_cost.append(rate_cost)
+                elif item == "schedule_seasonal_demand":
+                    rate_summer = Q_(el_cost_dict[item]["dem_charge_summer"], '1/{}'.format(units))
+                    rate_winter = Q_(el_cost_dict[item]["dem_charge_winter"], '1/{}'.format(units))
+                    monthly_dem_peaks = class_dict["demand"].monthly_demand_peaks(dem_profile=electricity_bought_hourly)
+                    for i, peak in enumerate(monthly_dem_peaks):
+                        if summer_start <= i+1 < winter_start:
+                            rate_cost_item = (rate_summer * peak).to_reduced_units()
+                        else:
+                            rate_cost_item = (rate_winter * peak).to_reduced_units()
+                        annual_rate_cost.append(rate_cost_item)
 
-            elif item == "schedule_seasonal_demand_block":
-                base_cost, rate_cost = seasonal_block_rates(sch=item, units=units, el_cost_dict=el_cost_dict,
-                                                            costs_class=class_dict['costs'],
-                                                            electricity_bought_hourly=electricity_bought_hourly)
-                annual_base_cost.append(base_cost)
-                annual_rate_cost.append(rate_cost)
+                elif item == "schedule_seasonal_energy_block":
+                    base_cost, rate_cost = seasonal_block_rates(sch=item, units=units, el_cost_dict=el_cost_dict,
+                                                                costs_class=class_dict['costs'],
+                                                                electricity_bought_hourly=electricity_bought_hourly)
+                    annual_base_cost.append(base_cost)
+                    annual_rate_cost.append(rate_cost)
 
-        total = sum(annual_base_cost) + sum(annual_rate_cost)
-        total.ito_reduced_units()
-        return total
+                elif item == "schedule_seasonal_demand_block":
+                    base_cost, rate_cost = seasonal_block_rates(sch=item, units=units, el_cost_dict=el_cost_dict,
+                                                                costs_class=class_dict['costs'],
+                                                                electricity_bought_hourly=electricity_bought_hourly)
+                    annual_base_cost.append(base_cost)
+                    annual_rate_cost.append(rate_cost)
+
+            total = sum(annual_base_cost) + sum(annual_rate_cost)
+            total.ito_reduced_units()
+            return total
 
 
 def seasonal_block_rates(sch=None, units=None, el_cost_dict=None, costs_class=None, electricity_bought_hourly=None):
@@ -141,67 +145,69 @@ def seasonal_block_rates(sch=None, units=None, el_cost_dict=None, costs_class=No
     total_rate_cost: Quantity
         Dimensionless value representing costs associated with rate schedule (excludes base charges).
     """
-    summer_length = costs_class.winter_start_month - costs_class.summer_start_month
+    args_list = [sch, units, el_cost_dict, costs_class, electricity_bought_hourly]
+    if any(elem is None for elem in args_list) is False:
+        summer_length = costs_class.winter_start_month - costs_class.summer_start_month
 
-    annual_base_cost = []
-    annual_rate_cost = []
+        annual_base_cost = []
+        annual_rate_cost = []
 
-    if electricity_bought_hourly[0].units == ureg.kWh:
-        electricity_bought_hourly = \
-            costs_class.convert_units(values_list=electricity_bought_hourly, units_to_str="kW")
+        if electricity_bought_hourly[0].units == ureg.kWh:
+            electricity_bought_hourly = \
+                costs_class.convert_units(values_list=electricity_bought_hourly, units_to_str="kW")
 
-    if sch == "schedule_seasonal_energy_block":
-        block1_cap = Q_(el_cost_dict[sch]["energy_block1_cap"], '{}'.format(units))
-        rate_summer_b1 = Q_(el_cost_dict[sch]["energy_charge_summer_block1"], '1/{}'.format(units))
-        rate_winter_b1 = Q_(el_cost_dict[sch]["energy_charge_winter_block1"], '1/{}'.format(units))
-        rate_summer_b2 = Q_(el_cost_dict[sch]["energy_charge_summer_block2"], '1/{}'.format(units))
-        rate_winter_b2 = Q_(el_cost_dict[sch]["energy_charge_winter_block2"], '1/{}'.format(units))
-        monthly_energy_or_peaks_list = costs_class.monthly_energy_sums(dem_profile=electricity_bought_hourly)
-        monthly_min = min(monthly_energy_or_peaks_list)
-    elif sch == "schedule_seasonal_demand_block":
-        block1_cap = Q_(el_cost_dict[sch]["dem_block1_cap"], '{}'.format(units))
-        rate_summer_b1 = Q_(el_cost_dict[sch]["dem_charge_summer_block1"], '1/{}'.format(units))
-        rate_winter_b1 = Q_(el_cost_dict[sch]["dem_charge_winter_block1"], '1/{}'.format(units))
-        rate_summer_b2 = Q_(el_cost_dict[sch]["dem_charge_summer_block2"], '1/{}'.format(units))
-        rate_winter_b2 = Q_(el_cost_dict[sch]["dem_charge_winter_block2"], '1/{}'.format(units))
-        monthly_energy_or_peaks_list = costs_class.monthly_demand_peaks(dem_profile=electricity_bought_hourly)
-        monthly_min = min(monthly_energy_or_peaks_list)
-    else:
-        raise Exception("schedule must be either seasonal demand block or seasonal energy block")
+        if sch == "schedule_seasonal_energy_block":
+            block1_cap = Q_(el_cost_dict[sch]["energy_block1_cap"], '{}'.format(units))
+            rate_summer_b1 = Q_(el_cost_dict[sch]["energy_charge_summer_block1"], '1/{}'.format(units))
+            rate_winter_b1 = Q_(el_cost_dict[sch]["energy_charge_winter_block1"], '1/{}'.format(units))
+            rate_summer_b2 = Q_(el_cost_dict[sch]["energy_charge_summer_block2"], '1/{}'.format(units))
+            rate_winter_b2 = Q_(el_cost_dict[sch]["energy_charge_winter_block2"], '1/{}'.format(units))
+            monthly_energy_or_peaks_list = costs_class.monthly_energy_sums(dem_profile=electricity_bought_hourly)
+            monthly_min = min(monthly_energy_or_peaks_list)
+        elif sch == "schedule_seasonal_demand_block":
+            block1_cap = Q_(el_cost_dict[sch]["dem_block1_cap"], '{}'.format(units))
+            rate_summer_b1 = Q_(el_cost_dict[sch]["dem_charge_summer_block1"], '1/{}'.format(units))
+            rate_winter_b1 = Q_(el_cost_dict[sch]["dem_charge_winter_block1"], '1/{}'.format(units))
+            rate_summer_b2 = Q_(el_cost_dict[sch]["dem_charge_summer_block2"], '1/{}'.format(units))
+            rate_winter_b2 = Q_(el_cost_dict[sch]["dem_charge_winter_block2"], '1/{}'.format(units))
+            monthly_energy_or_peaks_list = costs_class.monthly_demand_peaks(dem_profile=electricity_bought_hourly)
+            monthly_min = min(monthly_energy_or_peaks_list)
+        else:
+            raise Exception("schedule must be either seasonal demand block or seasonal energy block")
 
-    if block1_cap <= monthly_min:
-        summer_b1_cost = rate_summer_b1 * block1_cap * summer_length
-        winter_b1_cost = rate_winter_b1 * block1_cap * (Q_(12, '') - summer_length)
-        b1_total = summer_b1_cost + winter_b1_cost
-        annual_base_cost.append(b1_total)
+        if block1_cap <= monthly_min:
+            summer_b1_cost = rate_summer_b1 * block1_cap * summer_length
+            winter_b1_cost = rate_winter_b1 * block1_cap * (Q_(12, '') - summer_length)
+            b1_total = summer_b1_cost + winter_b1_cost
+            annual_base_cost.append(b1_total)
 
-        monthly_energy_bought_b2 = [item - block1_cap for item in monthly_energy_or_peaks_list]
-        summer_weight_b2, winter_weight_b2 = \
-            costs_class.seasonal_weights_monthly_data(monthly_data=monthly_energy_bought_b2)
+            monthly_energy_bought_b2 = [item - block1_cap for item in monthly_energy_or_peaks_list]
+            summer_weight_b2, winter_weight_b2 = \
+                costs_class.seasonal_weights_monthly_data(monthly_data=monthly_energy_bought_b2)
 
-        effective_rate_b2 = (rate_summer_b2 * summer_weight_b2) + (rate_winter_b2 * winter_weight_b2)
-        annual_b2_rate_cost = effective_rate_b2 * sum(monthly_energy_bought_b2)
-        annual_rate_cost.append(annual_b2_rate_cost)
-        total_base_cost = sum(annual_base_cost)
-        total_rate_cost = sum(annual_rate_cost)
-        return total_base_cost, total_rate_cost
-    else:
-        monthly_cost = []
-        for index, monthly_energy in enumerate(monthly_energy_or_peaks_list):
-            if costs_class.summer_start_month <= int(index + 1) < costs_class.winter_start_month:
-                if monthly_energy < block1_cap:
-                    monthly_cost.append(monthly_energy * rate_summer_b1)
+            effective_rate_b2 = (rate_summer_b2 * summer_weight_b2) + (rate_winter_b2 * winter_weight_b2)
+            annual_b2_rate_cost = effective_rate_b2 * sum(monthly_energy_bought_b2)
+            annual_rate_cost.append(annual_b2_rate_cost)
+            total_base_cost = sum(annual_base_cost)
+            total_rate_cost = sum(annual_rate_cost)
+            return total_base_cost, total_rate_cost
+        else:
+            monthly_cost = []
+            for index, monthly_energy in enumerate(monthly_energy_or_peaks_list):
+                if costs_class.summer_start_month <= int(index + 1) < costs_class.winter_start_month:
+                    if monthly_energy < block1_cap:
+                        monthly_cost.append(monthly_energy * rate_summer_b1)
+                    else:
+                        monthly_cost.append(monthly_energy * rate_summer_b2)
                 else:
-                    monthly_cost.append(monthly_energy * rate_summer_b2)
-            else:
-                if monthly_energy < block1_cap:
-                    monthly_cost.append(monthly_energy * rate_winter_b1)
-                else:
-                    monthly_cost.append(monthly_energy * rate_winter_b2)
-        annual_rate_cost.append(sum(monthly_cost))
-        total_base_cost = sum(annual_base_cost)
-        total_rate_cost = sum(annual_rate_cost)
-        return total_base_cost, total_rate_cost
+                    if monthly_energy < block1_cap:
+                        monthly_cost.append(monthly_energy * rate_winter_b1)
+                    else:
+                        monthly_cost.append(monthly_energy * rate_winter_b2)
+            annual_rate_cost.append(sum(monthly_cost))
+            total_base_cost = sum(annual_base_cost)
+            total_rate_cost = sum(annual_rate_cost)
+            return total_base_cost, total_rate_cost
 
 
 def calc_fuel_charges(class_dict=None, fuel_bought_hourly=None):
@@ -220,80 +226,82 @@ def calc_fuel_charges(class_dict=None, fuel_bought_hourly=None):
     total: Quantity
         total annual cost of fuel in dimensionless units
     """
-    monthly_energy_bought_list = class_dict['demand'].monthly_energy_sums(dem_profile=fuel_bought_hourly)
-    min_energy_use_annual = min(monthly_energy_bought_list)
-    annual_base_cost = []
-    annual_rate_cost = []
+    args_list = [class_dict, fuel_bought_hourly]
+    if any(elem is None for elem in args_list) is False:
+        monthly_energy_bought_list = class_dict['demand'].monthly_energy_sums(dem_profile=fuel_bought_hourly)
+        min_energy_use_annual = min(monthly_energy_bought_list)
+        annual_base_cost = []
+        annual_rate_cost = []
 
-    # Check metering type
-    if class_dict['costs'].meter_type_fuel == "master_metered_fuel":
-        fuel_cost_dict = class_dict['costs'].master_meter_fuel_dict
-    elif class_dict['costs'].meter_type_fuel == "single_metered_fuel":
-        fuel_cost_dict = class_dict['costs'].single_meter_fuel_dict
-    else:
-        raise Exception("Issue parsing fuel metering type (master meter vs individually metered apartments)")
-
-    # Ensure units are consistent. We want units of power for hourly fuel bought.
-    if fuel_bought_hourly[0].check('[energy]'):
-        fuel_bought_hourly = class_dict['demand'].convert_units(values_list=fuel_bought_hourly,
-                                                                units_to_str="kW")
-
-    # Loop through possible ng rate schedule types for the chosen meter type
-    for item in class_dict['costs'].schedule_type_fuel:
-        # Add annual base costs to list
-        if class_dict['costs'].meter_type_fuel == "single_metered_fuel":
-            building_base_cost = fuel_cost_dict[item]["monthly_base_charge"] * (class_dict['costs'].no_apts + 1)
-            annual_base_cost.append(Q_(12 * building_base_cost, ''))
+        # Check metering type
+        if class_dict['costs'].meter_type_fuel == "master_metered_fuel":
+            fuel_cost_dict = class_dict['costs'].master_meter_fuel_dict
+        elif class_dict['costs'].meter_type_fuel == "single_metered_fuel":
+            fuel_cost_dict = class_dict['costs'].single_meter_fuel_dict
         else:
-            annual_base_cost.append(Q_(12 * fuel_cost_dict[item]["monthly_base_charge"], ''))
-        units = fuel_cost_dict[item]["units"]
+            raise Exception("Issue parsing fuel metering type (master meter vs individually metered apartments)")
 
-        # Convert units if needed
-        if fuel_bought_hourly[0].check('[power]'):
-            fuel_bought_hourly = class_dict['demand'].convert_units(units_to_str=str(units),
-                                                                    values_list=fuel_bought_hourly)
-        elif str(fuel_bought_hourly[0].units) != str(units):
-            for fuel in fuel_bought_hourly:
-                fuel.to(str(units))
+        # Ensure units are consistent. We want units of power for hourly fuel bought.
+        if fuel_bought_hourly[0].check('[energy]'):
+            fuel_bought_hourly = class_dict['demand'].convert_units(values_list=fuel_bought_hourly,
+                                                                    units_to_str="kW")
 
-        if item == "schedule_basic":
-            monthly_rate = Q_(fuel_cost_dict[item]["monthly_energy_charge"], '1/{}'.format(units))
-            annual_rate_cost = monthly_rate * sum(fuel_bought_hourly)
-            total = annual_rate_cost + sum(annual_base_cost)
-            total.ito_reduced_units()
-            return total
+        # Loop through possible ng rate schedule types for the chosen meter type
+        for item in class_dict['costs'].schedule_type_fuel:
+            # Add annual base costs to list
+            if class_dict['costs'].meter_type_fuel == "single_metered_fuel":
+                building_base_cost = fuel_cost_dict[item]["monthly_base_charge"] * (class_dict['costs'].no_apts + 1)
+                annual_base_cost.append(Q_(12 * building_base_cost, ''))
+            else:
+                annual_base_cost.append(Q_(12 * fuel_cost_dict[item]["monthly_base_charge"], ''))
+            units = fuel_cost_dict[item]["units"]
 
-        elif item == "schedule_energy_block":
-            block1_cap = Q_(fuel_cost_dict[item]["energy_block1_cap"], str(units))
-            block2_cap = Q_(fuel_cost_dict[item]["energy_block2_cap"], str(units))
-            rate_b1 = Q_(fuel_cost_dict[item]["energy_charge_block1"], '1/{}'.format(units))
-            rate_b2 = Q_(fuel_cost_dict[item]["energy_charge_block2"], '1/{}'.format(units))
-            rate_b3 = Q_(fuel_cost_dict[item]["energy_charge_block3"], '1/{}'.format(units))
+            # Convert units if needed
+            if fuel_bought_hourly[0].check('[power]'):
+                fuel_bought_hourly = class_dict['demand'].convert_units(units_to_str=str(units),
+                                                                        values_list=fuel_bought_hourly)
+            elif str(fuel_bought_hourly[0].units) != str(units):
+                for fuel in fuel_bought_hourly:
+                    fuel.to(str(units))
 
-            if min_energy_use_annual < block1_cap:
-                annual_b1_rate_cost = (rate_b1 * sum(monthly_energy_bought_list)).to('')
-                annual_rate_cost.append(annual_b1_rate_cost)
+            if item == "schedule_basic":
+                monthly_rate = Q_(fuel_cost_dict[item]["monthly_energy_charge"], '1/{}'.format(units))
+                annual_rate_cost = monthly_rate * sum(fuel_bought_hourly)
+                total = annual_rate_cost + sum(annual_base_cost)
+                total.ito_reduced_units()
+                return total
 
-            elif block1_cap <= min_energy_use_annual < block2_cap:
-                b1_cost = (rate_b1 * block1_cap * 12).to('')
-                annual_base_cost.append(b1_cost)
+            elif item == "schedule_energy_block":
+                block1_cap = Q_(fuel_cost_dict[item]["energy_block1_cap"], str(units))
+                block2_cap = Q_(fuel_cost_dict[item]["energy_block2_cap"], str(units))
+                rate_b1 = Q_(fuel_cost_dict[item]["energy_charge_block1"], '1/{}'.format(units))
+                rate_b2 = Q_(fuel_cost_dict[item]["energy_charge_block2"], '1/{}'.format(units))
+                rate_b3 = Q_(fuel_cost_dict[item]["energy_charge_block3"], '1/{}'.format(units))
 
-                monthly_energy_bought_b2 = [item - block1_cap for item in monthly_energy_bought_list]
-                annual_b2_rate_cost = rate_b2 * sum(monthly_energy_bought_b2)
-                annual_rate_cost.append(annual_b2_rate_cost)
+                if min_energy_use_annual < block1_cap:
+                    annual_b1_rate_cost = (rate_b1 * sum(monthly_energy_bought_list)).to('')
+                    annual_rate_cost.append(annual_b1_rate_cost)
 
-            elif block2_cap <= min_energy_use_annual:
-                b1_cost = rate_b1 * block1_cap * 12
-                b2_cost = rate_b2 * (block2_cap - block1_cap) * 12
-                annual_base_cost.append(b1_cost + b2_cost)
+                elif block1_cap <= min_energy_use_annual < block2_cap:
+                    b1_cost = (rate_b1 * block1_cap * 12).to('')
+                    annual_base_cost.append(b1_cost)
 
-                monthly_energy_bought_b3 = [item - block2_cap for item in monthly_energy_bought_list]
-                annual_b3_rate_cost = rate_b3 * sum(monthly_energy_bought_b3)
-                annual_rate_cost.append(annual_b3_rate_cost)
+                    monthly_energy_bought_b2 = [item - block1_cap for item in monthly_energy_bought_list]
+                    annual_b2_rate_cost = rate_b2 * sum(monthly_energy_bought_b2)
+                    annual_rate_cost.append(annual_b2_rate_cost)
 
-            total = sum(annual_base_cost) + sum(annual_rate_cost)
-            total.ito_reduced_units()
-            return total
+                elif block2_cap <= min_energy_use_annual:
+                    b1_cost = rate_b1 * block1_cap * 12
+                    b2_cost = rate_b2 * (block2_cap - block1_cap) * 12
+                    annual_base_cost.append(b1_cost + b2_cost)
+
+                    monthly_energy_bought_b3 = [item - block2_cap for item in monthly_energy_bought_list]
+                    annual_b3_rate_cost = rate_b3 * sum(monthly_energy_bought_b3)
+                    annual_rate_cost.append(annual_b3_rate_cost)
+
+                total = sum(annual_base_cost) + sum(annual_rate_cost)
+                total.ito_reduced_units()
+                return total
 
 
 def calc_pp_revenue(class_dict=None, electricity_sold_hourly=None):
@@ -313,8 +321,11 @@ def calc_pp_revenue(class_dict=None, electricity_sold_hourly=None):
     rev: Quantity
         sum of annual revenue from selling electricity. Units are dimensionless.
     """
-    rev = calc_electric_charges(class_dict=class_dict, electricity_bought_hourly=electricity_sold_hourly, pp_rev=True)
-    return rev
+    args_list = [class_dict, electricity_sold_hourly]
+    if any(elem is None for elem in args_list) is False:
+        rev = calc_electric_charges(class_dict=class_dict, electricity_bought_hourly=electricity_sold_hourly,
+                                    pp_rev=True)
+        return rev
 
 
 def calc_installed_om_cost(class_dict=None, dispatch_hourly=None, size=None, class_str=None):
@@ -340,21 +351,23 @@ def calc_installed_om_cost(class_dict=None, dispatch_hourly=None, size=None, cla
     om_cost: Quantity
         the yearly operation and maintenance cost of the equipment.
     """
-    class_info = class_dict[str(class_str)]
-    om_cost_list = []
+    args_list = [class_dict, dispatch_hourly, size, class_str]
+    if any(elem is None for elem in args_list) is False:
+        class_info = class_dict[str(class_str)]
+        om_cost_list = []
 
-    if size.magnitude == 0:
-        return Q_(0, ''), Q_(0, '')
+        if size.magnitude == 0:
+            return Q_(0, ''), Q_(0, '')
 
-    for rate in dispatch_hourly:
-        if class_str == "tes":
-            rate = rate * Q_(1, ureg.hours)
-        cost_hourly = (abs(rate) * class_info.om_cost).to('')
-        om_cost_list.append(cost_hourly)
+        for rate in dispatch_hourly:
+            if class_str == "tes":
+                rate = rate * Q_(1, ureg.hours)
+            cost_hourly = (abs(rate) * class_info.om_cost).to('')
+            om_cost_list.append(cost_hourly)
 
-    om_cost = sum(om_cost_list)
-    installed_cost = (size * class_info.installed_cost).to('')
-    return installed_cost, om_cost
+        om_cost = sum(om_cost_list)
+        installed_cost = (size * class_info.installed_cost).to('')
+        return installed_cost, om_cost
 
 
 def calc_costs(thermal_cost_new=None, electrical_cost_new=None, tes_size=None, pct_incentive=0, class_dict=None,
@@ -390,7 +403,7 @@ def calc_costs(thermal_cost_new=None, electrical_cost_new=None, tes_size=None, p
         negative for heat discharged.Units are Btu/hr
     electricity_sold_hourly: list
         contains excess electricity generated hourly by CHP and sold to grid.
-        Units are in kWh.
+        Units are in kWh. Optional argument.
 
     Returns
     -------
@@ -398,39 +411,42 @@ def calc_costs(thermal_cost_new=None, electrical_cost_new=None, tes_size=None, p
         This dictionary contains the equipment installed costs, O&M costs, buyback revenue, and payback period
         (with and without incentives). All units are dimensionless.
     """
-    # Calculate Cost Savings
-    if load_following_type == "TLF" or load_following_type == "Peak":
-        revenue = calc_pp_revenue(class_dict=class_dict, electricity_sold_hourly=electricity_sold_hourly)
-    else:
-        revenue = Q_(0, '')
+    args_list = [class_dict, thermal_cost_new, electrical_cost_new, tes_size, pct_incentive, thermal_cost_baseline,
+                 electrical_cost_baseline, load_following_type, chp_size, chp_gen_hourly_kwh, tes_heat_flow_list]
+    if any(elem is None for elem in args_list) is False:
+        # Calculate Cost Savings
+        if load_following_type == "TLF" or load_following_type == "Peak":
+            revenue = calc_pp_revenue(class_dict=class_dict, electricity_sold_hourly=electricity_sold_hourly)
+        else:
+            revenue = Q_(0, '')
 
-    thermal_cost_savings = thermal_cost_baseline - thermal_cost_new
-    electrical_cost_savings = electrical_cost_baseline - electrical_cost_new
-    total_cost_savings = electrical_cost_savings + thermal_cost_savings
+        thermal_cost_savings = thermal_cost_baseline - thermal_cost_new
+        electrical_cost_savings = electrical_cost_baseline - electrical_cost_new
+        total_cost_savings = electrical_cost_savings + thermal_cost_savings
 
-    # Implementation Cost (material cost + installation cost)
-    installed_cost_chp, om_cost_chp = calc_installed_om_cost(class_dict=class_dict, size=chp_size,
-                                                             class_str="chp",
-                                                             dispatch_hourly=chp_gen_hourly_kwh)
-    installed_cost_tes, om_cost_tes = calc_installed_om_cost(class_dict=class_dict, size=tes_size, class_str="tes",
-                                                             dispatch_hourly=tes_heat_flow_list)
-    incremental_cost = om_cost_chp + om_cost_tes
-    total_installed_cost = installed_cost_chp + installed_cost_tes
-    implementation_cost_incent = total_installed_cost - (pct_incentive * total_installed_cost)
-    implementation_cost_norm = total_installed_cost
+        # Implementation Cost (material cost + installation cost)
+        installed_cost_chp, om_cost_chp = calc_installed_om_cost(class_dict=class_dict, size=chp_size,
+                                                                 class_str="chp",
+                                                                 dispatch_hourly=chp_gen_hourly_kwh)
+        installed_cost_tes, om_cost_tes = calc_installed_om_cost(class_dict=class_dict, size=tes_size, class_str="tes",
+                                                                 dispatch_hourly=tes_heat_flow_list)
+        incremental_cost = om_cost_chp + om_cost_tes
+        total_installed_cost = installed_cost_chp + installed_cost_tes
+        implementation_cost_incent = total_installed_cost - (pct_incentive * total_installed_cost)
+        implementation_cost_norm = total_installed_cost
 
-    # Simple Payback Period (implementation cost / annual cost savings)
-    incentive_payback = implementation_cost_incent / (revenue + total_cost_savings - incremental_cost)
-    simple_payback = implementation_cost_norm / (revenue + total_cost_savings - incremental_cost)
+        # Simple Payback Period (implementation cost / annual cost savings)
+        incentive_payback = implementation_cost_incent / (revenue + total_cost_savings - incremental_cost)
+        simple_payback = implementation_cost_norm / (revenue + total_cost_savings - incremental_cost)
 
-    cost_data_dict = {
-        "chp_installed_cost": installed_cost_chp,
-        "tes_installed_cost": installed_cost_tes,
-        "chp_om_cost": om_cost_chp,
-        "tes_om_cost": om_cost_tes,
-        "pp_rev": revenue,
-        "simple_payback": simple_payback,
-        "incentive_payback": incentive_payback
-    }
+        cost_data_dict = {
+            "chp_installed_cost": installed_cost_chp,
+            "tes_installed_cost": installed_cost_tes,
+            "chp_om_cost": om_cost_chp,
+            "tes_om_cost": om_cost_tes,
+            "pp_rev": revenue,
+            "simple_payback": simple_payback,
+            "incentive_payback": incentive_payback
+        }
 
-    return cost_data_dict
+        return cost_data_dict

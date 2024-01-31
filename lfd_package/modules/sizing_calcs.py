@@ -216,13 +216,8 @@ def size_tes(chp_size=None, class_dict=None):
 
     Parameters
     ----------
-    chp_gen_hourly_btuh: list
-        contains hourly chp heat generated in Btu/hr.
     chp_size: Quantity
         contains size of CHP unit in kW.
-    load_following_type: str
-        specifies whether calculation is for electrical load following (ELF) state
-        or thermal load following (TLF) state.
     class_dict: dict
         contains initialized class data using CLI inputs (see command_line.py)
 
@@ -231,64 +226,66 @@ def size_tes(chp_size=None, class_dict=None):
     tes_size_btu: Quantity
         Recommended thermal storage size in units of Btu.
     """
-    # Create empty lists
-    uncovered_heat_demand_hourly = []
-    daily_uncovered_heat_btu_list = []
-    excess_chp_heat_gen_hourly = []
-    daily_excess_chp_heat_btu_list = []
-    list_comparison_min_values = []
+    args_list = [chp_size, class_dict]
+    if any(elem is None for elem in args_list) is False:
+        # Create empty lists
+        uncovered_heat_demand_hourly = []
+        daily_uncovered_heat_btu_list = []
+        excess_chp_heat_gen_hourly = []
+        daily_excess_chp_heat_btu_list = []
+        list_comparison_min_values = []
 
-    # For unit management in pint
-    hour_unit = Q_(1, ureg.hour)
+        # For unit management in pint
+        hour_unit = Q_(1, ureg.hour)
 
-    # Pull needed data (assumes CHP runs at constant max generation for sizing purposes)
-    hourly_excess_and_deficit_list = \
-        [(electrical_output_to_thermal_output(chp_size)).to(ureg.Btu / ureg.hour) - dem for dem in
-         class_dict['demand'].hl]
+        # Pull needed data (assumes CHP runs at constant max generation for sizing purposes)
+        hourly_excess_and_deficit_list = \
+            [(electrical_output_to_thermal_output(chp_size)).to(ureg.Btu / ureg.hour) - dem for dem in
+             class_dict['demand'].hl]
 
-    assert isinstance(hourly_excess_and_deficit_list, list)
-    assert hourly_excess_and_deficit_list[0].units == ureg.Btu / ureg.hour
+        assert isinstance(hourly_excess_and_deficit_list, list)
+        assert hourly_excess_and_deficit_list[0].units == ureg.Btu / ureg.hour
 
-    # Separate data into excess generation list and uncovered demand list
-    for index, element in enumerate(hourly_excess_and_deficit_list):
-        if element.magnitude <= 0:
-            uncovered_heat_demand_hourly.append(Q_(abs(element.magnitude), element.units))
-            excess_chp_heat_gen_hourly.append(Q_(0, ureg.Btu / ureg.hour))
-        elif 0 < element.magnitude:
-            uncovered_heat_demand_hourly.append(Q_(0, ureg.Btu / ureg.hour))
-            excess_chp_heat_gen_hourly.append(Q_(abs(element.magnitude), element.units))
+        # Separate data into excess generation list and uncovered demand list
+        for index, element in enumerate(hourly_excess_and_deficit_list):
+            if element.magnitude <= 0:
+                uncovered_heat_demand_hourly.append(Q_(abs(element.magnitude), element.units))
+                excess_chp_heat_gen_hourly.append(Q_(0, ureg.Btu / ureg.hour))
+            elif 0 < element.magnitude:
+                uncovered_heat_demand_hourly.append(Q_(0, ureg.Btu / ureg.hour))
+                excess_chp_heat_gen_hourly.append(Q_(abs(element.magnitude), element.units))
+            else:
+                raise Exception('Error in sizing_calcs.py function, size_tes()')
+
+        # Turn hourly lists into daily sums
+        assert len(uncovered_heat_demand_hourly) == len(excess_chp_heat_gen_hourly)
+        for index in range(24, len(uncovered_heat_demand_hourly) + 1, 24):
+            daily_uncovered_heat_btu_hour = sum(uncovered_heat_demand_hourly[(index - 24):index])
+            daily_uncovered_heat_btu = (daily_uncovered_heat_btu_hour * hour_unit).to(ureg.Btu)
+            daily_uncovered_heat_btu_list.append(daily_uncovered_heat_btu)
+
+            daily_excess_heat_btu_hour = sum(excess_chp_heat_gen_hourly[(index - 24):index])
+            daily_excess_heat_btu = (daily_excess_heat_btu_hour * hour_unit).to(ureg.Btu)
+            daily_excess_chp_heat_btu_list.append(daily_excess_heat_btu)
+
+        # Compare the two lists and pick the min for each day
+        assert len(daily_excess_chp_heat_btu_list) == len(daily_uncovered_heat_btu_list)
+        for index in range(len(daily_excess_chp_heat_btu_list)):
+            if daily_excess_chp_heat_btu_list[index] <= daily_uncovered_heat_btu_list[index]:
+                list_comparison_min_values.append(daily_excess_chp_heat_btu_list[index])
+            elif daily_uncovered_heat_btu_list[index] < daily_excess_chp_heat_btu_list[index]:
+                list_comparison_min_values.append(daily_uncovered_heat_btu_list[index])
+            else:
+                raise Exception('Error in sizing_calcs.py function, size_tes()')
+
+        assert len(list_comparison_min_values) == len(daily_excess_chp_heat_btu_list)
+
+        # Search the resulting list of min values for the maximum, aka the TES size
+        tes_size_btu = max(list_comparison_min_values)
+        assert list_comparison_min_values[0].units == ureg.Btu
+        assert tes_size_btu.units == ureg.Btu
+
+        if 0 <= tes_size_btu.magnitude:
+            return tes_size_btu
         else:
-            raise Exception('Error in sizing_calcs.py function, size_tes()')
-
-    # Turn hourly lists into daily sums
-    assert len(uncovered_heat_demand_hourly) == len(excess_chp_heat_gen_hourly)
-    for index in range(24, len(uncovered_heat_demand_hourly) + 1, 24):
-        daily_uncovered_heat_btu_hour = sum(uncovered_heat_demand_hourly[(index - 24):index])
-        daily_uncovered_heat_btu = (daily_uncovered_heat_btu_hour * hour_unit).to(ureg.Btu)
-        daily_uncovered_heat_btu_list.append(daily_uncovered_heat_btu)
-
-        daily_excess_heat_btu_hour = sum(excess_chp_heat_gen_hourly[(index - 24):index])
-        daily_excess_heat_btu = (daily_excess_heat_btu_hour * hour_unit).to(ureg.Btu)
-        daily_excess_chp_heat_btu_list.append(daily_excess_heat_btu)
-
-    # Compare the two lists and pick the min for each day
-    assert len(daily_excess_chp_heat_btu_list) == len(daily_uncovered_heat_btu_list)
-    for index in range(len(daily_excess_chp_heat_btu_list)):
-        if daily_excess_chp_heat_btu_list[index] <= daily_uncovered_heat_btu_list[index]:
-            list_comparison_min_values.append(daily_excess_chp_heat_btu_list[index])
-        elif daily_uncovered_heat_btu_list[index] < daily_excess_chp_heat_btu_list[index]:
-            list_comparison_min_values.append(daily_uncovered_heat_btu_list[index])
-        else:
-            raise Exception('Error in sizing_calcs.py function, size_tes()')
-
-    assert len(list_comparison_min_values) == len(daily_excess_chp_heat_btu_list)
-
-    # Search the resulting list of min values for the maximum, aka the TES size
-    tes_size_btu = max(list_comparison_min_values)
-    assert list_comparison_min_values[0].units == ureg.Btu
-    assert tes_size_btu.units == ureg.Btu
-
-    if 0 <= tes_size_btu.magnitude:
-        return tes_size_btu
-    else:
-        raise Exception('TES size is negative - error in size_tes() function')
+            raise Exception('TES size is negative - error in size_tes() function')
